@@ -1,4 +1,4 @@
-﻿"""
+"""
 从 OCR 文本自动抽取档案知识图谱实体
 ----------------------------------
 把已经识别好的 OCR 文本，自动抽取成知识图谱节点和关系，并与现有手工图谱合并。
@@ -210,6 +210,10 @@ class LLMExtractor:
             "next_event, next_on_route, alias, member_of, related_to。\n"
             "关系和实体的 name 要尽量与原文一致。\n"
             "description 只用一句话，不要换行，不要包含双引号。\n"
+            "注意：不要抽取图书编辑出版人员（主编、副主编、责任编辑、执行主编、编委、"
+            "监制、摄影、设计、校对、印制、法律顾问等），也不要抽取与长征历史无关的"
+            "现代行政/商业职务人物（如现代县委书记、县长、董事长、会长等），"
+            "除非该人物直接参与 1935-1936 年红军长征相关历史事件。\n"
             "返回严格 JSON，不要输出 Markdown。"
         )
 
@@ -240,7 +244,7 @@ class LLMExtractor:
                 {"role": "user", "content": user_prompt},
             ],
             temperature=0.1,
-            max_tokens=1600,
+            max_tokens=4000,
             response_format={"type": "json_object"},
         )
 
@@ -266,7 +270,7 @@ class LLMExtractor:
                 },
             ],
             temperature=0,
-            max_tokens=2000,
+            max_tokens=4000,
             response_format={"type": "json_object"},
         )
         return parse_llm_json(repair_response.choices[0].message.content or "{}")
@@ -537,7 +541,12 @@ def extract_from_ocr(
             print(f"  读取失败：{e}")
             continue
 
-        limited_text = text[: int(max_chars_per_file)]
+        # 跳过封面/版权页（约前 12%），避免抽出编委会、监制等非历史噪声；
+        # 短文件保护：保证至少取 max_chars_per_file 字符
+        skip = int(len(text) * 0.12)
+        if len(text) - skip < int(max_chars_per_file):
+            skip = max(0, len(text) - int(max_chars_per_file))
+        limited_text = text[skip : skip + int(max_chars_per_file)]
         for chunk in chunk_text(limited_text, max_chars=max_chars_per_file):
             try:
                 result = extractor.extract_chunk(chunk, file_path.name, existing_names)
@@ -569,7 +578,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="从 OCR 文本自动抽取知识图谱实体")
     parser.add_argument("--mode", choices=["llm", "rule"], default="llm", help="抽取模式")
     parser.add_argument("--limit-files", type=int, default=None, help="最多处理多少个 OCR 文件")
-    parser.add_argument("--max-chars", type=int, default=6000, help="每个文件最多参与抽取的字符数")
+    parser.add_argument("--max-chars", type=int, default=4500, help="每个文件最多参与抽取的字符数")
     parser.add_argument("--project-dir", type=str, default=None, help="项目根目录，默认读取 config.PROJECT_DIR")
     parser.add_argument("--remerge", action="store_true", help="Use existing auto_extracted.json and re-merge without calling LLM")
     parser.add_argument("--commit-preview", action="store_true", help="Commit knowledge_graph_auto.json as the active graph")

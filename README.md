@@ -24,7 +24,7 @@ src/
 data/
 ├── ocr_output/        # OCR 档案文本
 ├── index/             # TF-IDF 索引
-└── knowledge_graph/   # 图谱数据
+└── knowledge_graph/   # 知识图谱 + 档案篇目目录(book_toc.json)
 
 docs/
 ├── 当前项目技术文档.md
@@ -45,15 +45,27 @@ cd Red-Aechives-Agent
 以下数据默认不会上传到 GitHub，需要从团队共享位置复制到本地：
 
 ```text
-data/ocr_output/    OCR 文本
+data/ocr_output/    OCR 档案文本（18 部）
 data/index/         TF-IDF 索引
 ```
 
-如果本地没有索引，需要先重建：
+以下数据已入库（克隆后自带），无需额外准备：
+
+```text
+data/knowledge_graph/knowledge_graph.json   知识图谱（473 实体 / 282 关系，LLM 抽取 + 校验）
+data/knowledge_graph/book_toc.json          档案篇目目录（18 部书、1,225 条篇目-页码，用于"某书某页"溯源）
+```
+
+如果本地没有索引，需要先重建（需要 `data/ocr_output/` 就位）：
 
 ```powershell
 python src/knowledge/rebuild_index.py
 ```
+
+> 重建索引会自动做三件事：① 应用 OCR 错字纠错表（`src/knowledge/ocr_fixes.py`，53 条）；
+> ② 按篇目目录标注每个文本块的篇目名与页码（`src/knowledge/toc_index.py`）；
+> ③ 生成 TF-IDF 索引与村寨倒排。
+> 如需**重新生成** `book_toc.json`（例如目录 xlsx 更新过），设置环境变量 `RED_ARCHIVE_TOC_XLSX` 指向 xlsx 后重跑索引；否则直接使用入库的目录即可。
 
 ### 3. 创建虚拟环境
 

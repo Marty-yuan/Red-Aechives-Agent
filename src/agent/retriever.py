@@ -87,6 +87,10 @@ class ArchiveRetriever:
                 "text": chunk["text"],
                 "locations": chunk.get("locations", []),
                 "source": chunk.get("source", "未知档案"),
+                "offset": chunk.get("offset"),
+                "page": chunk.get("page"),
+                "section": chunk.get("section"),
+                "confidence": chunk.get("confidence"),
                 "score": float(score),
             })
 

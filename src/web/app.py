@@ -213,11 +213,11 @@ def api_tts():
     gender = data.get("gender") or VILLAGE_GENDERS.get(village, "female")
 
     if not text:
-        return jsonify({"error": "text????"}), 400
+        return jsonify({"error": "文本不能为空"}), 400
 
     result = synthesize_speech(text, gender=gender)
     if not result:
-        return jsonify({"error": "TTS????"}), 503
+        return jsonify({"error": "语音合成暂不可用，请稍后重试"}), 503
 
     audio_bytes, voice, mime = result
     return Response(

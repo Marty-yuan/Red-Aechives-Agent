@@ -43,8 +43,10 @@ class KnowledgeGraphStore:
         project_dir = os.path.dirname(os.path.dirname(current_dir))
         candidates.append(os.path.join(project_dir, "data", "knowledge_graph", "knowledge_graph.json"))
 
-        # 3. 兼容 D 盘部署路径
-        candidates.append(r"D:\agent kf\Red-Aechives-Agent\data\knowledge_graph\knowledge_graph.json")
+        # 3. 兼容旧的 D 盘部署路径（仅当 RED_ARCHIVE_PROJECT_DIR 被显式设置时）
+        legacy_env = os.environ.get("RED_ARCHIVE_PROJECT_DIR")
+        if legacy_env:
+            candidates.append(os.path.join(legacy_env, "data", "knowledge_graph", "knowledge_graph.json"))
 
         for path in candidates:
             if os.path.exists(path):

@@ -3,17 +3,26 @@
 解决：OCR 文本被换行切得太碎，导致 chunk 平均只有 35 字
 改进：合并相邻短行，生成 400-600 字的语义完整块
 """
-import os, sys, io, json, pickle
+import os, sys, io, json, pickle, re
 from collections import Counter
 from datetime import datetime
+from pathlib import Path
+
+SRC_DIR = Path(__file__).resolve().parents[1]
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from knowledge.ocr_fixes import apply_fixes  # noqa: E402
+from knowledge.toc_index import load_toc, match_book, annotate_chunks  # noqa: E402
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from scipy.sparse import save_npz
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-TXT_DIR = r"D:\agent kf\Red-Aechives-Agent\data\ocr_output"
-INDEX_DIR = r"D:\agent kf\Red-Aechives-Agent\data\index"
+PROJECT_DIR = Path(__file__).resolve().parents[2]
+TXT_DIR = PROJECT_DIR / "data" / "ocr_output"
+INDEX_DIR = PROJECT_DIR / "data" / "index"
 
 # 目标 chunk 大小（字符），比之前的 35 字大幅提升
 TARGET_CHUNK_SIZE = 500
@@ -27,57 +36,81 @@ VILLAGE_KEYWORDS = [
     "蒙自", "东川", "永善", "绥江", "盐津", "大关", "鲁甸"
 ]
 
+# 页码标记：build_pipeline.py 提取 PDF 时在每页文本前插入 [PAGE:n]
+PAGE_RE = re.compile(r"\[PAGE:(\d+)\]")
+
+
 def merge_lines_to_chunks(text: str) -> list:
     """
     把 OCR 产生的碎片化短行，合并成 500 字左右的语义完整块。
-    关键改进：不再逐行切分，而是累积相邻行直到达到目标长度。
+    返回 [(chunk_text, start_offset, page), ...]，其中：
+      - start_offset: chunk 在源文件中的字符偏移（用于定位原文）
+      - page: 该 chunk 所属页码（仅在文本含 [PAGE:n] 标记时有值）
     """
-    # 先按空行分割成自然段落
     raw_paragraphs = text.split("\n")
     
     chunks = []
     current = ""
+    current_start = 0
+    current_page = None
+    chunk_page = None
+    line_offset = 0
     
     for line in raw_paragraphs:
-        line = line.strip()
-        if not line:
+        stripped = line.strip()
+        
+        # 提取页码标记（新格式 OCR 输出）
+        m = PAGE_RE.search(stripped)
+        if m:
+            current_page = int(m.group(1))
+            stripped = PAGE_RE.sub("", stripped).strip()
+        
+        if not stripped:
             # 空行是自然段落边界，先保存当前块
             if len(current) >= MIN_CHUNK_SIZE:
-                chunks.append(current)
+                chunks.append((current, current_start, chunk_page))
                 current = ""
+            line_offset += len(line) + 1
             continue
         
         # 累积文本
         if current:
-            current += line
+            current += stripped
         else:
-            current = line
+            # chunk 起点：记录起始偏移与起始页码
+            current = stripped
+            current_start = line_offset
+            chunk_page = current_page
         
         # 达到目标长度就切块
         if len(current) >= TARGET_CHUNK_SIZE:
-            chunks.append(current)
+            chunks.append((current, current_start, chunk_page))
             current = ""
+        
+        line_offset += len(line) + 1
     
     # 保存最后剩余的部分
     if len(current) >= MIN_CHUNK_SIZE:
-        chunks.append(current)
+        chunks.append((current, current_start, chunk_page))
     elif current and chunks:
-        # 太短的尾巴拼到前一个块
-        chunks[-1] += current
+        # 太短的尾巴拼到前一个块（保持原 offset/page）
+        chunks[-1] = (chunks[-1][0] + current, chunks[-1][1], chunks[-1][2])
     
     return chunks
 
 def chunk_text(text: str, source_file: str) -> list:
-    """分块并标注地点"""
+    """分块并标注地点、偏移与页码"""
     raw_chunks = merge_lines_to_chunks(text)
     
     final_chunks = []
-    for raw in raw_chunks:
+    for raw, offset, page in raw_chunks:
         locations = [kw for kw in VILLAGE_KEYWORDS if kw in raw]
         final_chunks.append({
             "text": raw,
             "locations": locations,
-            "source": source_file
+            "source": source_file,
+            "offset": offset,
+            "page": page,
         })
     
     return final_chunks
@@ -91,10 +124,35 @@ def rebuild():
     all_chunks = []
     file_stats = []
     
+    # 加载篇目目录（用于"篇目 + 页码"级溯源，见 toc_index.py）
+    toc = load_toc()
+    book_anchor_stats = {}
+    
     for fname in txt_files:
         with open(os.path.join(TXT_DIR, fname), "r", encoding="utf-8") as f:
             text = f.read()
+        # OCR 错字纠错（见 ocr_fixes.py，可扩展条目）
+        text = apply_fixes(text)
         chunks = chunk_text(text, fname)
+        
+        # 篇目/页码标注：精确锚定优先，不可靠时近似插值（见 toc_index.py）
+        book = match_book(fname, toc)
+        annotated = 0
+        if book and toc.get(book):
+            anns = annotate_chunks(text, toc[book], [c.get("offset", 0) for c in chunks])
+            for c, ann in zip(chunks, anns):
+                c["section"] = ann["section"]
+                c["page"] = ann["page"]
+                c["confidence"] = ann["confidence"]
+                if ann["section"]:
+                    annotated += 1
+        else:
+            for c in chunks:
+                c["section"] = None
+                c["page"] = None
+                c["confidence"] = None
+        book_anchor_stats[fname[:40]] = f"{annotated}/{len(chunks)} chunks 标注篇目"
+        
         all_chunks.extend(chunks)
         
         avg_len = sum(len(c["text"]) for c in chunks) // len(chunks) if chunks else 0
@@ -138,13 +196,19 @@ def rebuild():
     with open(os.path.join(INDEX_DIR, "village_index.json"), "w", encoding="utf-8") as f:
         json.dump(village_index, f, ensure_ascii=False)
     
+    with_page = sum(1 for c in all_chunks if c.get("page"))
+    with_section = sum(1 for c in all_chunks if c.get("section"))
     summary = {
         "built_at": datetime.now().isoformat(),
         "total_chunks": total,
         "avg_chunk_len": avg_total,
         "total_villages": len(village_index),
         "villages": dict(loc_counter.most_common(30)),
-        "vector_shape": list(embeddings.shape)
+        "vector_shape": list(embeddings.shape),
+        "chunks_with_page": with_page,
+        "chunks_with_section": with_section,
+        "chunks_with_offset": total,
+        "book_anchor_stats": book_anchor_stats,
     }
     with open(os.path.join(INDEX_DIR, "_index_summary.json"), "w", encoding="utf-8") as f:
         json.dump(summary, f, ensure_ascii=False, indent=2)

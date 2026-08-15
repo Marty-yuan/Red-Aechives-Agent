@@ -6,7 +6,7 @@ r"""
 最后返回 None，由前端回退到浏览器 SpeechSynthesis。
 
 安装方式：
-    & "D:\agent kf\venv\Scripts\python.exe" -m pip install edge-tts
+    python -m pip install edge-tts
 """
 import asyncio
 import os

@@ -156,7 +156,7 @@ class OrchestratorAgent:
                         named.append(OrchestratorAgent._coord_name(point[0], point[1]))
                 route_line = name
                 if named:
-                    route_line += "?" + " -> ".join(named)
+                    route_line += "：" + " -> ".join(named)
                 if direction:
                     route_line += "；方向：" + direction
                 lines.append(route_line)

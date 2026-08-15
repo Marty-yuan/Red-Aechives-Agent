@@ -1,0 +1,610 @@
+{
+  "meta": {
+    "note": "关键词弱标注评测集：每题含 anchor（锚定词）与 keywords（扩展判定词）。相关判定：检索结果文本包含 anchor 或任一 keyword。",
+    "created": "2026-08",
+    "n": 60
+  },
+  "questions": [
+    {
+      "id": 1,
+      "question": "扎西会议是什么时候召开的？",
+      "village": "扎西",
+      "anchor": "扎西会议",
+      "keywords": [
+        "1935",
+        "二月"
+      ]
+    },
+    {
+      "id": 2,
+      "question": "扎西会议主要做出了哪些决策？",
+      "village": "扎西",
+      "anchor": "扎西会议",
+      "keywords": [
+        "整编",
+        "川南特委"
+      ]
+    },
+    {
+      "id": 3,
+      "question": "万急渡江令是在哪里发出的？",
+      "village": "寻甸",
+      "anchor": "渡江令",
+      "keywords": [
+        "柯渡",
+        "丹桂"
+      ]
+    },
+    {
+      "id": 4,
+      "question": "中央红军是怎么渡过金沙江的？",
+      "village": "皎平渡",
+      "anchor": "巧渡金沙江",
+      "keywords": [
+        "皎平渡",
+        "木船"
+      ]
+    },
+    {
+      "id": 5,
+      "question": "皎平渡渡江用了多少条木船？",
+      "village": "皎平渡",
+      "anchor": "木船",
+      "keywords": [
+        "皎平渡",
+        "七条"
+      ]
+    },
+    {
+      "id": 6,
+      "question": "红二、六军团是什么时候进入云南的？",
+      "village": "宣威",
+      "anchor": "红二",
+      "keywords": [
+        "1936",
+        "入滇",
+        "宣威"
+      ]
+    },
+    {
+      "id": 7,
+      "question": "石鼓渡江发生在哪一年？",
+      "village": "石鼓",
+      "anchor": "石鼓",
+      "keywords": [
+        "1936",
+        "渡江"
+      ]
+    },
+    {
+      "id": 8,
+      "question": "贺龙在哪一年率部渡过金沙江？",
+      "village": "石鼓",
+      "anchor": "贺龙",
+      "keywords": [
+        "1936",
+        "渡江"
+      ]
+    },
+    {
+      "id": 9,
+      "question": "中央红军长征是什么时候经过云南的？",
+      "village": null,
+      "anchor": "中央红军",
+      "keywords": [
+        "1935",
+        "云南"
+      ]
+    },
+    {
+      "id": 10,
+      "question": "红二、六军团长征经过了云南哪些地方？",
+      "village": null,
+      "anchor": "红二",
+      "keywords": [
+        "楚雄",
+        "丽江",
+        "宣威"
+      ]
+    },
+    {
+      "id": 11,
+      "question": "扎西会议与遵义会议有什么关系？",
+      "village": "扎西",
+      "anchor": "扎西会议",
+      "keywords": [
+        "遵义会议",
+        "继续"
+      ]
+    },
+    {
+      "id": 12,
+      "question": "红军在柯渡丹桂村发生了什么重要事件？",
+      "village": "寻甸",
+      "anchor": "丹桂",
+      "keywords": [
+        "柯渡",
+        "渡江令"
+      ]
+    },
+    {
+      "id": 13,
+      "question": "万急渡江令是什么时候发出的？",
+      "village": "寻甸",
+      "anchor": "渡江令",
+      "keywords": [
+        "1935",
+        "四月"
+      ]
+    },
+    {
+      "id": 14,
+      "question": "中央红军巧渡金沙江用了多长时间？",
+      "village": "皎平渡",
+      "anchor": "金沙江",
+      "keywords": [
+        "七天",
+        "七夜",
+        "三万人"
+      ]
+    },
+    {
+      "id": 15,
+      "question": "红军长征在云南留下了哪些革命遗址？",
+      "village": null,
+      "anchor": "遗址",
+      "keywords": [
+        "纪念馆",
+        "红军洞"
+      ]
+    },
+    {
+      "id": 16,
+      "question": "贺龙在红二、六军团中担任什么职务？",
+      "village": null,
+      "anchor": "贺龙",
+      "keywords": [
+        "总指挥"
+      ]
+    },
+    {
+      "id": 17,
+      "question": "任弼时与贺龙是什么关系？",
+      "village": null,
+      "anchor": "任弼时",
+      "keywords": [
+        "贺龙",
+        "政委",
+        "政治委员"
+      ]
+    },
+    {
+      "id": 18,
+      "question": "刘伯承在巧渡金沙江时担任什么职务？",
+      "village": null,
+      "anchor": "刘伯承",
+      "keywords": [
+        "渡河司令",
+        "总参谋长"
+      ]
+    },
+    {
+      "id": 19,
+      "question": "陈云写过哪篇关于长征的文章？",
+      "village": null,
+      "anchor": "陈云",
+      "keywords": [
+        "随军西行见闻录"
+      ]
+    },
+    {
+      "id": 20,
+      "question": "朱德在红军中担任什么职务？",
+      "village": null,
+      "anchor": "朱德",
+      "keywords": [
+        "总司令"
+      ]
+    },
+    {
+      "id": 21,
+      "question": "毛泽东在扎西会议后处于什么地位？",
+      "village": "扎西",
+      "anchor": "毛泽东",
+      "keywords": [
+        "扎西会议",
+        "领导"
+      ]
+    },
+    {
+      "id": 22,
+      "question": "王震属于哪个方面军？",
+      "village": null,
+      "anchor": "王震",
+      "keywords": [
+        "红二方面军",
+        "军团"
+      ]
+    },
+    {
+      "id": 23,
+      "question": "老船工张朝满为红军做了什么？",
+      "village": null,
+      "anchor": "张朝满",
+      "keywords": [
+        "船工",
+        "渡江"
+      ]
+    },
+    {
+      "id": 24,
+      "question": "刘伯承撰写过哪篇回忆文章？",
+      "village": null,
+      "anchor": "刘伯承",
+      "keywords": [
+        "回顾长征"
+      ]
+    },
+    {
+      "id": 25,
+      "question": "陈云在长征过云南期间有什么经历？",
+      "village": null,
+      "anchor": "陈云",
+      "keywords": [
+        "随军西行见闻录",
+        "云南"
+      ]
+    },
+    {
+      "id": 26,
+      "question": "周恩来在红军渡江过程中做了什么？",
+      "village": null,
+      "anchor": "周恩来",
+      "keywords": [
+        "渡江",
+        "金沙江"
+      ]
+    },
+    {
+      "id": 27,
+      "question": "红军伤员王其英有什么英勇事迹？",
+      "village": null,
+      "anchor": "王其英",
+      "keywords": [
+        "红军洞",
+        "牺牲"
+      ]
+    },
+    {
+      "id": 28,
+      "question": "36名船工在哪里帮助红军渡江？",
+      "village": "皎平渡",
+      "anchor": "船工",
+      "keywords": [
+        "皎平渡",
+        "渡江"
+      ]
+    },
+    {
+      "id": 29,
+      "question": "老红军魏国禄回忆了渡江时的什么内容？",
+      "village": null,
+      "anchor": "魏国禄",
+      "keywords": [
+        "渡江",
+        "周副主席"
+      ]
+    },
+    {
+      "id": 30,
+      "question": "红军在云南有哪些民族团结的故事？",
+      "village": null,
+      "anchor": "各族人民",
+      "keywords": [
+        "支援",
+        "回民",
+        "船工"
+      ]
+    },
+    {
+      "id": 31,
+      "question": "皎平渡在哪个县？",
+      "village": "皎平渡",
+      "anchor": "皎平渡",
+      "keywords": [
+        "禄劝"
+      ]
+    },
+    {
+      "id": 32,
+      "question": "扎西在哪个县？",
+      "village": "扎西",
+      "anchor": "扎西",
+      "keywords": [
+        "威信"
+      ]
+    },
+    {
+      "id": 33,
+      "question": "石鼓在哪个市？",
+      "village": "石鼓",
+      "anchor": "石鼓",
+      "keywords": [
+        "丽江"
+      ]
+    },
+    {
+      "id": 34,
+      "question": "寻甸柯渡有什么红色遗址？",
+      "village": "寻甸",
+      "anchor": "柯渡",
+      "keywords": [
+        "丹桂",
+        "纪念馆"
+      ]
+    },
+    {
+      "id": 35,
+      "question": "红军长征经过曲靖的哪些地方？",
+      "village": "曲靖",
+      "anchor": "曲靖",
+      "keywords": [
+        "沾益",
+        "马龙"
+      ]
+    },
+    {
+      "id": 36,
+      "question": "禄劝有哪些红军渡口？",
+      "village": "禄劝",
+      "anchor": "禄劝",
+      "keywords": [
+        "皎平渡",
+        "渡口"
+      ]
+    },
+    {
+      "id": 37,
+      "question": "红军在宣威打了什么战斗？",
+      "village": "宣威",
+      "anchor": "宣威",
+      "keywords": [
+        "来宾铺"
+      ]
+    },
+    {
+      "id": 38,
+      "question": "红九军团在云南攻占了哪些地方？",
+      "village": null,
+      "anchor": "红九军团",
+      "keywords": [
+        "会泽",
+        "树桔"
+      ]
+    },
+    {
+      "id": 39,
+      "question": "红军在武定县发生了什么？",
+      "village": "武定",
+      "anchor": "武定",
+      "keywords": [
+        "攻克",
+        "红军"
+      ]
+    },
+    {
+      "id": 40,
+      "question": "红军在元谋县有什么活动？",
+      "village": "元谋",
+      "anchor": "元谋",
+      "keywords": [
+        "渡江",
+        "龙街"
+      ]
+    },
+    {
+      "id": 41,
+      "question": "红军在丽江有什么故事？",
+      "village": "丽江",
+      "anchor": "丽江",
+      "keywords": [
+        "石鼓",
+        "渡江"
+      ]
+    },
+    {
+      "id": 42,
+      "question": "昭通在红军长征中有什么事件？",
+      "village": "昭通",
+      "anchor": "昭通",
+      "keywords": [
+        "镇雄",
+        "红军"
+      ]
+    },
+    {
+      "id": 43,
+      "question": "威信县和扎西是什么关系？",
+      "village": null,
+      "anchor": "威信",
+      "keywords": [
+        "扎西",
+        "同地"
+      ]
+    },
+    {
+      "id": 44,
+      "question": "红军在富民县做了什么？",
+      "village": "富民",
+      "anchor": "富民",
+      "keywords": [
+        "攻克",
+        "县城"
+      ]
+    },
+    {
+      "id": 45,
+      "question": "金沙江在云南有哪些重要渡口？",
+      "village": null,
+      "anchor": "金沙江",
+      "keywords": [
+        "皎平渡",
+        "石鼓",
+        "渡口"
+      ]
+    },
+    {
+      "id": 46,
+      "question": "中央红军长征过云南的行军路线是怎样的？",
+      "village": null,
+      "anchor": "中央红军",
+      "keywords": [
+        "扎西",
+        "皎平渡",
+        "金沙江"
+      ]
+    },
+    {
+      "id": 47,
+      "question": "红二、六军团长征过云南的路线是怎样的？",
+      "village": null,
+      "anchor": "红二",
+      "keywords": [
+        "宣威",
+        "石鼓",
+        "金沙江"
+      ]
+    },
+    {
+      "id": 48,
+      "question": "中央红军和红二、六军团的行军路线有什么不同？",
+      "village": null,
+      "anchor": "红二",
+      "keywords": [
+        "中央红军",
+        "路线"
+      ]
+    },
+    {
+      "id": 49,
+      "question": "红军长征过云南的时间线是怎样的？",
+      "village": null,
+      "anchor": "1935",
+      "keywords": [
+        "1936",
+        "云南",
+        "长征"
+      ]
+    },
+    {
+      "id": 50,
+      "question": "云南各族人民是如何支援红军的？",
+      "village": null,
+      "anchor": "各族人民",
+      "keywords": [
+        "支援",
+        "红军"
+      ]
+    },
+    {
+      "id": 51,
+      "question": "红军长征在云南留下了哪些革命文化史料？",
+      "village": null,
+      "anchor": "革命文化史料",
+      "keywords": [
+        "史料",
+        "云南"
+      ]
+    },
+    {
+      "id": 52,
+      "question": "红军在云南木克村留下了什么？",
+      "village": null,
+      "anchor": "木克",
+      "keywords": [
+        "标语"
+      ]
+    },
+    {
+      "id": 53,
+      "question": "红军洞在哪里？",
+      "village": null,
+      "anchor": "红军洞",
+      "keywords": [
+        "禄劝"
+      ]
+    },
+    {
+      "id": 54,
+      "question": "红军长征在云南有多少个主要渡口？",
+      "village": null,
+      "anchor": "渡口",
+      "keywords": [
+        "皎平渡",
+        "石鼓",
+        "树桔"
+      ]
+    },
+    {
+      "id": 55,
+      "question": "扎西整编是怎么回事？",
+      "village": "扎西",
+      "anchor": "整编",
+      "keywords": [
+        "扎西",
+        "缩编"
+      ]
+    },
+    {
+      "id": 56,
+      "question": "龙云对红军入滇是什么态度？",
+      "village": null,
+      "anchor": "龙云",
+      "keywords": [
+        "滇军",
+        "追堵"
+      ]
+    },
+    {
+      "id": 57,
+      "question": "滇军是如何追堵红军的？",
+      "village": null,
+      "anchor": "滇军",
+      "keywords": [
+        "追堵",
+        "龙云"
+      ]
+    },
+    {
+      "id": 58,
+      "question": "红军长征在云南牺牲的烈士有哪些？",
+      "village": null,
+      "anchor": "烈士",
+      "keywords": [
+        "牺牲",
+        "团以上"
+      ]
+    },
+    {
+      "id": 59,
+      "question": "红军长征对云南革命有什么影响？",
+      "village": null,
+      "anchor": "长征",
+      "keywords": [
+        "影响",
+        "革命",
+        "火种"
+      ]
+    },
+    {
+      "id": 60,
+      "question": "云南有哪些红军长征纪念馆？",
+      "village": null,
+      "anchor": "纪念馆",
+      "keywords": [
+        "遗址",
+        "陈列"
+      ]
+    }
+  ]
+}

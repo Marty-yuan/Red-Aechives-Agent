@@ -41,7 +41,12 @@ TEMPERATURE = 0.7        # 温度：越高越有创造性，越低越保守（0-
 MAX_TOKENS = 1000        # 单次回复最大 token 数
 
 # ===================== 数据路径 =====================
-PROJECT_DIR = r"D:\agent kf\Red-Aechives-Agent"
+# 项目根目录：优先读 RED_ARCHIVE_PROJECT_DIR 环境变量（.env.example 中有说明），
+# 否则按仓库实际位置推导（src/agent/config.py -> src/agent -> src -> 项目根）。
+PROJECT_DIR = os.environ.get(
+    "RED_ARCHIVE_PROJECT_DIR",
+    str(Path(__file__).resolve().parents[2]),
+)
 INDEX_DIR = os.path.join(PROJECT_DIR, "data", "index")
 
 # ===================== 检索参数 =====================

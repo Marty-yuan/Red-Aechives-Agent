@@ -1,4 +1,4 @@
-﻿# ===== 数据 / 检索 =====
+# ===== 数据 / 检索 =====
 pymupdf>=1.24.0
 opencc-python-reimplemented
 scikit-learn>=1.3.0
@@ -14,3 +14,6 @@ flask>=3.0.0
 
 # ===== 语音 =====
 edge-tts>=6.1.0
+
+# ===== 测试（可选）=====
+# pytest>=8.0.0   # 运行 tests/ 目录单元测试与检索评测辅助

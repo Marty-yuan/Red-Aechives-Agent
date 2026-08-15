@@ -1,6 +1,6 @@
 # 清理旧版/实验脚本
-# 请在 D:\agent kf\Red-Aechives-Agent 目录下执行，或修改 $ProjectRoot
-$ProjectRoot = "D:\agent kf\Red-Aechives-Agent"
+# 脚本位于 scripts/ 下，项目根取上一级目录
+$ProjectRoot = Split-Path -Parent $PSScriptRoot
 
 $files = @(
     "run_mineru.py",

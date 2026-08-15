@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-TXT_DIR = r"D:\agent kf\Red-Aechives-Agent\data\ocr_output"
+TXT_DIR = Path(__file__).resolve().parents[2] / "data" / "ocr_output"
 
 def convert_files():
     try:
