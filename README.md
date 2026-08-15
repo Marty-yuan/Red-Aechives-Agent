@@ -124,6 +124,16 @@ python src/web/app.py
 
 - [当前项目技术文档](docs/当前项目技术文档.md)
 - [后续功能技术文档](docs/后续功能技术文档.md)
+- [代码规范与协作约定（必读）](docs/CODE_STYLE.md)
+
+## 协作须知（两人开发）
+
+- **环境**：统一 Python 3.10+，用 `requirements-lock.txt` 复现环境；虚拟环境命名 `venv`。
+- **路径**：禁止硬编码本机绝对路径（如 `D:\...`），项目根用 `RED_ARCHIVE_PROJECT_DIR` 或代码推导。
+- **换行/编码**：仓库已配置 `.gitattributes`（LF + UTF-8），合并冲突最小化；保存文件请用 UTF-8。
+- **密钥**：`.env` 不入库，用 `.env.example` 占位；API Key 只在本地 `.env`。
+- **数据**：`data/ocr_output`、`data/index` 不入库（体积大），克隆后复制或重建；图谱/目录/评测等结构化资产入库。
+- **提交**：合并前 `git fetch && git rebase origin/main`，跑 `python -m pytest tests/`，Commit Message 用 Conventional Commits。
 
 ## 注意事项
 

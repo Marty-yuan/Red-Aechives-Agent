@@ -1,0 +1,23 @@
+# 精确版本锁定（当前开发环境实测可用，Python 3.13.9）
+# 安装：python -m pip install -r requirements-lock.txt
+# 新增依赖时同步更新 requirements.txt（下限）与本文件（精确版本）
+
+# ===== 数据 / 检索 =====
+pymupdf==1.27.2.3
+opencc-python-reimplemented==0.1.7
+scikit-learn==1.7.2
+scipy==1.16.3
+numpy==2.3.5
+
+# ===== Agent / LLM =====
+openai==2.41.1
+python-dotenv==1.2.2
+
+# ===== Web =====
+flask==3.1.2
+
+# ===== 语音 =====
+edge-tts==7.2.8
+
+# ===== 测试（可选）=====
+pytest==8.4.2

@@ -17,3 +17,6 @@ edge-tts>=6.1.0
 
 # ===== 测试（可选）=====
 # pytest>=8.0.0   # 运行 tests/ 目录单元测试与检索评测辅助
+
+# 提示：如需精确复现环境，请用 pip install -r requirements-lock.txt（当前开发机实测版本）
+
