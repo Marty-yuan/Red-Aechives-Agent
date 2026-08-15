@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>红色村寨数字代言人</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+.header { height: 48px; background: linear-gradient(90deg, #8B0000 0%, #C41E3A 100%); display: flex; align-items: center; padding: 0 16px; gap: 10px; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.header .logo { font-size: 20px; }
+.header h1 { font-size: 16px; color: white; font-weight: normal; letter-spacing: 2px; }
+.header .subtitle { font-size: 11px; color: rgba(255,255,255,0.6); margin-left: 12px; }
+
+.main { flex: 1; display: flex; overflow: hidden; }
+.map-panel { flex: 1; position: relative; min-width: 0; }
+#map { width: 100%; height: 100%; }
+
+.map-legend { position: absolute; top: 10px; right: 10px; z-index: 1000; background: rgba(26,26,46,0.92); border: 1px solid rgba(196,30,58,0.4); border-radius: 8px; padding: 10px 14px; color: white; font-size: 12px; max-width: 180px; max-height: 55%; overflow-y: auto; }
+.map-legend h4 { color: #FFD700; margin-bottom: 6px; font-size: 12px; }
+.legend-route { margin: 4px 0; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.legend-route .color-line { display: inline-block; width: 20px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.legend-route .route-name { font-size: 11px; font-weight: bold; }
+.legend-route .route-dir { font-size: 10px; opacity: 0.6; margin-left: 26px; }
+.map-legend .legend-item { display: flex; align-items: center; gap: 6px; margin: 3px 0; cursor: pointer; padding: 2px 4px; border-radius: 4px; }
+.map-legend .legend-item:hover { background: rgba(196,30,58,0.3); }
+.map-legend .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; border: 2px solid white; background: #C41E3A; }
+
+.voice-toggle { margin-left: auto; padding: 6px 10px; background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.35); border-radius: 16px; cursor: pointer; font-size: 12px; white-space: nowrap; }
+.voice-toggle:hover { background: rgba(255,255,255,0.22); }
+
+.avatar-wrap { position: relative; width: 56px; height: 56px; border-radius: 50%; overflow: hidden; background: #C41E3A; border: 2px solid #FFD700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.avatar-img { width: 100%; height: 100%; object-fit: cover; display: none; }
+.avatar-fallback { font-size: 26px; display: flex; align-items: center; justify-content: center; }
+.mouth { position: absolute; left: 50%; bottom: 9px; width: 16px; height: 7px; border-radius: 8px; background: #fff; transform: translateX(-50%) scaleY(0.35); transform-origin: center; }
+.avatar-wrap.speaking .mouth { animation: mouthTalk 0.22s infinite alternate; }
+@keyframes mouthTalk { from { transform: translateX(-50%) scaleY(0.35); } to { transform: translateX(-50%) scaleY(1); } }
+
+.chat-panel { width: 400px; background: #16213e; display: flex; flex-direction: column; border-left: 2px solid rgba(196,30,58,0.3); }
+.chat-header { padding: 12px 16px; background: rgba(196,30,58,0.15); border-bottom: 1px solid rgba(196,30,58,0.3); display: flex; align-items: center; gap: 10px; }
+.chat-header .av { width: 40px; height: 40px; border-radius: 50%; background: #C41E3A; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.chat-header h3 { font-size: 15px; color: white; }
+.chat-header p { font-size: 11px; color: rgba(255,255,255,0.5); }
+.chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-thumb { background: rgba(196,30,58,0.3); border-radius: 2px; }
+
+.msg { display: flex; gap: 8px; }
+.msg.user { flex-direction: row-reverse; }
+.msg .bubble { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.6; word-break: break-word; }
+.msg.agent .bubble { background: #1e2d4a; color: #e0e0e0; }
+.msg.user .bubble { background: #C41E3A; color: white; }
+.msg .av-sm { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.msg.agent .av-sm { background: #C41E3A; color: white; }
+
+.plan-bubble { background: #0f1525; border: 1px solid #2a3b5c; }
+.plan-title { color: #FFD700; font-size: 12px; margin-bottom: 6px; font-weight: bold; }
+.plan-step { font-size: 12px; color: #d7c8a8; margin: 3px 0; line-height: 1.5; }
+
+.verify-bubble { background: #0f1525; border: 1px solid #e67e22; }
+.verify-title { color: #E67E22; font-size: 12px; margin-bottom: 6px; font-weight: bold; }
+.verify-issue { font-size: 12px; color: #f0d9b5; margin: 3px 0; line-height: 1.5; }
+.verify-high { border-left: 3px solid #ff4d4f; padding-left: 6px; }
+.verify-medium { border-left: 3px solid #e67e22; padding-left: 6px; }
+.verify-low { border-left: 3px solid #4a90e2; padding-left: 6px; }
+.msg.user .av-sm { background: #4a6fa5; color: white; }
+
+.welcome { text-align: center; color: rgba(255,255,255,0.4); margin-top: 50px; }
+.welcome .icon { font-size: 48px; margin-bottom: 10px; }
+.welcome h3 { color: #FFD700; font-size: 16px; }
+
+.chat-input { padding: 12px 16px; background: rgba(0,0,0,0.2); display: flex; gap: 8px; }
+.chat-input input { flex: 1; padding: 10px 14px; background: #1e2d4a; border: 1px solid rgba(196,30,58,0.3); border-radius: 20px; color: white; font-size: 13px; outline: none; }
+.chat-input input:focus { border-color: #C41E3A; }
+.chat-input button { padding: 8px 18px; background: #C41E3A; color: white; border: none; border-radius: 20px; font-size: 13px; cursor: pointer; }
+.chat-input button:hover { background: #a01830; }
+
+.typing { display: flex; gap: 5px; padding: 4px 0; }
+.typing span { width: 6px; height: 6px; background: #888; border-radius: 50%; animation: bounce 1.4s infinite; }
+.typing span:nth-child(2) { animation-delay: 0.2s; }
+.typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%,80%,100%{transform:scale(0.4)} 40%{transform:scale(1)} }
+
+.soldier-marker { background: transparent !important; border: none !important; display: flex; align-items: center; justify-content: center; }
+.soldier-img { width: 80px; height: 80px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); animation: walk-bob 0.5s infinite alternate; }
+.soldier-badge { width: 44px; height: 44px; border-radius: 50%; background: #C41E3A; border: 2px solid #FFD700; display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.5); animation: walk-bob 0.5s infinite alternate; }
+@keyframes walk-bob { from { transform: translateY(0); } to { transform: translateY(-4px); } }
+
+/* 方向箭头 */
+.route-arrow { background: transparent !important; border: none !important; font-size: 18px; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+
+/* 时间轴 */
+.timeline-bar { height: 96px; background: #0f1525; border-top: 2px solid rgba(196,30,58,0.4); display: flex; align-items: center; padding: 0 20px; overflow-x: auto; position: relative; }
+.timeline-bar::-webkit-scrollbar { height: 4px; }
+.timeline-bar::-webkit-scrollbar-thumb { background: rgba(196,30,58,0.3); border-radius: 2px; }
+.tl-track { display: flex; align-items: center; gap: 0; min-width: fit-content; }
+.tl-event { display: flex; flex-direction: column; align-items: center; min-width: 120px; cursor: pointer; position: relative; z-index: 2; }
+.tl-event .tl-dot { width: 14px; height: 14px; border-radius: 50%; background: #C41E3A; border: 3px solid #FFD700; margin-bottom: 6px; transition: all 0.2s; }
+.tl-event:hover .tl-dot { transform: scale(1.3); box-shadow: 0 0 12px #FFD700; }
+.tl-event.active .tl-dot { background: #FFD700; border-color: white; }
+.tl-event .tl-date { font-size: 10px; color: rgba(255,255,255,0.5); }
+.tl-event .tl-label { font-size: 12px; color: white; font-weight: bold; margin-top: 2px; }
+.tl-event .tl-army { font-size: 9px; color: #E67E22; margin-top: 1px; }
+
+.leaflet-container { background: #1a1a2e; }
+.leaflet-popup-content-wrapper { background: #16213e; color: white; border-radius: 8px; border: 1px solid #C41E3A; }
+.leaflet-popup-tip { background: #16213e; }
+.leaflet-popup-content b { color: #FFD700; }
+.leaflet-control-zoom a { background: #16213e !important; color: white !important; border-color: rgba(196,30,58,0.3) !important; }
+
+/* ????????? */
+.kg-open-btn { margin-left: auto; padding: 7px 12px; background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.35); border-radius: 16px; cursor: pointer; font-size: 12px; white-space: nowrap; }
+.kg-open-btn:hover { background: rgba(255,255,255,0.22); }
+.kg-overlay { display: none; position: fixed; inset: 0; z-index: 2000; background: rgba(8,8,18,0.94); align-items: center; justify-content: center; }
+.kg-panel { width: 92vw; height: 88vh; max-width: 1200px; background: #11172a; border: 1px solid rgba(196,30,58,0.5); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+.kg-header { height: 48px; padding: 0 16px; display: flex; align-items: center; background: linear-gradient(90deg, #8B0000 0%, #C41E3A 100%); color: white; }
+.kg-header h2 { font-size: 16px; font-weight: normal; letter-spacing: 1px; }
+.kg-subtitle { padding: 8px 16px; color: #d7c8a8; font-size: 12px; border-bottom: 1px solid rgba(196,30,58,0.3); }
+.kg-close { margin-left: auto; width: 30px; height: 30px; border: 1px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.12); color: white; border-radius: 50%; cursor: pointer; font-size: 15px; }
+.kg-close:hover { background: rgba(255,255,255,0.25); }
+#kgNetwork { flex: 1; width: 100%; height: 100%; background: #0d1322; }
+.kg-loading { color: rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; height: 100%; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <span class="logo">🏘️</span>
+    <h1>红色村寨数字代言人</h1>
+    <span class="subtitle">云南省红军长征档案 · DeepSeek RAG</span>
+    <button class="kg-open-btn" id="kgOpenBtn">📊 知识图谱</button>
+</div>
+
+<div class="main">
+    <div class="map-panel">
+        <div id="map"></div>
+        <div class="map-legend">
+            <h4>🗺️ 长征路线</h4>
+            <div id="routeLegend"></div>
+            <h4 style="margin-top:8px">🏘️ 村寨代言人</h4>
+            <div id="legendList"></div>
+        </div>
+    </div>
+
+    <div class="chat-panel">
+        <div class="chat-header">
+            <div class="avatar-wrap" id="avatarWrap">
+                <img class="avatar-img" id="avatarImg" src="/static/avatars/jiaopingdu.png" alt="&#25968;&#23383;&#20154;">
+                <div class="avatar-fallback" id="avatarFallback">&#127894;&#65039;</div>
+                <div class="mouth" id="avatarMouth"></div>
+            </div>
+            <div>
+                <h3 id="chatName">选择村寨</h3>
+                <p id="chatMeta">点击地图标记，战士会走过去</p>
+            </div>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome">
+                <div class="icon">🗺️</div>
+                <h3>红色村寨数字代言人</h3>
+                <p>点击地图上的村寨标记</p>
+            </div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="queryInput" placeholder="问问这个村寨的故事..." onkeypress="if(event.key==='Enter')sendMessage()">
+            <button onclick="sendMessage()">发送</button>
+        </div>
+    </div>
+</div>
+
+<div class="timeline-bar" id="timelineBar">
+    <div class="tl-track" id="tlTrack"></div>
+</div>
+
+<div class="kg-overlay" id="kgOverlay">
+    <div class="kg-panel">
+        <div class="kg-header">
+            <h2>📊 档案知识图谱</h2>
+            <button class="kg-close" id="kgCloseBtn">✕</button>
+        </div>
+        <div class="kg-subtitle">人物 / 地点 / 事件 / 部队关系网络</div>
+        <div id="kgNetwork"><div class="kg-loading">正在加载知识图谱...</div></div>
+    </div>
+</div>
+<script>
+let currentVillage = null;
+let villageMarkers = {};
+let villageArmy = {};   // 村寨 -> 所属路线索引
+let map;
+let soldierMarker = null;
+let routes = [];        // 两条路线数据
+let soldierPos = { route: 0, idx: 0 };
+let soldierLatLng = null;   // 战士当前实际坐标 [lat, lng]
+let walkAnimationId = null; // 当前行走动画句柄，避免两段动画同时抢位置
+
+let voiceEnabled = true;   // 是否开启数字人语音
+let audioPlayer = new Audio();  // 播放 edge-tts 返回的音频
+let villageAvatars = {};        // ?? -> ?? URL
+let villageVoiceGenders = {};   // ?? -> male / female
+let currentVillageVoiceGender = "female";
+
+// ========== 初始化地图 ==========
+map = L.map("map", { center: [25.5, 101.5], zoom: 7, attributionControl: false });
+L.tileLayer("https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}", { subdomains: ["1","2","3","4"], maxZoom: 14 }).addTo(map);
+
+// ========== 战士标记 ==========
+function createSoldierMarker(latlng) {
+    const probe = new Image();
+    probe.src = "/static/soldier.png";
+    probe.onload = function() {
+        const icon = L.divIcon({ className: "soldier-marker", html: `<img class="soldier-img" src="/static/soldier.png" alt="红军战士">`, iconSize: [80, 80], iconAnchor: [40, 72] });
+        soldierMarker = L.marker(latlng, { icon: icon, zIndexOffset: 1000 }).addTo(map);
+        soldierMarker.bindTooltip("红军战士", { direction: "top", offset: [0, -24] });
+    };
+    probe.onerror = function() {
+        const icon = L.divIcon({ className: "soldier-marker", html: `<div class="soldier-badge">⭐</div>`, iconSize: [44, 44], iconAnchor: [22, 22] });
+        soldierMarker = L.marker(latlng, { icon: icon, zIndexOffset: 1000 }).addTo(map);
+        soldierMarker.bindTooltip("红军战士", { direction: "top", offset: [0, -20] });
+    };
+    return soldierMarker;
+}
+
+// ========== 加载两条路线 ==========
+fetch("/api/routes").then(r => r.json()).then(data => {
+    routes = data.routes;
+    const legend = document.getElementById("routeLegend");
+    const allPoints = [];
+
+    routes.forEach((route, ri) => {
+        // 画路线
+        L.polyline(route.points, {
+            color: route.color, weight: 4, opacity: 0.8
+        }).addTo(map);
+        allPoints.push(...route.points);
+
+        // 图例
+        let item = document.createElement("div");
+        item.className = "legend-route";
+        item.innerHTML = `<span class="color-line" style="background:${route.color}"></span><span class="route-name">${route.name}</span><div class="route-dir">方向：${route.direction}</div>`;
+        legend.appendChild(item);
+
+        // 方向箭头：在每段中点放置，旋转指向行进方向
+        for (let i = 0; i < route.points.length - 1; i++) {
+            const p1 = map.project(route.points[i], 10);
+            const p2 = map.project(route.points[i + 1], 10);
+            const mid = p1.add(p2.subtract(p1).divideBy(2));
+            const latlng = map.unproject(mid, 10);
+            const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI;
+            const arrowIcon = L.divIcon({
+                className: "route-arrow",
+                html: `<div style="transform: rotate(${angle}deg); font-size:18px;">➤</div>`,
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+            L.marker(latlng, { icon: arrowIcon, interactive: false }).addTo(map);
+        }
+    });
+
+    // 地图视野
+    map.fitBounds(L.polyline(allPoints).getBounds().pad(0.15));
+    // 战士初始位置
+    createSoldierMarker(routes[0].points[0]);
+    soldierPos = { route: 0, idx: 0 };
+});
+
+// ========== 加载村寨 ==========
+fetch("/api/villages").then(r => r.json()).then(villages => {
+    const legend = document.getElementById("legendList");
+    villages.forEach(v => {
+        if (!v.lat || !v.lng) return;
+        // 找到村寨所属路线
+        let armyIdx = 0;
+        routes.forEach((route, ri) => {
+            route.points.forEach(p => {
+                if (Math.abs(p[0] - v.lat) < 0.01 && Math.abs(p[1] - v.lng) < 0.01) {
+                    armyIdx = ri;
+                }
+            });
+        });
+        villageArmy[v.name] = armyIdx;
+        villageAvatars[v.name] = v.avatar || "/static/soldier.png";
+        villageVoiceGenders[v.name] = v.voice_gender || "female";
+
+        let marker = L.circleMarker([v.lat, v.lng], {
+            radius: 10, fillColor: "#C41E3A", color: "#FFD700", weight: 2, fillOpacity: 0.85
+        }).addTo(map);
+        // 弹窗放在下方，避免挡住战士
+        marker.bindPopup(`<b>${v.name}</b><br>${v.event} · ${v.year}<br>${v.army}`, { className: "village-popup", offset: L.point(0, -70), autoPan: false, autoClose: false, closeButton: false });
+        marker.on("click", () => selectVillage(v.name));
+        villageMarkers[v.name] = marker;
+
+        let item = document.createElement("div");
+        item.className = "legend-item";
+        item.innerHTML = `<span class="dot"></span><span>${v.name}<br><small style="opacity:0.5">${v.event} · ${v.year}</small></span>`;
+        item.onclick = () => selectVillage(v.name);
+        legend.appendChild(item);
+    });
+});
+
+// ========== 加载时间轴 ==========
+fetch("/api/timeline").then(r => r.json()).then(events => {
+    const track = document.getElementById("tlTrack");
+    events.forEach(ev => {
+        let el = document.createElement("div");
+        el.className = "tl-event";
+        el.innerHTML = `
+            <div class="tl-dot"></div>
+            <div class="tl-date">${ev.date}</div>
+            <div class="tl-label">${ev.label}</div>
+            <div class="tl-army">${ev.army}</div>`;
+        el.title = ev.desc;
+        el.onclick = () => selectVillage(ev.village);
+        track.appendChild(el);
+    });
+});
+
+// ========== 平滑行走动画 ==========
+function toLatLngArray(p) {
+    if (Array.isArray(p)) return [p[0], p[1]];
+    return [p.lat, p.lng];
+}
+
+function nearestPointIndexOnRoute(latlng, points) {
+    let idx = 0;
+    let minDist = Infinity;
+    points.forEach((p, i) => {
+        const d = Math.abs(p[0] - latlng[0]) + Math.abs(p[1] - latlng[1]);
+        if (d < minDist) { minDist = d; idx = i; }
+    });
+    return idx;
+}
+
+// ========== 平滑行走动画 ==========
+function walkSoldierAlongPath(path, routeIdx, targetIdx, durationMs) {
+    if (!soldierMarker) return;
+
+    // 新指令到达时，取消上一次还没走完的动画
+    if (walkAnimationId !== null) {
+        cancelAnimationFrame(walkAnimationId);
+        walkAnimationId = null;
+    }
+
+    if (!Array.isArray(path) || path.length === 0) return;
+
+    if (path.length === 1) {
+        soldierMarker.setLatLng(path[0]);
+        soldierLatLng = toLatLngArray(path[0]);
+        soldierPos = { route: routeIdx, idx: targetIdx };
+        return;
+    }
+
+    // 计算每段投影距离
+    const segments = [];
+    let totalDist = 0;
+    for (let i = 0; i < path.length - 1; i++) {
+        const p1 = map.project(toLatLngArray(path[i]), 10);
+        const p2 = map.project(toLatLngArray(path[i + 1]), 10);
+        const d = p1.distanceTo(p2);
+        segments.push({
+            start: toLatLngArray(path[i]),
+            end: toLatLngArray(path[i + 1]),
+            dist: d,
+            cumStart: totalDist
+        });
+        totalDist += d;
+    }
+
+    const SPEED = 30;  // 像素/秒（在 zoom=10 投影下）
+    const duration = durationMs || Math.max(1800, totalDist / SPEED);
+    const startTime = performance.now();
+
+    function animateFrame(now) {
+        const t = Math.min((now - startTime) / duration, 1);
+        const targetDist = t * totalDist;
+
+        let newPos = null;
+        for (let si = 0; si < segments.length; si++) {
+            const seg = segments[si];
+            const isLast = si === segments.length - 1;
+            if (targetDist <= seg.cumStart + seg.dist || isLast) {
+                const segT = seg.dist > 0 ? Math.min(1, (targetDist - seg.cumStart) / seg.dist) : 1;
+                const p1 = map.project(seg.start, 10);
+                const p2 = map.project(seg.end, 10);
+                const mid = p1.add(p2.subtract(p1).multiplyBy(segT));
+                newPos = map.unproject(mid, 10);
+                break;
+            }
+        }
+
+        if (newPos) {
+            soldierMarker.setLatLng(newPos);
+            soldierLatLng = [newPos.lat, newPos.lng];
+        }
+
+        if (t < 1) {
+            walkAnimationId = requestAnimationFrame(animateFrame);
+        } else {
+            const last = toLatLngArray(path[path.length - 1]);
+            soldierMarker.setLatLng(last);
+            soldierLatLng = last;
+            soldierPos = { route: routeIdx, idx: targetIdx };
+            walkAnimationId = null;
+        }
+    }
+
+    walkAnimationId = requestAnimationFrame(animateFrame);
+}
+
+function walkSoldierTo(targetLatlng, routeIdx) {
+    const route = routes[routeIdx];
+    if (!route) return;
+
+    const target = toLatLngArray(targetLatlng);
+
+    if (!soldierLatLng) {
+        soldierLatLng = [route.points[0][0], route.points[0][1]];
+    }
+
+    const targetIdx = nearestPointIndexOnRoute(target, route.points);
+    let path = [];
+
+    if (soldierPos.route === routeIdx) {
+        // 同一条路线：从当前坐标出发，沿路线走到目标
+        const startIdx = nearestPointIndexOnRoute(soldierLatLng, route.points);
+        path = [soldierLatLng];
+        if (startIdx < targetIdx) {
+            path.push(...route.points.slice(startIdx + 1, targetIdx + 1));
+        } else if (startIdx > targetIdx) {
+            path.push(...route.points.slice(targetIdx, startIdx).reverse());
+        } else {
+            path.push(route.points[targetIdx]);
+        }
+    } else {
+        // 切换到另一条路线：先从当前位置走到目标路线最近入口，再沿路线走到目标
+        const entryIdx = nearestPointIndexOnRoute(soldierLatLng, route.points);
+        path = [soldierLatLng];
+        if (entryIdx < targetIdx) {
+            path.push(...route.points.slice(entryIdx, targetIdx + 1));
+        } else if (entryIdx > targetIdx) {
+            path.push(...route.points.slice(targetIdx, entryIdx + 1).reverse());
+        } else {
+            path.push(route.points[targetIdx]);
+        }
+    }
+
+    walkSoldierAlongPath(path, routeIdx, targetIdx);
+}
+
+// ========== 数字人语音 ==========
+function setupAvatar() {
+    const img = document.getElementById("avatarImg");
+    const fallback = document.getElementById("avatarFallback");
+
+    img.onload = function () {
+        img.style.display = "block";
+        fallback.style.display = "none";
+    };
+
+    img.onerror = function () {
+        if (!img.dataset.triedSoldier) {
+            img.dataset.triedSoldier = "1";
+            img.src = "/static/soldier.png";
+        } else {
+            img.style.display = "none";
+            fallback.style.display = "flex";
+        }
+    };
+}
+
+function setVillageAvatar(name) {
+    const img = document.getElementById("avatarImg");
+    const fallback = document.getElementById("avatarFallback");
+    if (!img) return;
+
+    const avatarUrl = villageAvatars[name] || "/static/soldier.png";
+    img.dataset.triedSoldier = "";
+    img.src = avatarUrl;
+    img.onload = function () {
+        img.style.display = "block";
+        fallback.style.display = "none";
+    };
+    img.onerror = function () {
+        if (!img.dataset.triedSoldier) {
+            img.dataset.triedSoldier = "1";
+            img.src = "/static/soldier.png";
+        } else {
+            img.style.display = "none";
+            fallback.style.display = "flex";
+        }
+    };
+}
+
+function setSpeaking(speaking) {
+    const wrap = document.getElementById("avatarWrap");
+    if (wrap) wrap.classList.toggle("speaking", speaking);
+}
+
+function stopAudio() {
+    audioPlayer.pause();
+    audioPlayer.currentTime = 0;
+    if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+    }
+}
+
+function browserSpeak(text) {
+    if (!("speechSynthesis" in window)) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "zh-CN";
+    utterance.rate = 0.95;
+    utterance.volume = 1;
+
+    // ????????????????????????????
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith("zh"));
+    if (zhVoice) utterance.voice = zhVoice;
+
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+}
+
+async function speak(text) {
+    if (!voiceEnabled || !text) return;
+    stopAudio();
+    setSpeaking(true);
+
+    try {
+        const response = await fetch("/api/tts", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                text: text,
+                village: currentVillage || "",
+                gender: currentVillageVoiceGender
+            })
+        });
+
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            audioPlayer.src = url;
+            audioPlayer.onended = () => {
+                setSpeaking(false);
+                URL.revokeObjectURL(url);
+            };
+            audioPlayer.onerror = () => {
+                URL.revokeObjectURL(url);
+                browserSpeak(text);
+            };
+            try {
+                await audioPlayer.play();
+            } catch (e) {
+                browserSpeak(text);
+            }
+        } else {
+            browserSpeak(text);
+        }
+    } catch (e) {
+        setSpeaking(false);
+        browserSpeak(text);
+    }
+}
+
+function setupVoiceButton() {
+    const btn = document.getElementById("voiceToggle");
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+        voiceEnabled = !voiceEnabled;
+        btn.textContent = voiceEnabled ? "🔊 语音开" : "🔇 语音关";
+        if (!voiceEnabled) {
+            stopAudio();
+            setSpeaking(false);
+        }
+    });
+}
+
+// ========== 选择村寨 ==========
+function selectVillage(name) {
+    currentVillage = name;
+    currentVillageVoiceGender = villageVoiceGenders[name] || "female";
+    setVillageAvatar(name);
+    document.getElementById("chatName").textContent = name + " 代言人";
+    document.getElementById("chatMeta").textContent = "战士正在前往...";
+
+    // 高亮
+    Object.values(villageMarkers).forEach(m => m.setStyle({ fillColor: "#C41E3A" }));
+    if (villageMarkers[name]) {
+        villageMarkers[name].setStyle({ fillColor: "#FFD700" });
+        const latlng = villageMarkers[name].getLatLng();
+        // 放大到更近的缩放级别
+        map.flyTo(latlng, 8, { duration: 1.1 });  // 10：保留周边路线和地名信息，不放得过大
+        const routeIdx = villageArmy[name] !== undefined ? villageArmy[name] : 0;
+        walkSoldierTo([latlng.lat, latlng.lng], routeIdx);
+
+        // Open the popup after map movement ends, so it never disappears on repeated clicks.
+        map.once("moveend", () => {
+            if (!villageMarkers[name]) return;
+            Object.values(villageMarkers).forEach(m => m.closePopup());
+            villageMarkers[name].openPopup();
+        });
+    }
+
+    // 欢迎语
+    let msgs = document.getElementById("chatMessages");
+    msgs.innerHTML = "";
+    let msg = document.createElement("div");
+    msg.className = "msg agent";
+    msg.innerHTML = `<div class="av-sm">🎖️</div><div class="bubble">你好，我是${name}的代言人。想了解这里的红军长征故事吗？</div>`;
+    msgs.appendChild(msg);
+}
+
+// ========== 发送消息 ==========
+function escapeHtml(text) {
+    return String(text || "").replace(/[&<>"']/g, function (ch) {
+        return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch];
+    });
+}
+
+function sendMessage() {
+    if (!currentVillage) return;
+    let input = document.getElementById("queryInput");
+    let question = input.value.trim();
+    if (!question) return;
+    input.value = "";
+
+    let msgs = document.getElementById("chatMessages");
+    let um = document.createElement("div");
+    um.className = "msg user";
+    um.innerHTML = `<div class="bubble">${question}</div><div class="av-sm">👤</div>`;
+    msgs.appendChild(um);
+
+    let tm = document.createElement("div");
+    tm.className = "msg agent";
+    tm.id = "typing";
+    tm.innerHTML = `<div class="av-sm">🎖️</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+    msgs.appendChild(tm);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    fetch("/chat", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({village: currentVillage, question: question})
+    }).then(r => r.json()).then(data => {
+        document.getElementById("typing").remove();
+
+        const answer = data.answer || data.error || "&#20986;&#38169;&#20102;";
+        const plan = data.plan;
+        const verification = data.verification;
+
+        if (plan && Array.isArray(plan.steps) && plan.steps.length > 0) {
+            const planDiv = document.createElement("div");
+            planDiv.className = "msg agent";
+            const stepsHtml = plan.steps.map((step, idx) => {
+                const purpose = step.purpose || step.tool || "&#25191;&#34892;&#24037;&#20855;";
+                return `<div class="plan-step">${idx + 1}. ${escapeHtml(purpose)}</div>`;
+            }).join("");
+            planDiv.innerHTML = `<div class="av-sm">&#129517;</div><div class="bubble plan-bubble"><div class="plan-title">&#26234;&#33021;&#20307;&#35268;&#21010;</div>${stepsHtml}</div>`;
+            msgs.appendChild(planDiv);
+        }
+
+        let am = document.createElement("div");
+        am.className = "msg agent";
+        am.innerHTML = `<div class="av-sm">&#127894;&#65039;</div><div class="bubble">${escapeHtml(answer).replace(/\n/g, "<br>")}</div>`;
+        msgs.appendChild(am);
+
+        if (verification && Array.isArray(verification.issues) && verification.issues.length > 0) {
+            const vDiv = document.createElement("div");
+            vDiv.className = "msg agent";
+            const issuesHtml = verification.issues.map((issue) => {
+                const claim = issue.claim || issue || "";
+                const severity = issue.severity || "low";
+                return `<div class="verify-issue verify-${severity}">&#9888;&#65039; ${escapeHtml(claim)}</div>`;
+            }).join("");
+            vDiv.innerHTML = `<div class="av-sm">&#9989;</div><div class="bubble verify-bubble"><div class="verify-title">&#20107;&#23454;&#26657;&#39564;</div>${issuesHtml}</div>`;
+            msgs.appendChild(vDiv);
+        }
+
+        msgs.scrollTop = msgs.scrollHeight;
+        speak(answer);
+    });
+}
+
+// ========== ??????? ==========
+let kgNetwork = null;
+
+function openKnowledgeGraph() {
+    document.getElementById("kgOverlay").style.display = "flex";
+    if (!kgNetwork) {
+        loadKnowledgeGraph();
+    }
+}
+
+function closeKnowledgeGraph() {
+    document.getElementById("kgOverlay").style.display = "none";
+}
+
+function loadKnowledgeGraph() {
+    const container = document.getElementById("kgNetwork");
+    if (typeof vis === "undefined") {
+        container.innerHTML = '<div class="kg-loading">图谱库加载失败，请检查网络</div>';
+        return;
+    }
+
+    fetch("/api/knowledge_graph").then(r => r.json()).then(data => {
+        const nodes = new vis.DataSet((data.nodes || []).map(n => ({
+            id: n.id,
+            label: n.name,
+            group: n.type || "location",
+            title: `<b>${n.name}</b><br>${n.description || ""}`
+        })));
+
+        const edges = new vis.DataSet((data.edges || []).map(e => ({
+            from: e.source,
+            to: e.target,
+            label: e.label || e.relation || "",
+            arrows: { to: { enabled: true, scaleFactor: 0.45 } },
+            color: { color: "#b7a77a", highlight: "#FFD700" },
+            font: { size: 10, color: "#e8dcc0", strokeWidth: 0 }
+        })));
+
+        const options = {
+            nodes: {
+                shape: "dot",
+                size: 18,
+                font: { size: 14, color: "#ffffff", face: "Microsoft YaHei" },
+                borderWidth: 1.5,
+                shadow: true
+            },
+            edges: {
+                smooth: { type: "dynamic" },
+                width: 1.2,
+                selectionWidth: 2
+            },
+            groups: {
+                person: { color: { background: "#C41E3A", border: "#FFD700" }, shape: "dot", size: 22 },
+                location: { color: { background: "#2f80ed", border: "#ffffff" }, shape: "box" },
+                event: { color: { background: "#E67E22", border: "#ffffff" }, shape: "star" },
+                army: { color: { background: "#27ae60", border: "#ffffff" }, shape: "diamond" }
+            },
+            physics: {
+                stabilization: true,
+                solver: "forceAtlas2Based",
+                forceAtlas2Based: { gravitationalConstant: -90, springLength: 140, springConstant: 0.18, damping: 0.35 }
+            },
+            interaction: { hover: true, tooltipDelay: 120 }
+        };
+
+        kgNetwork = new vis.Network(container, { nodes: nodes, edges: edges }, options);
+        kgNetwork.once("stabilizationIterationsDone", () => {
+            kgNetwork.setOptions({ physics: { enabled: false } });
+        });
+    }).catch(() => {
+        container.innerHTML = '<div class="kg-loading">图谱加载失败，请检查后端服务</div>';
+    });
+}
+
+document.getElementById("kgOpenBtn").addEventListener("click", openKnowledgeGraph);
+document.getElementById("kgCloseBtn").addEventListener("click", closeKnowledgeGraph);
+document.getElementById("kgOverlay").addEventListener("click", function (e) {
+    if (e.target && e.target.id === "kgOverlay") closeKnowledgeGraph();
+});
+
+setupAvatar();
+setupVoiceButton();
+</script>
+</body>
+</html>

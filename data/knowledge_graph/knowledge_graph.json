@@ -1,0 +1,1023 @@
+{
+  "meta": {
+    "name": "云南红军长征档案知识图谱（含 OCR 自动抽取）",
+    "version": "auto-0.1",
+    "base_entity_count": 22,
+    "base_relation_count": 29,
+    "validation_mode": "llm",
+    "review_required_count": 2
+  },
+  "entities": [
+    {
+      "id": "P_MAO",
+      "type": "person",
+      "name": "毛泽东",
+      "aliases": [
+        "毛主席",
+        "毛泽东同志"
+      ],
+      "description": "扎西会议后成为中央红军实际军事指挥核心。",
+      "properties": {
+        "role": "中共中央领导人"
+      }
+    },
+    {
+      "id": "P_HELONG",
+      "type": "person",
+      "name": "贺龙",
+      "aliases": [
+        "贺老总",
+        "贺龙同志"
+      ],
+      "description": "红二、六军团总指挥，率部1936年进入云南并渡过金沙江。",
+      "properties": {
+        "role": "红二、六军团总指挥"
+      }
+    },
+    {
+      "id": "P_RENBISHI",
+      "type": "person",
+      "name": "任弼时",
+      "aliases": [
+        "任弼时同志"
+      ],
+      "description": "红二、六军团政治委员，与贺龙共同率部长征过云南。",
+      "properties": {
+        "role": "红二、六军团政治委员"
+      }
+    },
+    {
+      "id": "P_BOATMEN",
+      "type": "person",
+      "name": "36名船工",
+      "aliases": [
+        "皎平渡船工",
+        "金沙江船工"
+      ],
+      "description": "1935年帮助中央红军在皎平渡巧渡金沙江的船工群体。",
+      "properties": {
+        "role": "支前群众"
+      }
+    },
+    {
+      "id": "A_CENTRAL",
+      "type": "army",
+      "name": "中央红军",
+      "aliases": [
+        "红一方面军"
+      ],
+      "description": "1935年长征经过云南的中央红军。",
+      "properties": {
+        "year": 1935,
+        "color": "#C41E3A"
+      }
+    },
+    {
+      "id": "A_RED26",
+      "type": "army",
+      "name": "红二、六军团",
+      "aliases": [
+        "红二六军团",
+        "红二方面军"
+      ],
+      "description": "1936年长征经过云南的红二、六军团。",
+      "properties": {
+        "year": 1936,
+        "color": "#E67E22"
+      }
+    },
+    {
+      "id": "L_ZAXI",
+      "type": "location",
+      "name": "扎西",
+      "aliases": [
+        "威信",
+        "威信县"
+      ],
+      "description": "扎西会议召开地。",
+      "properties": {
+        "lat": 27.85,
+        "lng": 105.05,
+        "city": "威信县"
+      }
+    },
+    {
+      "id": "L_WEIXIN",
+      "type": "location",
+      "name": "威信",
+      "aliases": [
+        "扎西"
+      ],
+      "description": "扎西所在县，与扎西同地异名。",
+      "properties": {
+        "lat": 27.85,
+        "lng": 105.05,
+        "city": "威信县"
+      }
+    },
+    {
+      "id": "L_QUJING",
+      "type": "location",
+      "name": "曲靖",
+      "aliases": [
+        "曲靖市"
+      ],
+      "description": "中央红军与红二六军团两次经过的重要地区。",
+      "properties": {
+        "lat": 25.49,
+        "lng": 103.79,
+        "city": "曲靖市"
+      }
+    },
+    {
+      "id": "L_XUNDIAN_KEDU",
+      "type": "location",
+      "name": "寻甸柯渡",
+      "aliases": [
+        "寻甸",
+        "柯渡",
+        "丹桂村"
+      ],
+      "description": "万急渡江令发出地。",
+      "properties": {
+        "lat": 25.68,
+        "lng": 102.91,
+        "city": "寻甸县"
+      }
+    },
+    {
+      "id": "L_KUNMING",
+      "type": "location",
+      "name": "昆明",
+      "aliases": [
+        "昆明市"
+      ],
+      "description": "中央红军1935年佯攻威逼昆明。",
+      "properties": {
+        "lat": 25.04,
+        "lng": 102.71,
+        "city": "昆明市"
+      }
+    },
+    {
+      "id": "L_LUQUAN",
+      "type": "location",
+      "name": "禄劝",
+      "aliases": [
+        "禄劝县"
+      ],
+      "description": "中央红军前往皎平渡途中经过的县。",
+      "properties": {
+        "lat": 25.56,
+        "lng": 102.47,
+        "city": "禄劝县"
+      }
+    },
+    {
+      "id": "L_JIAOPINGDU",
+      "type": "location",
+      "name": "皎平渡",
+      "aliases": [
+        "金沙江皎平渡"
+      ],
+      "description": "中央红军1935年巧渡金沙江的主要渡口。",
+      "properties": {
+        "lat": 26.3,
+        "lng": 102.42,
+        "city": "禄劝县"
+      }
+    },
+    {
+      "id": "L_XUANWEI",
+      "type": "location",
+      "name": "宣威",
+      "aliases": [
+        "宣威市"
+      ],
+      "description": "红二、六军团1936年入滇第一站。",
+      "properties": {
+        "lat": 26.22,
+        "lng": 104.1,
+        "city": "宣威市"
+      }
+    },
+    {
+      "id": "L_CHUXIONG",
+      "type": "location",
+      "name": "楚雄",
+      "aliases": [
+        "楚雄州"
+      ],
+      "description": "红二、六军团1936年经过的地区。",
+      "properties": {
+        "lat": 25.03,
+        "lng": 101.55,
+        "city": "楚雄州"
+      }
+    },
+    {
+      "id": "L_LIJIANG",
+      "type": "location",
+      "name": "丽江",
+      "aliases": [
+        "丽江市"
+      ],
+      "description": "红二、六军团1936年渡金沙江前经过的丽江。",
+      "properties": {
+        "lat": 26.86,
+        "lng": 100.23,
+        "city": "丽江市"
+      }
+    },
+    {
+      "id": "L_SHIGU",
+      "type": "location",
+      "name": "石鼓",
+      "aliases": [
+        "石鼓镇"
+      ],
+      "description": "红二、六军团1936年石鼓渡江的主要渡口。",
+      "properties": {
+        "lat": 26.87,
+        "lng": 99.97,
+        "city": "丽江市"
+      }
+    },
+    {
+      "id": "E_ZAXI_CONFERENCE",
+      "type": "event",
+      "name": "扎西会议",
+      "aliases": [
+        "扎西会议"
+      ],
+      "description": "1935年2月，中共中央在威信扎西召开会议，进行扎西整编。",
+      "properties": {
+        "date": "1935-02-05",
+        "year": 1935
+      }
+    },
+    {
+      "id": "E_URGENT_CROSSING_ORDER",
+      "type": "event",
+      "name": "万急渡江令",
+      "aliases": [
+        "巧渡金沙江前奏"
+      ],
+      "description": "1935年4月29日，中革军委在柯渡丹桂村发出万急渡江令。",
+      "properties": {
+        "date": "1935-04-29",
+        "year": 1935
+      }
+    },
+    {
+      "id": "E_CROSS_JINSHA",
+      "type": "event",
+      "name": "巧渡金沙江",
+      "aliases": [
+        "皎平渡渡江"
+      ],
+      "description": "1935年5月，中央红军在皎平渡用7条木船渡江。",
+      "properties": {
+        "date": "1935-05-03",
+        "year": 1935
+      }
+    },
+    {
+      "id": "E_RED26_ENTER_YUNNAN",
+      "type": "event",
+      "name": "红二六军团入滇",
+      "aliases": [
+        "红二六军团进入云南"
+      ],
+      "description": "1936年3月20日，贺龙、任弼时率红二、六军团从贵州进入云南宣威。",
+      "properties": {
+        "date": "1936-03-20",
+        "year": 1936
+      }
+    },
+    {
+      "id": "E_SHIGU_CROSSING",
+      "type": "event",
+      "name": "石鼓渡江",
+      "aliases": [
+        "红二六军团渡金沙江"
+      ],
+      "description": "1936年4月25日，红二、六军团在丽江石鼓至巨甸渡口抢渡金沙江。",
+      "properties": {
+        "date": "1936-04-25",
+        "year": 1936
+      }
+    },
+    {
+      "id": "P_7FD9831C",
+      "type": "person",
+      "name": "刘云",
+      "aliases": [],
+      "description": "《万急渡江令》主编",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.9
+    },
+    {
+      "id": "E_8A9E70EE",
+      "type": "event",
+      "name": "红二、六军团入滇",
+      "aliases": [],
+      "description": "红二、六军团进入云南的事件",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.9
+    },
+    {
+      "id": "P_CE98886F",
+      "type": "person",
+      "name": "王震",
+      "aliases": [],
+      "description": "红二方面军负责人之一",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 1.0
+    },
+    {
+      "id": "P_1D1E67B8",
+      "type": "person",
+      "name": "甘泗淇",
+      "aliases": [],
+      "description": "红二方面军负责人之一",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.9
+    },
+    {
+      "id": "P_1A40B044",
+      "type": "person",
+      "name": "李贞",
+      "aliases": [],
+      "description": "红二方面军负责人之一",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.95
+    },
+    {
+      "id": "P_19592584",
+      "type": "person",
+      "name": "周士第",
+      "aliases": [],
+      "description": "红二方面军负责人之一",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.95
+    },
+    {
+      "id": "P_8A84D4D5",
+      "type": "person",
+      "name": "朱瑞",
+      "aliases": [],
+      "description": "红二方面军负责人之一",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.95
+    },
+    {
+      "id": "P_E1F112AF",
+      "type": "person",
+      "name": "李井泉",
+      "aliases": [],
+      "description": "红二方面军负责人之一",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.95
+    },
+    {
+      "id": "P_8C9A70B8",
+      "type": "person",
+      "name": "张朝满",
+      "aliases": [],
+      "description": "当年帮助红军渡江的老船工",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.9
+    },
+    {
+      "id": "P_D4AEFD97",
+      "type": "person",
+      "name": "李正芳",
+      "aliases": [],
+      "description": "当年帮助红军渡江的老船工",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.9
+    },
+    {
+      "id": "P_48A3707E",
+      "type": "person",
+      "name": "陈月清",
+      "aliases": [],
+      "description": "当年帮助红军渡江的老船工",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.9
+    },
+    {
+      "id": "P_9B983121",
+      "type": "person",
+      "name": "王其英",
+      "aliases": [],
+      "description": "红军伤员，在红军洞英勇就义",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.9
+    },
+    {
+      "id": "P_7D93CC35",
+      "type": "person",
+      "name": "朱德",
+      "aliases": [],
+      "description": "红军领导人",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.99
+    },
+    {
+      "id": "P_A02585E0",
+      "type": "person",
+      "name": "陈云",
+      "aliases": [],
+      "description": "撰写《随军西行见闻录》",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.99
+    },
+    {
+      "id": "P_855C0F53",
+      "type": "person",
+      "name": "刘伯承",
+      "aliases": [],
+      "description": "撰写《回顾长征》",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.99
+    },
+    {
+      "id": "P_2D1DECF5",
+      "type": "person",
+      "name": "张爱萍",
+      "aliases": [],
+      "description": "撰写《巧渡金沙江》",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.99
+    },
+    {
+      "id": "P_79B6507F",
+      "type": "person",
+      "name": "魏国禄",
+      "aliases": [],
+      "description": "老红军，撰写回忆文章",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.9
+    },
+    {
+      "id": "P_99F62DDA",
+      "type": "person",
+      "name": "张秀珍",
+      "aliases": [],
+      "description": "彝族老红军",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.9
+    },
+    {
+      "id": "P_64535558",
+      "type": "person",
+      "name": "刘光焯",
+      "aliases": [],
+      "description": "老红军，撰写《长征是播种机》",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.9
+    },
+    {
+      "id": "P_327A91D0",
+      "type": "person",
+      "name": "张致中",
+      "aliases": [],
+      "description": "老红军，撰写《征途的回忆》",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.9
+    },
+    {
+      "id": "A_6EA49AB5",
+      "type": "army",
+      "name": "红六军团",
+      "aliases": [],
+      "description": "红二方面军组成部分",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 1.0
+    },
+    {
+      "id": "A_4DA3088B",
+      "type": "army",
+      "name": "红九军团",
+      "aliases": [],
+      "description": "中央红军组成部分",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 1.0
+    },
+    {
+      "id": "L_8D315E32",
+      "type": "location",
+      "name": "金沙江",
+      "aliases": [],
+      "description": "长江上游，红军渡江的河流",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 1.0
+    },
+    {
+      "id": "L_B3368FEC",
+      "type": "location",
+      "name": "武定",
+      "aliases": [],
+      "description": "云南省楚雄州下辖县，红军攻克",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 1.0
+    },
+    {
+      "id": "L_89B459AE",
+      "type": "location",
+      "name": "元谋",
+      "aliases": [],
+      "description": "云南省楚雄州下辖县，红军经过",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 1.0
+    },
+    {
+      "id": "L_591F3A9D",
+      "type": "location",
+      "name": "姚安",
+      "aliases": [],
+      "description": "云南省楚雄州下辖县，红军经过",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 1.0
+    },
+    {
+      "id": "L_D3C9A2E1",
+      "type": "location",
+      "name": "南华",
+      "aliases": [],
+      "description": "云南省楚雄州下辖县，红军经过",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 1.0
+    },
+    {
+      "id": "L_628FCF00",
+      "type": "location",
+      "name": "禄丰",
+      "aliases": [],
+      "description": "云南省楚雄州下辖县，红军经过",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 1.0
+    },
+    {
+      "id": "L_BCBDB004",
+      "type": "location",
+      "name": "木克",
+      "aliases": [],
+      "description": "禄劝县下辖村，红军标语所在地",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 1.0
+    },
+    {
+      "id": "L_AA37299C",
+      "type": "location",
+      "name": "琅井",
+      "aliases": [],
+      "description": "禄丰县下辖镇，红军遗物发现地",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 1.0
+    },
+    {
+      "id": "L_C998E7FE",
+      "type": "location",
+      "name": "田心",
+      "aliases": [],
+      "description": "南华县下辖乡，红军驻扎地",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 1.0
+    },
+    {
+      "id": "L_20682724",
+      "type": "location",
+      "name": "高家桥",
+      "aliases": [],
+      "description": "南华县田心乡的桥，红军驻扎地",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 1.0
+    },
+    {
+      "id": "L_BBFCBA7D",
+      "type": "location",
+      "name": "平安街",
+      "aliases": [],
+      "description": "姚安县街道，红军驻扎地",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 1.0
+    },
+    {
+      "id": "L_179CD37C",
+      "type": "location",
+      "name": "红军洞",
+      "aliases": [],
+      "description": "禄劝县革命遗址，红军伤员就义处",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.95
+    },
+    {
+      "id": "E_11010C6A",
+      "type": "event",
+      "name": "长征",
+      "aliases": [],
+      "description": "中国工农红军长征",
+      "properties": {},
+      "source": "validated",
+      "evidence": "",
+      "confidence": 0.99
+    }
+  ],
+  "relations": [
+    {
+      "id": "R_ZAXI_MAO",
+      "source": "E_ZAXI_CONFERENCE",
+      "target": "P_MAO",
+      "relation": "core_figure",
+      "label": "核心人物"
+    },
+    {
+      "id": "R_ZAXI_LOC",
+      "source": "E_ZAXI_CONFERENCE",
+      "target": "L_ZAXI",
+      "relation": "occurred_at",
+      "label": "发生地"
+    },
+    {
+      "id": "R_ZAXI_ARMY",
+      "source": "E_ZAXI_CONFERENCE",
+      "target": "A_CENTRAL",
+      "relation": "army",
+      "label": "所属部队"
+    },
+    {
+      "id": "R_ZAXI_WEIXIN",
+      "source": "L_ZAXI",
+      "target": "L_WEIXIN",
+      "relation": "alias",
+      "label": "同地异名"
+    },
+    {
+      "id": "R_ORDER_LOC",
+      "source": "E_URGENT_CROSSING_ORDER",
+      "target": "L_XUNDIAN_KEDU",
+      "relation": "occurred_at",
+      "label": "发生地"
+    },
+    {
+      "id": "R_ORDER_ARMY",
+      "source": "E_URGENT_CROSSING_ORDER",
+      "target": "A_CENTRAL",
+      "relation": "army",
+      "label": "所属部队"
+    },
+    {
+      "id": "R_JINSHA_LOC",
+      "source": "E_CROSS_JINSHA",
+      "target": "L_JIAOPINGDU",
+      "relation": "occurred_at",
+      "label": "发生地"
+    },
+    {
+      "id": "R_JINSHA_ARMY",
+      "source": "E_CROSS_JINSHA",
+      "target": "A_CENTRAL",
+      "relation": "army",
+      "label": "所属部队"
+    },
+    {
+      "id": "R_JINSHA_BOATMEN",
+      "source": "E_CROSS_JINSHA",
+      "target": "P_BOATMEN",
+      "relation": "participant",
+      "label": "参与者"
+    },
+    {
+      "id": "R_ENTER_HELONG",
+      "source": "E_RED26_ENTER_YUNNAN",
+      "target": "P_HELONG",
+      "relation": "commander",
+      "label": "指挥者"
+    },
+    {
+      "id": "R_ENTER_REN",
+      "source": "E_RED26_ENTER_YUNNAN",
+      "target": "P_RENBISHI",
+      "relation": "commander",
+      "label": "指挥者"
+    },
+    {
+      "id": "R_ENTER_LOC",
+      "source": "E_RED26_ENTER_YUNNAN",
+      "target": "L_XUANWEI",
+      "relation": "occurred_at",
+      "label": "发生地"
+    },
+    {
+      "id": "R_ENTER_ARMY",
+      "source": "E_RED26_ENTER_YUNNAN",
+      "target": "A_RED26",
+      "relation": "army",
+      "label": "所属部队"
+    },
+    {
+      "id": "R_SHIGU_HELONG",
+      "source": "E_SHIGU_CROSSING",
+      "target": "P_HELONG",
+      "relation": "commander",
+      "label": "指挥者"
+    },
+    {
+      "id": "R_SHIGU_REN",
+      "source": "E_SHIGU_CROSSING",
+      "target": "P_RENBISHI",
+      "relation": "commander",
+      "label": "指挥者"
+    },
+    {
+      "id": "R_SHIGU_LOC",
+      "source": "E_SHIGU_CROSSING",
+      "target": "L_SHIGU",
+      "relation": "occurred_at",
+      "label": "发生地"
+    },
+    {
+      "id": "R_SHIGU_ARMY",
+      "source": "E_SHIGU_CROSSING",
+      "target": "A_RED26",
+      "relation": "army",
+      "label": "所属部队"
+    },
+    {
+      "id": "R_ZAXI_NEXT",
+      "source": "E_ZAXI_CONFERENCE",
+      "target": "E_URGENT_CROSSING_ORDER",
+      "relation": "next_event",
+      "label": "后续事件"
+    },
+    {
+      "id": "R_ORDER_NEXT",
+      "source": "E_URGENT_CROSSING_ORDER",
+      "target": "E_CROSS_JINSHA",
+      "relation": "next_event",
+      "label": "后续事件"
+    },
+    {
+      "id": "R_ENTER_NEXT",
+      "source": "E_RED26_ENTER_YUNNAN",
+      "target": "E_SHIGU_CROSSING",
+      "relation": "next_event",
+      "label": "后续事件"
+    },
+    {
+      "id": "R_CENTRAL_1",
+      "source": "L_ZAXI",
+      "target": "L_QUJING",
+      "relation": "next_on_route",
+      "label": "中央红军路线"
+    },
+    {
+      "id": "R_CENTRAL_2",
+      "source": "L_QUJING",
+      "target": "L_XUNDIAN_KEDU",
+      "relation": "next_on_route",
+      "label": "中央红军路线"
+    },
+    {
+      "id": "R_CENTRAL_3",
+      "source": "L_XUNDIAN_KEDU",
+      "target": "L_KUNMING",
+      "relation": "next_on_route",
+      "label": "中央红军路线"
+    },
+    {
+      "id": "R_CENTRAL_4",
+      "source": "L_KUNMING",
+      "target": "L_LUQUAN",
+      "relation": "next_on_route",
+      "label": "中央红军路线"
+    },
+    {
+      "id": "R_CENTRAL_5",
+      "source": "L_LUQUAN",
+      "target": "L_JIAOPINGDU",
+      "relation": "next_on_route",
+      "label": "中央红军路线"
+    },
+    {
+      "id": "R_RED26_1",
+      "source": "L_XUANWEI",
+      "target": "L_QUJING",
+      "relation": "next_on_route",
+      "label": "红二六军团路线"
+    },
+    {
+      "id": "R_RED26_2",
+      "source": "L_QUJING",
+      "target": "L_CHUXIONG",
+      "relation": "next_on_route",
+      "label": "红二六军团路线"
+    },
+    {
+      "id": "R_RED26_3",
+      "source": "L_CHUXIONG",
+      "target": "L_LIJIANG",
+      "relation": "next_on_route",
+      "label": "红二六军团路线"
+    },
+    {
+      "id": "R_RED26_4",
+      "source": "L_LIJIANG",
+      "target": "L_SHIGU",
+      "relation": "next_on_route",
+      "label": "红二六军团路线"
+    },
+    {
+      "id": "X_78852A23",
+      "source": "A_CENTRAL",
+      "target": "P_MAO",
+      "relation": "commander",
+      "label": "指挥者",
+      "properties": {},
+      "source_file": "validated",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_2C2E27DC",
+      "source": "A_RED26",
+      "target": "P_HELONG",
+      "relation": "commander",
+      "label": "指挥者",
+      "properties": {},
+      "source_file": "validated",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_D22C4D3E",
+      "source": "A_RED26",
+      "target": "P_RENBISHI",
+      "relation": "commander",
+      "label": "指挥者",
+      "properties": {},
+      "source_file": "validated",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_6D773D5F",
+      "source": "E_CROSS_JINSHA",
+      "target": "A_CENTRAL",
+      "relation": "participant",
+      "label": "参与者",
+      "properties": {},
+      "source_file": "validated",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_B7ACF371",
+      "source": "E_8A9E70EE",
+      "target": "A_RED26",
+      "relation": "participant",
+      "label": "参与者",
+      "properties": {},
+      "source_file": "validated",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_F6EB6E6B",
+      "source": "E_SHIGU_CROSSING",
+      "target": "A_RED26",
+      "relation": "participant",
+      "label": "参与者",
+      "properties": {},
+      "source_file": "validated",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_DEDF841C",
+      "source": "E_URGENT_CROSSING_ORDER",
+      "target": "E_CROSS_JINSHA",
+      "relation": "related_to",
+      "label": "相关",
+      "properties": {},
+      "source_file": "validated",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_22897C5C",
+      "source": "A_CENTRAL",
+      "target": "A_RED26",
+      "relation": "related_to",
+      "label": "相关",
+      "properties": {},
+      "source_file": "validated",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_8678850D",
+      "source": "L_XUNDIAN_KEDU",
+      "target": "L_KUNMING",
+      "relation": "located_in",
+      "label": "位于",
+      "properties": {},
+      "source_file": "validated",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_98C16234",
+      "source": "L_JIAOPINGDU",
+      "target": "L_LUQUAN",
+      "relation": "located_in",
+      "label": "位于",
+      "properties": {},
+      "source_file": "validated",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_B9567189",
+      "source": "L_SHIGU",
+      "target": "L_LIJIANG",
+      "relation": "located_in",
+      "label": "位于",
+      "properties": {},
+      "source_file": "validated",
+      "evidence": "",
+      "confidence": 0.8
+    }
+  ]
+}

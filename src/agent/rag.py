@@ -1,0 +1,211 @@
+"""
+检索增强生成（RAG）
+------------------
+核心流程：
+    1. 用 ArchiveRetriever 检索与问题最相关的档案片段
+    2. 把检索到的片段作为"档案资料"拼进 prompt
+    3. 让 LLM 以村寨代言人的身份，结合对话历史生成自然回答
+
+这样既保留了 LLM 的语言能力，又用真实档案锚定了历史事实，避免幻觉。
+"""
+from openai import OpenAI
+
+from . import config
+from .personas import build_system_prompt
+from .orchestrator import OrchestratorAgent
+from .retriever import ArchiveRetriever
+from .verifier import FactCheckerAgent
+
+# 最多向模型回传多少轮历史消息
+HISTORY_LIMIT = 8
+
+# 这些属于寒暄/闲聊，不强制附加档案来源
+CHITCHAT_KEYWORDS = {
+    "你好", "您好", "在吗", "你是谁", "你能做什么", "谢谢", "再见",
+    "介绍你自己", "介绍自己", "早上好", "下午好", "晚上好",
+}
+
+
+class VillageAgent:
+    """村寨数字代言人 Agent：检索 + 多轮记忆 + 生成"""
+
+    def __init__(self, api_key: str = None):
+        """
+        初始化 Agent。
+
+        参数:
+            api_key: DeepSeek API key，默认从 config 读取
+        """
+        # 初始化 LLM 客户端（DeepSeek 兼容 OpenAI 接口）
+        self.client = OpenAI(
+            api_key=api_key or config.DEEPSEEK_API_KEY,
+            base_url=config.BASE_URL,
+        )
+
+        # 初始化检索器
+        self.retriever = ArchiveRetriever()
+
+        # 当前对话的村寨（用于切换人格）
+        self.current_village = None
+
+        # 多轮对话记忆：每个村寨单独保存，切换村寨时不会串戏
+        # 格式：{村寨名: [{"role": "user" | "assistant", "content": "..."}, ...]}
+        self.conversation_history = {}
+
+        # ??????????????????
+        self.orchestrator = None
+        self.last_plan = None
+        self.fact_checker = None
+        self.last_verification = None
+
+    def ask(self, question: str, village: str = None) -> str:
+        """
+        用户提问，返回村寨代言人的回答。
+
+        参数:
+            question: 用户的问题
+            village:  可选，指定村寨（不指定则沿用上次的村寨）
+
+        返回:
+            村寨代言人的回答文本
+        """
+        if village:
+            self.current_village = village
+            self.conversation_history.setdefault(village, [])
+
+        history = self.conversation_history.get(self.current_village, [])
+
+        # 0. 如果问题像复杂任务，先尝试 Planner + 工具调用
+        orchestrator_result = self._run_orchestrator(question, history)
+        if orchestrator_result and orchestrator_result.get("handled"):
+            answer = orchestrator_result["answer"]
+            self.last_plan = orchestrator_result.get("plan")
+            self.last_verification = orchestrator_result.get("verification")
+            self._remember(question, answer, history)
+            return answer
+
+        self.last_plan = None
+
+        # 1. 检索相关档案片段
+        # 检索时把最近几轮对话一起带上，方便处理“后来呢”“他呢”这类追问
+        recent_context = [turn["content"] for turn in history[-6:]]
+        retrieval_query = question
+        if recent_context:
+            retrieval_query = question + "\n" + "\n".join(recent_context)
+
+        results = self.retriever.search(retrieval_query, village=self.current_village)
+
+        # 2. 组装档案资料
+        archive_text = self._format_archive(results)
+
+        # 3. 组装 system prompt（村寨人格）
+        system_prompt = build_system_prompt(self.current_village)
+
+        # 4. 组装 user prompt（问题 + 档案资料）
+        user_prompt = self._build_user_prompt(question, archive_text)
+
+        # 5. 组装完整消息：system + 历史对话 + 当前问题
+        messages = [{"role": "system", "content": system_prompt}]
+        for turn in history[-HISTORY_LIMIT:]:
+            messages.append({"role": turn["role"], "content": turn["content"]})
+        messages.append({"role": "user", "content": user_prompt})
+
+        # 6. 调用 LLM 生成回答
+        response = self.client.chat.completions.create(
+            model=config.MODEL_NAME,
+            messages=messages,
+            temperature=config.TEMPERATURE,
+            max_tokens=config.MAX_TOKENS,
+        )
+
+        answer = (response.choices[0].message.content or "").strip()
+
+        # 7. 只有在确实引用了档案时才自然补充来源，闲聊不强制加
+        answer = self._maybe_add_source(answer, results, question)
+
+        # 8. 保存本轮对话记忆
+        history.append({"role": "user", "content": question})
+        history.append({"role": "assistant", "content": answer})
+        if len(history) > HISTORY_LIMIT * 2:
+            history = history[-HISTORY_LIMIT * 2:]
+        self.conversation_history[self.current_village] = history
+
+        return answer
+
+    def _run_fact_checker(self, question: str, answer: str, evidence_text: str):
+        """?????? Agent ????????????"""
+        if self.fact_checker is None:
+            self.fact_checker = FactCheckerAgent()
+        return self.fact_checker.verify(question, answer, evidence_text)
+
+    def _run_orchestrator(self, question: str, history: list):
+        """??? Planner + ???????????"""
+        if self.orchestrator is None:
+            self.orchestrator = OrchestratorAgent(retriever=self.retriever)
+        return self.orchestrator.run(
+            question=question,
+            village=self.current_village,
+            history=history,
+        )
+
+    def _remember(self, question: str, answer: str, history: list) -> None:
+        """?????????????????"""
+        history.append({"role": "user", "content": question})
+        history.append({"role": "assistant", "content": answer})
+        if len(history) > HISTORY_LIMIT * 2:
+            history = history[-HISTORY_LIMIT * 2:]
+        self.conversation_history[self.current_village] = history
+
+    @staticmethod
+    def _format_archive(results: list) -> str:
+        """把检索到的档案片段格式化成 LLM 可读的文本"""
+        if not results:
+            return (
+                "（本次未检索到相关档案资料。"
+                "如果用户问的是寒暄、路线咨询或常识，请自然回应；"
+                "如果用户问的是具体历史事实，请说明档案里没记清，不要编造数字、人名或日期。）"
+            )
+
+        blocks = []
+        for i, r in enumerate(results, 1):
+            blocks.append("【档案" + str(i) + "】（来源：" + r["source"] + "）\n" + r["text"])
+
+        return "\n\n".join(blocks)
+
+    @staticmethod
+    def _build_user_prompt(question: str, archive_text: str) -> str:
+        """组装发送给 LLM 的 user prompt"""
+        return (
+            "【用户当前问题】\n" + question + "\n\n"
+            "【可参考的档案资料】\n" + archive_text + "\n\n"
+            "请结合对话历史和当前问题，以村寨代言人的身份自然回应。\n"
+            "回答要求：\n"
+            "1. 如果是具体历史事实，数字、人名、日期、部队番号必须严格照抄档案，不得编造。\n"
+            "2. 如果是寒暄、追问、普通聊天或路线咨询，直接自然回应，不要硬套档案，也不要重复固定格式。\n"
+            "3. 来源要自然融入口语，不要每轮都以“档案来源：”结尾。"
+        )
+
+    @staticmethod
+    def _maybe_add_source(answer: str, results: list, question: str) -> str:
+        """只在确需溯源时自然补充来源，避免每轮都机械地加“档案来源”。"""
+        if not results:
+            return answer
+
+        # 闲聊问题不强加来源
+        if any(word in question for word in CHITCHAT_KEYWORDS):
+            return answer
+
+        # 模型已经自然带出来源时，不再重复添加
+        if "《" in answer or "来源" in answer or "档案" in answer:
+            return answer
+
+        sources = []
+        for r in results[:2]:
+            source = r.get("source", "").strip()
+            if source and source != "未知档案" and source not in sources:
+                sources.append(source)
+
+        if not sources:
+            return answer
+
+        return answer + "\n——据《" + "》《".join(sources) + "》"

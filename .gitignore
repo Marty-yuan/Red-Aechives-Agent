@@ -1,0 +1,43 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# IDE / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# Secrets
+.env
+*.pem
+
+# Large / local data
+data/ocr_output/
+data/index/
+data/tmp/
+render_out/
+config/
+
+# Knowledge graph generated / preview files
+data/knowledge_graph/*.bak_*
+data/knowledge_graph/auto_extracted.json
+data/knowledge_graph/knowledge_graph_auto.json
+data/knowledge_graph/validated_entities.json
+data/knowledge_graph/review_required.json
+data/knowledge_graph/knowledge_graph_clean.json
+
+# Legacy artifacts
+run_mineru.py
+src/ocr/pdf_processor.py
+src/ocr/pdf_processor_mineru.py
+src/ocr/test_ocr.py
+src/ocr/test_mineru.py
+
+# Office / generated
+*.docx
+*.pdf

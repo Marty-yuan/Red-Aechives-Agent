@@ -1,0 +1,121 @@
+# 红色档案智能体
+
+基于云南省红军长征档案构建的多村寨 AI 数字代言人。项目结合 RAG、多智能体任务规划、事实校验、知识图谱和地图/时间轴可视化。
+
+## 当前功能
+
+- OCR 档案文本清洗与 TF-IDF 检索
+- 村寨数字代言人多轮问答
+- DeepSeek 驱动的复杂任务规划与工具调用
+- 事实校验 Agent
+- 档案知识图谱：手工图谱 + OCR 自动抽取 + 实体自动校验
+- Flask Web：地图、双路线、时间轴、战士动画、语音朗读、知识图谱可视化
+
+## 目录
+
+```text
+src/
+├── agent/        # RAG、规划、工具、事实校验、图谱查询
+├── knowledge/    # 文本清洗、索引构建
+├── kg/           # 知识图谱抽取、校验、合并
+├── ocr/          # OCR 相关脚本
+└── web/          # Flask 后端与前端页面
+
+data/
+├── ocr_output/        # OCR 档案文本
+├── index/             # TF-IDF 索引
+└── knowledge_graph/   # 图谱数据
+
+docs/
+├── 当前项目技术文档.md
+└── 后续功能技术文档.md
+```
+
+## 队友从零运行项目
+
+### 1. 克隆仓库
+
+```powershell
+git clone <你的仓库地址>
+cd Red-Aechives-Agent
+```
+
+### 2. 准备本地数据
+
+以下数据默认不会上传到 GitHub，需要从团队共享位置复制到本地：
+
+```text
+data/ocr_output/    OCR 文本
+data/index/         TF-IDF 索引
+```
+
+如果本地没有索引，需要先重建：
+
+```powershell
+python src/knowledge/rebuild_index.py
+```
+
+### 3. 创建虚拟环境
+
+Windows PowerShell：
+
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
+
+### 4. 安装依赖
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+### 5. 配置 DeepSeek API Key
+
+项目根目录的 `.env` 默认不存在，需要自己创建。
+
+先复制示例文件：
+
+```powershell
+Copy-Item .env.example .env
+```
+
+然后用 VS Code 打开 `.env`，改成：
+
+```text
+DEEPSEEK_API_KEY=sk-你的真实Key
+```
+
+也可以不创建 `.env`，而是临时设置环境变量：
+
+```powershell
+$env:DEEPSEEK_API_KEY="你的真实Key"
+```
+
+> 为什么看不到 `.env`：它不是一个自动生成的系统文件，只有执行 `Copy-Item .env.example .env` 后才会出现。VS Code 文件树默认应该能看到；如果看不到，点击左侧资源管理器刷新，或直接在终端运行 `Get-ChildItem -Force` 查看。
+
+### 6. 命令行测试
+
+```powershell
+python src/agent/main.py
+```
+
+### 7. 启动 Web
+
+```powershell
+python src/web/app.py
+```
+
+浏览器打开：`http://127.0.0.1:5000`
+
+## 详细文档
+
+- [当前项目技术文档](docs/当前项目技术文档.md)
+- [后续功能技术文档](docs/后续功能技术文档.md)
+
+## 注意事项
+
+- `.env` 已经被 `.gitignore` 忽略，不要把真实 Key 提交到 GitHub。
+- `.env.example` 可以提交，里面只有占位符。
+- OCR 原始文本和索引体积较大，默认不提交。
+- 上传前请阅读 `docs/当前项目技术文档.md` 的“GitHub 上传前建议”。
