@@ -8,6 +8,8 @@
 
 这样既保留了 LLM 的语言能力，又用真实档案锚定了历史事实，避免幻觉。
 """
+import json
+
 from openai import OpenAI
 
 from . import config
@@ -55,6 +57,8 @@ class VillageAgent:
         # ??????????????????
         self.orchestrator = None
         self.last_plan = None
+        self.last_tool_results = None
+        self.last_evidence = None
         self.fact_checker = None
         self.last_verification = None
 
@@ -80,11 +84,16 @@ class VillageAgent:
         if orchestrator_result and orchestrator_result.get("handled"):
             answer = orchestrator_result["answer"]
             self.last_plan = orchestrator_result.get("plan")
+            self.last_tool_results = orchestrator_result.get("tool_results")
+            self.last_evidence = self._extract_evidence(orchestrator_result.get("tool_results"))
             self.last_verification = orchestrator_result.get("verification")
             self._remember(question, answer, history)
             return answer
 
         self.last_plan = None
+        self.last_tool_results = None
+        self.last_evidence = None
+        self.last_verification = None
 
         # 1. 检索相关档案片段
         # 检索时把最近几轮对话一起带上，方便处理“后来呢”“他呢”这类追问
@@ -94,6 +103,7 @@ class VillageAgent:
             retrieval_query = question + "\n" + "\n".join(recent_context)
 
         results = self.retriever.search(retrieval_query, village=self.current_village)
+        self.last_evidence = results
 
         # 2. 组装档案资料
         archive_text = self._format_archive(results)
@@ -120,8 +130,19 @@ class VillageAgent:
 
         answer = (response.choices[0].message.content or "").strip()
 
-        # 7. 只有在确实引用了档案时才自然补充来源，闲聊不强制加
-        answer = self._maybe_add_source(answer, results, question)
+        # 7. 来源统一由前端“证据链”卡片展示，回答正文不再追加来源
+
+        # 7.5 普通 RAG 也走反幻觉校验，补齐证据链
+        verification = self._run_fact_checker(question, answer, archive_text)
+        if verification.get("revised_answer"):
+            answer = verification["revised_answer"]
+        self.last_verification = verification
+        self.last_plan = {
+            "is_complex": False,
+            "task_type": "archive_qa",
+            "reasoning": "简单档案问答，使用 RAG 检索档案证据。",
+            "steps": [],
+        }
 
         # 8. 保存本轮对话记忆
         history.append({"role": "user", "content": question})
@@ -131,6 +152,28 @@ class VillageAgent:
         self.conversation_history[self.current_village] = history
 
         return answer
+
+    @staticmethod
+    def _extract_evidence(tool_results):
+        """从工具结果中提取 search_archives 返回的档案证据。"""
+        evidence = []
+        for item in tool_results or []:
+            if item.get("tool") != "search_archives":
+                continue
+            try:
+                data = json.loads(item.get("result") or "[]")
+            except Exception:
+                continue
+            if not isinstance(data, list):
+                continue
+            for row in data[:5]:
+                if isinstance(row, dict):
+                    evidence.append({
+                        "text": (row.get("text") or "")[:1000],
+                        "source": row.get("source") or "未知档案",
+                        "score": row.get("score"),
+                    })
+        return evidence
 
     def _run_fact_checker(self, question: str, answer: str, evidence_text: str):
         """?????? Agent ????????????"""
@@ -182,7 +225,7 @@ class VillageAgent:
             "回答要求：\n"
             "1. 如果是具体历史事实，数字、人名、日期、部队番号必须严格照抄档案，不得编造。\n"
             "2. 如果是寒暄、追问、普通聊天或路线咨询，直接自然回应，不要硬套档案，也不要重复固定格式。\n"
-            "3. 来源要自然融入口语，不要每轮都以“档案来源：”结尾。"
+            "3. 不要在回答末尾追加“——据《...》”或罗列档案来源；来源会由证据链单独展示。"
         )
 
     @staticmethod

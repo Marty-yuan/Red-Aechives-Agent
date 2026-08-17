@@ -13,6 +13,7 @@
 这样可以兼顾“复杂任务规划”和“日常聊天体验”。
 """
 import json
+import re
 from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
@@ -28,9 +29,16 @@ from .verifier import FactCheckerAgent
 # 这些关键词出现时，才尝试走复杂任务规划，避免每句话都多调用一次 Planner
 COMPLEX_HINTS = [
     "路线", "规划", "几天", "研学", "行程", "安排", "先后", "顺序",
-    "对比", "比较", "哪些", "时间线", "时间轴", "经过", "推荐", "怎么走",
+    "旅游", "线路",
+    "对比", "比较", "不同", "区别", "差异", "哪些", "时间线", "时间轴", "经过", "推荐", "怎么走",
     "从", "到", "每天", "第一站", "第二站",
 ]
+
+# 旅游/研学路线兜底：即使 Planner 没调用，也保证前端有路线卡片
+ROUTE_TOOL_HINTS = ["旅游", "研学", "路线", "行程", "规划", "几天", "怎么走", "推荐", "线路"]
+
+# 村寨对比兜底：只要命中对比类词，并且能识别出两个村寨，就生成对比卡片
+COMPARE_TOOL_HINTS = ["对比", "比较", "不同", "区别", "差异"]
 
 
 class OrchestratorAgent:
@@ -57,6 +65,36 @@ class OrchestratorAgent:
         history: Optional[List[Dict[str, str]]] = None,
     ) -> Dict[str, Any]:
         """尝试处理复杂任务；如果不需要规划，返回 handled=False。"""
+        compare_hit = any(hint in question for hint in COMPARE_TOOL_HINTS)
+        compare_villages = [name for name in VILLAGE_COORDS if name in question]
+        compare_villages.sort(key=lambda name: question.find(name))
+
+        if compare_hit and len(compare_villages) >= 2:
+            args = {"village_a": compare_villages[0], "village_b": compare_villages[1]}
+            result = self.tools.execute("compare_villages", args)
+            compare_plan = {
+                "is_complex": True,
+                "task_type": "village_compare",
+                "reasoning": "用户要求对比两个村寨，自动生成对比结果。",
+                "steps": [
+                    {"tool": "compare_villages", "arguments": args, "purpose": "对比两个村寨的历史事件、部队、年份和知识图谱关系"}
+                ],
+            }
+            tool_results = [
+                {"tool": "compare_villages", "purpose": "对比两个村寨", "arguments": args, "result": result}
+            ]
+            draft_answer = self._generate_answer(question, village, compare_plan, tool_results)
+            evidence_text = self._format_tool_results(tool_results)
+            verification = self.fact_checker.verify(question, draft_answer, evidence_text)
+            answer = verification.get("revised_answer") or draft_answer
+            return {
+                "handled": True,
+                "plan": compare_plan,
+                "tool_results": tool_results,
+                "verification": verification,
+                "answer": answer,
+            }
+
         if not self.should_plan(question):
             return {"handled": False}
 
@@ -66,6 +104,44 @@ class OrchestratorAgent:
             tool_specs=self.tools.tool_specs(),
             history=history,
         )
+
+        route_hit = any(hint in question for hint in ROUTE_TOOL_HINTS)
+        if route_hit and (not plan.get("is_complex") or not plan.get("steps")):
+            route_villages = [name for name in VILLAGE_COORDS if name in question]
+            route_days = self._extract_days(question)
+            route_args = {"villages": route_villages, "days": route_days} if route_villages else {"days": route_days}
+            result = self.tools.execute("generate_study_route", route_args)
+            route_plan = {
+                "is_complex": True,
+                "task_type": "route_plan",
+                "reasoning": "用户请求旅游或研学路线，Planner 未给出可用步骤，自动生成路线。",
+                "steps": [
+                    {
+                        "tool": "generate_study_route",
+                        "arguments": route_args,
+                        "purpose": "自动生成旅游研学路线",
+                    }
+                ],
+            }
+            tool_results = [
+                {
+                    "tool": "generate_study_route",
+                    "purpose": "自动生成旅游研学路线",
+                    "arguments": route_args,
+                    "result": result,
+                }
+            ]
+            draft_answer = self._generate_answer(question, village, route_plan, tool_results)
+            evidence_text = self._format_tool_results(tool_results)
+            verification = self.fact_checker.verify(question, draft_answer, evidence_text)
+            answer = verification.get("revised_answer") or draft_answer
+            return {
+                "handled": True,
+                "plan": route_plan,
+                "tool_results": tool_results,
+                "verification": verification,
+                "answer": answer,
+            }
 
         if not plan.get("is_complex") or not plan.get("steps"):
             return {
@@ -87,6 +163,20 @@ class OrchestratorAgent:
                 "result": result,
             })
 
+        route_hit = any(hint in question for hint in ROUTE_TOOL_HINTS)
+        has_route_tool = any(item.get("tool") == "generate_study_route" for item in tool_results)
+        if route_hit and not has_route_tool:
+            route_villages = [name for name in VILLAGE_COORDS if name in question]
+            route_days = self._extract_days(question)
+            route_args = {"villages": route_villages, "days": route_days} if route_villages else {"days": route_days}
+            result = self.tools.execute("generate_study_route", route_args)
+            tool_results.append({
+                "tool": "generate_study_route",
+                "purpose": "自动补充研学路线",
+                "arguments": {},
+                "result": result,
+            })
+
         draft_answer = self._generate_answer(question, village, plan, tool_results)
 
         # ??????????????????????????
@@ -101,6 +191,11 @@ class OrchestratorAgent:
             "verification": verification,
             "answer": answer,
         }
+
+    @staticmethod
+    def _extract_days(question: str) -> Optional[int]:
+        match = re.search(r"(\d+)\s*天", question or "")
+        return int(match.group(1)) if match else None
 
     @staticmethod
     @staticmethod
@@ -252,7 +347,7 @@ class OrchestratorAgent:
             "要求：\n"
             "1. 如果用户要路线或计划，请按步骤、按天或按地点组织。\n"
             "2. 历史数字、人名、日期必须来自工具结果，不能编造。\n"
-            "3. 来源自然融入口语，不要机械写“档案来源：”。"
+            "3. 不要在回答末尾罗列档案来源，前端证据链会单独展示来源。"
         )
 
         response = self.client.chat.completions.create(

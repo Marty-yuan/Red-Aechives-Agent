@@ -17,7 +17,7 @@ from scipy.sparse import save_npz
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 # 原始 PDF 目录：用环境变量 RED_ARCHIVE_PDF_DIR 指定，默认本机开发路径
-PDF_DIR = os.environ.get("RED_ARCHIVE_PDF_DIR", r"D:\agent kf\Long March Archival\Long March Archival_OCR")
+PDF_DIR = os.environ.get("RED_ARCHIVE_PDF_DIR", "")
 # 项目根目录：优先环境变量，否则按脚本位置推导（build_pipeline.py 位于项目根）
 PROJECT_DIR = os.environ.get(
     "RED_ARCHIVE_PROJECT_DIR",

@@ -67,6 +67,46 @@ body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; height: 
 .verify-high { border-left: 3px solid #ff4d4f; padding-left: 6px; }
 .verify-medium { border-left: 3px solid #e67e22; padding-left: 6px; }
 .verify-low { border-left: 3px solid #4a90e2; padding-left: 6px; }
+.study-route-bubble { background: #0f1525; border: 1px solid #FFD700; }
+.study-route-title { color: #FFD700; font-size: 12px; margin-bottom: 6px; font-weight: bold; }
+.study-route-day { color: #ffd0d0; font-size: 12px; margin: 6px 0 2px; font-weight: bold; }
+.study-route-stop { background: #1a2440; border: 1px solid rgba(196,30,58,0.35); border-radius: 6px; padding: 6px 8px; margin: 4px 0; font-size: 12px; color: #e8e0d0; line-height: 1.5; }
+.study-stop-head { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 3px; }
+.study-stop-head b { color: #FFD700; }
+.study-stop-head span { color: #b7a77a; white-space: nowrap; }
+.study-travel { margin: 4px 0 8px; padding: 5px 7px; background: #0f1525; border-left: 3px solid #FFD700; color: #f0d9b5; font-size: 12px; }
+.study-tip { margin-top: 4px; color: #d7c8a8; font-size: 11px; }
+.study-stop { background: #C41E3A; color: white; border: 2px solid #FFD700; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; }
+.compare-bubble { background: #0f1525; border: 1px solid #4a90e2; }
+.compare-title { color: #4a90e2; font-size: 12px; margin-bottom: 6px; font-weight: bold; }
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.compare-col { background: #1a2440; border: 1px solid rgba(74,144,226,0.35); border-radius: 6px; padding: 8px; font-size: 12px; color: #e8e0d0; line-height: 1.5; }
+.compare-col h5 { color: #FFD700; font-size: 12px; margin: 0 0 4px; }
+.compare-item { margin: 4px 0; }
+.module-bubble { background: #0f1525; border: 1px solid rgba(255,255,255,0.14); }
+.module-title { color: #FFD700; font-size: 12px; margin-bottom: 6px; font-weight: bold; }
+.module-list { display: flex; flex-direction: column; gap: 6px; }
+.module-btn { text-align: left; padding: 8px 10px; background: #1a2440; border: 1px solid rgba(196,30,58,0.3); border-radius: 8px; color: #FFD700; font-size: 12px; cursor: pointer; }
+.module-btn:hover { border-color: #FFD700; }
+.module-body { display: none; background: #111b2e; border: 1px solid rgba(196,30,58,0.25); border-radius: 8px; padding: 8px 10px; font-size: 12px; color: #e8e0d0; line-height: 1.5; }
+.module-body.open { display: block; }
+.verify-ok { color: #8fd18f; margin: 2px 0; }
+.verify-meta { color: #b7a77a; margin: 2px 0; }
+.trace-title { color: #8fd18f; font-size: 12px; font-weight: bold; margin-bottom: 5px; }
+.trace-step { margin: 5px 0; color: #e8e0d0; }
+.trace-sub { margin: 2px 0 2px 12px; color: #d7c8a8; }
+.trace-evidence { margin: 4px 0; padding: 6px 7px; background: #1a2440; border-left: 3px solid #4a90e2; font-size: 11px; color: #d7e0ef; }
+.trace-risk-high { color: #ff4d4f; margin: 2px 0; }
+.trace-risk-medium { color: #e67e22; margin: 2px 0; }
+.trace-risk-low { color: #4a90e2; margin: 2px 0; }
+.risk-highlight { color: #ff4d4f; font-weight: bold; background: rgba(255,77,79,0.12); padding: 0 2px; border-radius: 3px; }
+.pdf-btn { display: inline-block; margin-top: 4px; padding: 3px 7px; background: #0f1525; color: #8fd18f; border: 1px solid #2b3a55; border-radius: 5px; cursor: pointer; }
+.pdf-overlay { display: none; position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.65); align-items: center; justify-content: center; }
+.pdf-overlay.open { display: flex; }
+.pdf-box { width: min(880px, 92vw); max-height: 90vh; background: #0f1525; border: 1px solid #2b3a55; border-radius: 10px; overflow: auto; padding: 12px; }
+.pdf-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; color: #d7e0ef; }
+.pdf-close { background: #1a2440; color: #d7e0ef; border: 1px solid #2b3a55; border-radius: 5px; padding: 4px 10px; cursor: pointer; }
+.pdf-box img { width: 100%; height: auto; border-radius: 6px; }
 .msg.user .av-sm { background: #4a6fa5; color: white; }
 
 .welcome { text-align: center; color: rgba(255,255,255,0.4); margin-top: 50px; }
@@ -186,6 +226,17 @@ body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; height: 
         <div id="kgNetwork"><div class="kg-loading">正在加载知识图谱...</div></div>
     </div>
 </div>
+
+<div id="pdfOverlay" class="pdf-overlay">
+    <div class="pdf-box">
+        <div class="pdf-toolbar">
+            <span id="pdfPageInfo">原始 PDF</span>
+            <button class="pdf-close" id="pdfCloseBtn">关闭</button>
+        </div>
+        <img id="pdfPageImg" alt="PDF 页面" />
+    </div>
+</div>
+
 <script>
 let currentVillage = null;
 let villageMarkers = {};
@@ -196,6 +247,7 @@ let routes = [];        // 两条路线数据
 let soldierPos = { route: 0, idx: 0 };
 let soldierLatLng = null;   // 战士当前实际坐标 [lat, lng]
 let walkAnimationId = null; // 当前行走动画句柄，避免两段动画同时抢位置
+let studyRouteLayer = null;  // 研学路线图层
 
 let voiceEnabled = true;   // 是否开启数字人语音
 let audioPlayer = new Audio();  // 播放 edge-tts 返回的音频
@@ -614,6 +666,380 @@ function selectVillage(name) {
     msgs.appendChild(msg);
 }
 
+function renderStudyRouteFromResult(raw) {
+    let data = raw;
+    if (typeof raw === "string") {
+        try { data = JSON.parse(raw); } catch (e) { return; }
+    }
+    if (!data || !Array.isArray(data.stops) || data.stops.length === 0) return;
+    renderStudyRoute(data);
+}
+
+function renderStudyRoute(routeData) {
+    const msgs = document.getElementById("chatMessages");
+    const days = {};
+    routeData.stops.forEach(stop => {
+        const day = stop.day || 1;
+        if (!days[day]) days[day] = [];
+        days[day].push(stop);
+    });
+
+    const div = document.createElement("div");
+    div.className = "msg agent";
+    let html = `<div class="av-sm">&#129517;</div><div class="bubble study-route-bubble"><div class="study-route-title">&#128506;&#65039; ${escapeHtml(routeData.route_name || "研学路线")}</div>`;
+
+    Object.keys(days).sort((a, b) => Number(a) - Number(b)).forEach(day => {
+        html += `<div class="study-route-day">第 ${escapeHtml(day)} 天</div>`;
+        days[day].forEach(stop => {
+            const eventLabel = Array.isArray(stop.timeline_events) && stop.timeline_events.length ? stop.timeline_events[0].label : "";
+            html += `<div class="study-route-stop"><b>${escapeHtml(stop.name || "")}</b>｜${escapeHtml(stop.city || "")}｜${escapeHtml(stop.event || "")}｜${escapeHtml(String(stop.year || ""))}｜${escapeHtml(stop.army || "")}${eventLabel ? " · " + escapeHtml(eventLabel) : ""}</div>`;
+        });
+    });
+
+    html += `</div>`;
+    div.innerHTML = html;
+    msgs.appendChild(div);
+    drawStudyRouteOnMap(routeData);
+}
+
+function drawStudyRouteOnMap(routeData) {
+    if (!map) return;
+    if (studyRouteLayer) {
+        map.removeLayer(studyRouteLayer);
+        studyRouteLayer = null;
+    }
+
+    const points = [];
+    const stops = [];
+    (routeData.stops || []).forEach(stop => {
+        if (typeof stop.lat === "number" && typeof stop.lng === "number") {
+            points.push([stop.lat, stop.lng]);
+            stops.push(stop);
+        }
+    });
+    if (!points.length) return;
+
+    studyRouteLayer = L.layerGroup().addTo(map);
+    if (points.length > 1) {
+        L.polyline(points, { color: "#FFD700", weight: 4, opacity: 0.95, dashArray: "6 8" }).addTo(studyRouteLayer);
+    }
+
+    points.forEach((p, idx) => {
+        const stop = stops[idx];
+        const icon = L.divIcon({
+            className: "study-stop",
+            html: `<div>${idx + 1}</div>`,
+            iconSize: [26, 26],
+            iconAnchor: [13, 13]
+        });
+        const marker = L.marker(p, { icon: icon }).addTo(studyRouteLayer);
+        marker.bindPopup(`<b>${escapeHtml(stop.name || "")}</b><br>${escapeHtml(stop.event || "")}`);
+    });
+
+    if (points.length > 1) {
+        map.fitBounds(L.polyline(points).getBounds().pad(0.2));
+    }
+}
+
+function renderCompareVillagesFromResult(raw) {
+    let data = raw;
+    if (typeof raw === "string") {
+        try { data = JSON.parse(raw); } catch (e) { return; }
+    }
+    if (!data || !data.village_a || !data.village_b) return;
+    renderCompareVillages(data);
+}
+
+function renderCompareVillages(data) {
+    const msgs = document.getElementById("chatMessages");
+    const div = document.createElement("div");
+    div.className = "msg agent";
+
+    const col = function (v) {
+        if (!v || !v.found) {
+            return `<div class="compare-col"><h5>${escapeHtml((v && v.name) || "未知村寨")}</h5><div class="compare-item">未找到村寨信息</div></div>`;
+        }
+        const p = v.profile || {};
+        const events = (v.timeline_events || []).map(e => `${escapeHtml(e.date || "")} ${escapeHtml(e.label || "")}`).join("<br>");
+        const relations = (v.knowledge_graph && Array.isArray(v.knowledge_graph.relations) ? v.knowledge_graph.relations : []);
+        const relText = relations.slice(0, 4).map(r => escapeHtml(r.label || r.relation || "关联")).join(" / ");
+        return `<div class="compare-col"><h5>${escapeHtml(v.name || "")}</h5>
+            <div class="compare-item">${escapeHtml(p.city || "")}｜${escapeHtml(p.event || "")}</div>
+            <div class="compare-item"><b>年份：</b>${escapeHtml(String(p.year || ""))}</div>
+            <div class="compare-item"><b>部队：</b>${escapeHtml(p.army || "")}</div>
+            <div class="compare-item"><b>时间线：</b><br>${events || "暂无"}</div>
+            <div class="compare-item"><b>图谱关系：</b>${relText || "暂无"}</div>
+        </div>`;
+    };
+
+    div.innerHTML = `<div class="av-sm">&#128269;</div><div class="bubble compare-bubble"><div class="compare-title">&#9878;&#65039; ${escapeHtml(data.aspect || "跨村寨对比")}</div><div class="compare-grid">${col(data.village_a)}${col(data.village_b)}</div></div>`;
+    msgs.appendChild(div);
+}
+
+function parseToolJson(raw) {
+    if (raw && typeof raw === "object") return raw;
+    try { return JSON.parse(raw); } catch (e) { return null; }
+}
+
+function findToolResult(toolResults, toolName) {
+    return (toolResults || []).find(item => item && item.tool === toolName);
+}
+
+function planModuleBody(plan) {
+    let html = `<div class="plan-title">规划理由：${escapeHtml(plan.reasoning || "未提供")}</div>`;
+    (plan.steps || []).forEach((step, idx) => {
+        const toolName = step.tool ? `（${escapeHtml(step.tool)}）` : "";
+        html += `<div class="plan-step">${idx + 1}. ${escapeHtml(step.purpose || step.tool || "执行工具")}${toolName}</div>`;
+    });
+    return html;
+}
+
+function studyRouteModuleBody(data) {
+    const segmentMap = {};
+    (data.travel_segments || []).forEach(seg => {
+        segmentMap[seg.from + "->" + seg.to] = seg;
+    });
+
+    let html = `<div class="study-route-title">${escapeHtml(data.route_name || "研学路线")}</div>`;
+    let currentDay = null;
+
+    (data.stops || []).forEach((stop, idx) => {
+        if (stop.day !== currentDay) {
+            currentDay = stop.day;
+            html += `<div class="study-route-day">第 ${escapeHtml(String(currentDay))} 天</div>`;
+        }
+
+        const attractions = Array.isArray(stop.attractions) ? stop.attractions.join("、") : "";
+        const food = Array.isArray(stop.food) ? stop.food.join("、") : "";
+
+        html += `<div class="study-route-stop">
+            <div class="study-stop-head"><b>${escapeHtml(stop.name || "")}</b><span>${escapeHtml(stop.visit_time || "")}</span></div>
+            <div>${escapeHtml(stop.city || "")}｜${escapeHtml(stop.event || "")}｜${escapeHtml(String(stop.year || ""))}｜${escapeHtml(stop.army || "")}</div>
+            <div><b>景点：</b>${escapeHtml(attractions || "暂无")}</div>
+            <div><b>美食：</b>${escapeHtml(food || "暂无")}</div>
+            <div><b>建议停留：</b>${escapeHtml(String(stop.duration_hours || 3))}小时</div>
+            ${stop.tips ? `<div class="study-tip">💡 ${escapeHtml(stop.tips)}</div>` : ""}
+        </div>`;
+
+        const next = data.stops[idx + 1];
+        if (next) {
+            const seg = segmentMap[stop.name + "->" + next.name];
+            if (seg) {
+                html += `<div class="study-travel">🚗 ${escapeHtml(stop.name)} → ${escapeHtml(next.name)}：约${escapeHtml(seg.estimated_travel_time || "")} / ${escapeHtml(String(seg.estimated_road_km || ""))}公里</div>`;
+            }
+        }
+    });
+
+    return html;
+}
+
+function compareModuleBody(data) {
+    const col = function (v) {
+        if (!v || !v.found) {
+            return `<div class="compare-col"><h5>${escapeHtml((v && v.name) || "未知村寨")}</h5><div class="compare-item">未找到村寨信息</div></div>`;
+        }
+        const p = v.profile || {};
+        const events = (v.timeline_events || []).map(e => `${escapeHtml(e.date || "")} ${escapeHtml(e.label || "")}`).join("<br>");
+        const relations = (v.knowledge_graph && Array.isArray(v.knowledge_graph.relations) ? v.knowledge_graph.relations : []);
+        const relText = relations.slice(0, 4).map(r => escapeHtml(r.label || r.relation || "关联")).join(" / ");
+        return `<div class="compare-col"><h5>${escapeHtml(v.name || "")}</h5>
+            <div class="compare-item">${escapeHtml(p.city || "")}｜${escapeHtml(p.event || "")}</div>
+            <div class="compare-item"><b>年份：</b>${escapeHtml(String(p.year || ""))}</div>
+            <div class="compare-item"><b>部队：</b>${escapeHtml(p.army || "")}</div>
+            <div class="compare-item"><b>时间线：</b><br>${events || "暂无"}</div>
+            <div class="compare-item"><b>图谱关系：</b>${relText || "暂无"}</div>
+        </div>`;
+    };
+    return `<div class="compare-grid">${col(data.village_a)}${col(data.village_b)}</div>`;
+}
+
+function verifyModuleBody(verification) {
+    const issues = Array.isArray(verification.issues) ? verification.issues : [];
+    const unavailable = verification.verified === null || verification.confidence === null || verification.confidence === undefined || issues.some(i => i && i.kind === "checker_unavailable");
+    if (unavailable) {
+        return `<div class="verify-warn">⚠️ 本轮事实校验未完成，回答未做自动纠错</div><div class="verify-meta">可信度：不适用</div>`;
+    }
+
+    const raw = Number(verification.confidence);
+    const confidence = Number.isFinite(raw) ? Math.round(raw * 100) : 0;
+    if (!issues.length) {
+        return `<div class="verify-ok">✅ 关键事实校验通过，未发现明显冲突</div><div class="verify-meta">可信度：${confidence}%</div>`;
+    }
+    let html = `<div class="verify-meta">可信度：${confidence}%</div>`;
+    issues.forEach(issue => {
+        const claim = issue.claim || issue || "";
+        const severity = issue.severity || "low";
+        html += `<div class="verify-issue verify-${escapeHtml(severity)}">⚠️ ${escapeHtml(claim)}</div>`;
+    });
+    return html;
+}
+
+function highlightRiskClaims(answer, verification) {
+    const issues = verification && Array.isArray(verification.issues) ? verification.issues : [];
+    let html = escapeHtml(answer);
+    issues.forEach(issue => {
+        if (issue && issue.severity === "high") {
+            const claim = (issue.claim || "").trim();
+            if (!claim || claim.length < 2) return;
+            const escaped = escapeHtml(claim);
+            if (html.includes(escaped)) {
+                html = html.split(escaped).join(`<span class="risk-highlight">${escaped}</span>`);
+            }
+        }
+    });
+    return html.replace(/\n/g, "<br>");
+}
+
+async function openPdfEvidence(source, text) {
+    const overlay = document.getElementById("pdfOverlay");
+    const img = document.getElementById("pdfPageImg");
+    const info = document.getElementById("pdfPageInfo");
+    if (!overlay || !img || !info) return;
+
+    overlay.classList.add("open");
+    img.src = "";
+    info.textContent = "正在定位原始 PDF 页面...";
+
+    try {
+        const url = `/api/pdf/page?source=${encodeURIComponent(source || "")}&text=${encodeURIComponent(text || "")}`;
+        const resp = await fetch(url);
+        if (!resp.ok) {
+            info.textContent = "无法定位原始 PDF 页面";
+            return;
+        }
+        const blob = await resp.blob();
+        img.src = URL.createObjectURL(blob);
+        const page = resp.headers.get("X-Page") || "?";
+        const count = resp.headers.get("X-Page-Count") || "?";
+        info.textContent = `原始 PDF · 第 ${page} 页 / 共 ${count} 页`;
+    } catch (e) {
+        info.textContent = "原始 PDF 加载失败";
+    }
+}
+
+function setupPdfOverlay() {
+    const overlay = document.getElementById("pdfOverlay");
+    const close = document.getElementById("pdfCloseBtn");
+    if (!overlay) return;
+    if (close) close.addEventListener("click", () => overlay.classList.remove("open"));
+    overlay.addEventListener("click", function (e) {
+        if (e.target && e.target.id === "pdfOverlay") overlay.classList.remove("open");
+    });
+}
+
+function evidenceModuleBody(question, village, plan, toolResults, evidence, verification) {
+    let html = `<div class="trace-title">🔎 审计链路</div>`;
+    html += `<div class="trace-step"><b>问题：</b>${escapeHtml(question || "未记录")}</div>`;
+    html += `<div class="trace-step"><b>村寨：</b>${escapeHtml(village || "未指定")}</div>`;
+
+    if (plan && plan.reasoning) {
+        html += `<div class="trace-step"><b>1. 任务规划：</b>${escapeHtml(plan.reasoning)}</div>`;
+    } else if (plan && Array.isArray(plan.steps) && plan.steps.length) {
+        html += `<div class="trace-step"><b>1. 任务规划：</b>共 ${plan.steps.length} 个执行步骤</div>`;
+    }
+
+    if (toolResults && toolResults.length) {
+        html += `<div class="trace-step"><b>2. 工具调用：</b></div>`;
+        toolResults.forEach((item, idx) => {
+            html += `<div class="trace-sub">${idx + 1}. ${escapeHtml(item.tool || "未知工具")}：${escapeHtml(item.purpose || "")}</div>`;
+        });
+    }
+
+    if (evidence && evidence.length) {
+        html += `<div class="trace-step"><b>3. 档案证据：</b></div>`;
+        evidence.slice(0, 4).forEach((e, idx) => {
+            html += `<div class="trace-evidence"><b>[${idx + 1}] ${escapeHtml(e.source || "未知档案")}</b><br>${escapeHtml((e.text || "").slice(0, 220))}...<br><button type="button" class="pdf-btn" data-source="${escapeHtml(e.source || "")}" data-text="${escapeHtml((e.text || "").slice(0, 120))}" onclick="openPdfEvidence(this.dataset.source, this.dataset.text)">查看原PDF</button></div>`;
+        });
+    }
+
+    if (verification) {
+        const issues = Array.isArray(verification.issues) ? verification.issues : [];
+        const unavailable = verification.verified === null || verification.confidence === null || verification.confidence === undefined || issues.some(i => i && i.kind === "checker_unavailable");
+        html += `<div class="trace-step"><b>4. 事实校验：</b>${unavailable ? "本轮自动校验未完成" : (issues.length ? `发现 ${issues.length} 个待核查点` : "未发现明显冲突")}</div>`;
+        issues.forEach(issue => {
+            if (issue && issue.kind === "checker_unavailable") {
+                html += `<div class="trace-risk trace-low">校验器暂不可用，回答未自动修正</div>`;
+                return;
+            }
+            const severity = issue.severity || "low";
+            html += `<div class="trace-risk trace-${escapeHtml(severity)}">${severity.toUpperCase()}：${escapeHtml(issue.claim || "")}</div>`;
+        });
+    }
+
+    if (!plan && !(toolResults && toolResults.length) && !(evidence && evidence.length) && !verification) {
+        html += `<div class="trace-step">本轮没有可展示的审计链路。</div>`;
+    }
+
+    return html;
+}
+
+function renderModuleCards(plan, toolResults, verification, evidence, question, village) {
+    const modules = [];
+
+    if (plan || (toolResults && toolResults.length) || (evidence && evidence.length) || verification) {
+        modules.push({
+            title: "🔗 证据链",
+            body: evidenceModuleBody(question, village, plan, toolResults, evidence, verification)
+        });
+    }
+
+    if (plan && (plan.is_complex || (Array.isArray(plan.steps) && plan.steps.length))) {
+        modules.push({ title: "🧭 智能体规划", body: planModuleBody(plan) });
+    }
+
+    const routeTool = findToolResult(toolResults, "generate_study_route");
+    if (routeTool) {
+        const routeData = parseToolJson(routeTool.result);
+        if (routeData && Array.isArray(routeData.stops) && routeData.stops.length) {
+            modules.push({
+                title: "🗺️ 研学路线",
+                body: studyRouteModuleBody(routeData),
+                onOpen: function () { drawStudyRouteOnMap(routeData); }
+            });
+        }
+    }
+
+    const compareTool = findToolResult(toolResults, "compare_villages");
+    if (compareTool) {
+        const compareData = parseToolJson(compareTool.result);
+        if (compareData) {
+            modules.push({ title: "🔍 村寨对比", body: compareModuleBody(compareData) });
+        }
+    }
+
+    if (verification) {
+        modules.push({ title: "✅ 事实校验", body: verifyModuleBody(verification) });
+    }
+
+    if (!modules.length) return null;
+
+    const wrap = document.createElement("div");
+    wrap.className = "msg agent";
+    let html = `<div class="av-sm">&#128203;</div><div class="bubble module-bubble"><div class="module-title">智能体模块</div><div class="module-list">`;
+    modules.forEach((m, idx) => {
+        html += `<button type="button" class="module-btn" data-module-index="${idx}">${m.title}</button><div class="module-body" id="moduleBody${idx}"></div>`;
+    });
+    html += `</div></div>`;
+    wrap.innerHTML = html;
+
+    const buttons = wrap.querySelectorAll(".module-btn");
+    const bodies = wrap.querySelectorAll(".module-body");
+    buttons.forEach((btn, idx) => {
+        btn.addEventListener("click", () => {
+            const body = bodies[idx];
+            const willOpen = !body.classList.contains("open");
+            bodies.forEach(b => b.classList.remove("open"));
+            if (willOpen) {
+                body.innerHTML = modules[idx].body;
+                body.classList.add("open");
+                if (modules[idx].onOpen) modules[idx].onOpen();
+            }
+        });
+    });
+
+    return wrap;
+}
+
 // ========== 发送消息 ==========
 function escapeHtml(text) {
     return String(text || "").replace(/[&<>"']/g, function (ch) {
@@ -651,34 +1077,16 @@ function sendMessage() {
         const answer = data.answer || data.error || "&#20986;&#38169;&#20102;";
         const plan = data.plan;
         const verification = data.verification;
-
-        if (plan && Array.isArray(plan.steps) && plan.steps.length > 0) {
-            const planDiv = document.createElement("div");
-            planDiv.className = "msg agent";
-            const stepsHtml = plan.steps.map((step, idx) => {
-                const purpose = step.purpose || step.tool || "&#25191;&#34892;&#24037;&#20855;";
-                return `<div class="plan-step">${idx + 1}. ${escapeHtml(purpose)}</div>`;
-            }).join("");
-            planDiv.innerHTML = `<div class="av-sm">&#129517;</div><div class="bubble plan-bubble"><div class="plan-title">&#26234;&#33021;&#20307;&#35268;&#21010;</div>${stepsHtml}</div>`;
-            msgs.appendChild(planDiv);
-        }
+        const toolResults = data.tool_results || [];
+        const evidence = data.evidence || [];
 
         let am = document.createElement("div");
         am.className = "msg agent";
         am.innerHTML = `<div class="av-sm">&#127894;&#65039;</div><div class="bubble">${escapeHtml(answer).replace(/\n/g, "<br>")}</div>`;
         msgs.appendChild(am);
 
-        if (verification && Array.isArray(verification.issues) && verification.issues.length > 0) {
-            const vDiv = document.createElement("div");
-            vDiv.className = "msg agent";
-            const issuesHtml = verification.issues.map((issue) => {
-                const claim = issue.claim || issue || "";
-                const severity = issue.severity || "low";
-                return `<div class="verify-issue verify-${severity}">&#9888;&#65039; ${escapeHtml(claim)}</div>`;
-            }).join("");
-            vDiv.innerHTML = `<div class="av-sm">&#9989;</div><div class="bubble verify-bubble"><div class="verify-title">&#20107;&#23454;&#26657;&#39564;</div>${issuesHtml}</div>`;
-            msgs.appendChild(vDiv);
-        }
+        const moduleWrap = renderModuleCards(plan, toolResults, verification, evidence, question, currentVillage);
+        if (moduleWrap) msgs.appendChild(moduleWrap);
 
         msgs.scrollTop = msgs.scrollHeight;
         speak(answer);
@@ -767,6 +1175,7 @@ document.getElementById("kgOverlay").addEventListener("click", function (e) {
 
 setupAvatar();
 setupVoiceButton();
+setupPdfOverlay();
 </script>
 </body>
 </html>
