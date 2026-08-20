@@ -63,6 +63,8 @@ class OrchestratorAgent:
         question: str,
         village: Optional[str],
         history: Optional[List[Dict[str, str]]] = None,
+        persona_mode: str = "tourist",
+        user_profile: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """尝试处理复杂任务；如果不需要规划，返回 handled=False。"""
         compare_hit = any(hint in question for hint in COMPARE_TOOL_HINTS)
@@ -83,7 +85,7 @@ class OrchestratorAgent:
             tool_results = [
                 {"tool": "compare_villages", "purpose": "对比两个村寨", "arguments": args, "result": result}
             ]
-            draft_answer = self._generate_answer(question, village, compare_plan, tool_results)
+            draft_answer = self._generate_answer(question, village, compare_plan, tool_results, persona_mode, user_profile)
             evidence_text = self._format_tool_results(tool_results)
             verification = self.fact_checker.verify(question, draft_answer, evidence_text)
             answer = verification.get("revised_answer") or draft_answer
@@ -109,7 +111,7 @@ class OrchestratorAgent:
         if route_hit and (not plan.get("is_complex") or not plan.get("steps")):
             route_villages = [name for name in VILLAGE_COORDS if name in question]
             route_days = self._extract_days(question)
-            route_args = {"villages": route_villages, "days": route_days} if route_villages else {"days": route_days}
+            route_args = self._make_route_args(route_villages, route_days, question)
             result = self.tools.execute("generate_study_route", route_args)
             route_plan = {
                 "is_complex": True,
@@ -131,7 +133,7 @@ class OrchestratorAgent:
                     "result": result,
                 }
             ]
-            draft_answer = self._generate_answer(question, village, route_plan, tool_results)
+            draft_answer = self._generate_answer(question, village, route_plan, tool_results, persona_mode, user_profile)
             evidence_text = self._format_tool_results(tool_results)
             verification = self.fact_checker.verify(question, draft_answer, evidence_text)
             answer = verification.get("revised_answer") or draft_answer
@@ -155,6 +157,8 @@ class OrchestratorAgent:
             tool_name = step.get("tool", "")
             arguments = step.get("arguments") or {}
             purpose = step.get("purpose", "")
+            if tool_name == "generate_study_route":
+                arguments = {**self._infer_route_preferences(question), **arguments}
             result = self.tools.execute(tool_name, arguments)
             tool_results.append({
                 "tool": tool_name,
@@ -168,7 +172,7 @@ class OrchestratorAgent:
         if route_hit and not has_route_tool:
             route_villages = [name for name in VILLAGE_COORDS if name in question]
             route_days = self._extract_days(question)
-            route_args = {"villages": route_villages, "days": route_days} if route_villages else {"days": route_days}
+            route_args = self._make_route_args(route_villages, route_days, question)
             result = self.tools.execute("generate_study_route", route_args)
             tool_results.append({
                 "tool": "generate_study_route",
@@ -177,7 +181,7 @@ class OrchestratorAgent:
                 "result": result,
             })
 
-        draft_answer = self._generate_answer(question, village, plan, tool_results)
+        draft_answer = self._generate_answer(question, village, plan, tool_results, persona_mode, user_profile)
 
         # ??????????????????????????
         evidence_text = self._format_tool_results(tool_results)
@@ -196,6 +200,34 @@ class OrchestratorAgent:
     def _extract_days(question: str) -> Optional[int]:
         match = re.search(r"(\d+)\s*天", question or "")
         return int(match.group(1)) if match else None
+
+    @staticmethod
+    def _infer_route_preferences(question: str) -> Dict[str, Any]:
+        """从用户自然语言中提取研学路线偏好。"""
+        q = question or ""
+        prefs = {}
+        family = any(w in q for w in ["亲子", "孩子", "儿童", "小朋友"])
+        low_energy = any(w in q for w in ["低体力", "轻松", "休闲", "少走路", "老人"])
+        food_focus = any(w in q for w in ["美食", "吃", "小吃", "餐厅", "特产"])
+        if family:
+            prefs.update({"travel_style": "low_energy", "low_energy": True, "family": True, "group": "亲子"})
+        elif low_energy:
+            prefs.update({"travel_style": "low_energy", "low_energy": True, "group": "低体力"})
+        elif any(w in q for w in ["最短", "最近", "顺路", "车程", "不走回头路"]):
+            prefs["travel_style"] = "nearest"
+        if food_focus:
+            prefs["food_focus"] = True
+        return prefs
+
+    def _make_route_args(self, route_villages: List[str], route_days: Optional[int], question: str) -> Dict[str, Any]:
+        """把识别出的村寨、天数和偏好合并为 generate_study_route 参数。"""
+        args = {}
+        if route_villages:
+            args["villages"] = route_villages
+        if route_days:
+            args["days"] = route_days
+        args.update(self._infer_route_preferences(question))
+        return args
 
     @staticmethod
     @staticmethod
@@ -256,6 +288,19 @@ class OrchestratorAgent:
                     route_line += "；方向：" + direction
                 lines.append(route_line)
             return "\n".join(lines)
+
+        if tool == "generate_study_route":
+            if isinstance(data, dict):
+                stops = data.get("stops") or []
+                lines = []
+                for s in stops:
+                    lines.append(
+                        f"第{s.get('day', '')}天：{s.get('name', '')}，{s.get('city', '')}，"
+                        f"{s.get('event', '')}，{s.get('visit_time', '')}，停留{s.get('duration_hours', '')}小时"
+                    )
+                reasons = data.get("why_not_other_routes") or []
+                return "推荐方案：\n" + "\n".join(lines) + ("\n\n未选其他路线的原因：\n" + "\n".join(reasons) if reasons else "")
+            return str(data)
 
         if tool == "query_timeline":
             if isinstance(data, list):
@@ -331,11 +376,13 @@ class OrchestratorAgent:
         village: Optional[str],
         plan: Dict[str, Any],
         tool_results: List[Dict[str, Any]],
+        persona_mode: str = "tourist",
+        user_profile: Optional[Dict[str, Any]] = None,
     ) -> str:
         """把工具执行结果汇总成面向用户的自然语言回答。"""
         results_block = self._format_tool_results(tool_results)
 
-        system_prompt = build_system_prompt(village) if village else build_system_prompt("扎西")
+        system_prompt = build_system_prompt(village, persona_mode, user_profile) if village else build_system_prompt("扎西", persona_mode, user_profile)
 
         user_prompt = (
             f"你是云南红军长征档案智能体的最终回答者。\n\n"

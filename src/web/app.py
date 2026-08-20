@@ -13,14 +13,20 @@ from pathlib import Path
 from opencc import OpenCC
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, Response, session
 
+from agent.database import init_db
 from agent.rag import VillageAgent
+from web.auth import create_access_token, get_current_username
 from agent import config
 from agent.graph_store import KnowledgeGraphStore, get_graph_payload
 from tts import synthesize_speech
 
 app = Flask(__name__)
+app.secret_key = config.SECRET_KEY
+
+# 初始化数据库（PostgreSQL / JSON fallback）
+init_db()
 
 # 初始化 Agent（全局单例）
 agent = VillageAgent()
@@ -232,21 +238,130 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/favicon.ico")
+def favicon():
+    """返回空图标，避免浏览器 404。"""
+    return Response(status=204)
+
+
+
+@app.route("/api/auth/register", methods=["POST"])
+def api_auth_register():
+    """注册并自动登录。"""
+    data = request.get_json(silent=True) or {}
+    ok, username = agent.memory_store.register(data.get("username"), data.get("password"))
+    if not ok:
+        return jsonify({"error": username}), 400
+    token = create_access_token(username)
+    session["user"] = username
+    return jsonify({"ok": True, "username": username, "token": token})
+
+
+@app.route("/api/auth/login", methods=["POST"])
+def api_auth_login():
+    """用户名密码登录。"""
+    data = request.get_json(silent=True) or {}
+    username = agent.memory_store.authenticate(data.get("username"), data.get("password"))
+    if not username:
+        return jsonify({"error": "用户名或密码错误"}), 401
+    token = create_access_token(username)
+    session["user"] = username
+    return jsonify({"ok": True, "username": username, "token": token})
+
+
+@app.route("/api/auth/logout", methods=["POST"])
+def api_auth_logout():
+    """退出登录。"""
+    session.pop("user", None)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/auth/me")
+def api_auth_me():
+    """当前登录用户与画像。"""
+    username = get_current_username()
+    if not username:
+        return jsonify({"logged_in": False})
+    return jsonify({
+        "logged_in": True,
+        "username": username,
+        "profile": agent.memory_store.get_profile(username),
+    })
+
+
+@app.route("/api/memory/history")
+def api_memory_history():
+    """读取当前用户在某村寨的历史对话。"""
+    username = get_current_username()
+    village = request.args.get("village", "")
+    if not username:
+        return jsonify({"logged_in": False, "messages": []})
+    return jsonify({
+        "logged_in": True,
+        "village": village,
+        "messages": agent.memory_store.get_history(username, village),
+    })
+
+
+@app.route("/api/memory/history", methods=["DELETE"])
+def api_memory_clear_history():
+    """删除当前用户在某村寨的全部历史对话。"""
+    username = get_current_username()
+    village = request.args.get("village", "")
+    if not username:
+        return jsonify({"error": "未登录"}), 401
+    if not village:
+        return jsonify({"error": "缺少村寨参数"}), 400
+    agent.memory_store.clear_history(username, village)
+    return jsonify({"ok": True, "village": village})
+
+
+@app.route("/api/memory/mode", methods=["POST"])
+def api_memory_mode():
+    """保存当前用户的讲解人格偏好。"""
+    username = get_current_username()
+    if not username:
+        return jsonify({"error": "未登录"}), 401
+    data = request.get_json(silent=True) or {}
+    mode = data.get("mode", "tourist")
+    if mode not in ("student", "tourist", "researcher"):
+        return jsonify({"error": "无效的讲解模式"}), 400
+    agent.memory_store.update_profile(username, persona_mode=mode)
+    return jsonify({"ok": True, "mode": mode})
+
+
+@app.route("/api/memory/profile")
+def api_memory_profile():
+    """读取当前用户画像与推荐。"""
+    username = get_current_username()
+    if not username:
+        return jsonify({"logged_in": False})
+    return jsonify({
+        "logged_in": True,
+        "profile": agent.memory_store.get_profile(username),
+    })
+
+
 @app.route("/chat", methods=["POST"])
 def chat():
     """对话接口"""
     data = request.get_json()
     village = data.get("village", "皎平渡")
     question = data.get("question", "")
+    user_id = get_current_username()
+    persona_mode = data.get("mode") or "tourist"
 
     if not question:
         return jsonify({"error": "问题不能为空"}), 400
 
     try:
-        answer = agent.ask(question, village=village)
+        answer = agent.ask(question, village=village, user_id=user_id, persona_mode=persona_mode)
+        profile = agent.memory_store.get_profile(user_id) if user_id else None
         return jsonify({
             "village": village,
             "answer": answer,
+            "mode": agent.current_persona_mode,
+            "profile": profile,
             "plan": agent.last_plan,
             "tool_results": agent.last_tool_results,
             "evidence": agent.last_evidence,
@@ -326,11 +441,12 @@ def api_tts():
     text = (data.get("text") or "").strip()
     village = data.get("village") or ""
     gender = data.get("gender") or VILLAGE_GENDERS.get(village, "female")
+    accent = data.get("accent") or "mandarin"
 
     if not text:
         return jsonify({"error": "文本不能为空"}), 400
 
-    result = synthesize_speech(text, gender=gender)
+    result = synthesize_speech(text, gender=gender, accent=accent)
     if not result:
         return jsonify({"error": "语音合成暂不可用，请稍后重试"}), 503
 

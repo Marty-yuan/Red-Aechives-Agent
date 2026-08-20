@@ -83,6 +83,7 @@ class PlannerAgent:
             "8. 只要用户要求旅游、研学、路线、行程、几天、怎么走、推荐路线，无论是否给出出发地或村寨，都必须调用 generate_study_route；需要交通耗时可用 estimate_travel。\n"
             "   用户没说出发地时，generate_study_route 会自动按长征路线生成默认行程，不要拒绝，也不要只回答文字。\n"
             "9. 涉及两个村寨或历史事件之间的对比、比较、不同、区别、差异，优先调用 compare_villages。\n"
+"10. 旅游/研学规划要识别用户偏好：亲子/儿童、低体力/轻松、重点美食、最少车程等，并把 travel_style、low_energy、food_focus、family、group 写入 generate_study_route 参数。\n"
         )
 
         user_prompt = (

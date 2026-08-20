@@ -32,6 +32,11 @@ body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; height: 
 
 .voice-toggle { margin-left: auto; padding: 6px 10px; background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.35); border-radius: 16px; cursor: pointer; font-size: 12px; white-space: nowrap; }
 .voice-toggle:hover { background: rgba(255,255,255,0.22); }
+.voice-switch { margin-left: auto; display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
+.voice-btn { padding: 5px 8px; background: #1a2440; color: #d7e0ef; border: 1px solid rgba(255,215,0,0.3); border-radius: 14px; cursor: pointer; font-size: 11px; white-space: nowrap; }
+.voice-btn:hover { border-color: #FFD700; }
+.voice-btn.active { background: #C41E3A; color: #fff; border-color: #FFD700; font-weight: bold; }
+.voice-btn.voice-off { color: #f0d9b5; }
 
 .avatar-wrap { position: relative; width: 56px; height: 56px; border-radius: 50%; overflow: hidden; background: #C41E3A; border: 2px solid #FFD700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .avatar-img { width: 100%; height: 100%; object-fit: cover; display: none; }
@@ -46,6 +51,9 @@ body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; height: 
 .chat-header h3 { font-size: 15px; color: white; }
 .chat-header p { font-size: 11px; color: rgba(255,255,255,0.5); }
 .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.chat-actions { padding: 6px 16px; background: rgba(0,0,0,0.12); border-top: 1px solid rgba(196,30,58,0.25); display: flex; justify-content: flex-end; }
+.delete-conversation-btn { padding: 6px 12px; background: #1a2440; color: #f0d9b5; border: 1px solid rgba(196,30,58,0.4); border-radius: 14px; font-size: 11px; cursor: pointer; }
+.delete-conversation-btn:hover { background: #a01830; color: white; border-color: #FFD700; }
 .chat-messages::-webkit-scrollbar { width: 4px; }
 .chat-messages::-webkit-scrollbar-thumb { background: rgba(196,30,58,0.3); border-radius: 2px; }
 
@@ -56,6 +64,8 @@ body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; height: 
 .msg.user .bubble { background: #C41E3A; color: white; }
 .msg .av-sm { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
 .msg.agent .av-sm { background: #C41E3A; color: white; }
+.msg .bubble a { color: #8fd18f; text-decoration: none; border-bottom: 1px dashed rgba(143,209,143,0.6); }
+.msg .bubble a:hover { color: #b8f2b8; }
 
 .plan-bubble { background: #0f1525; border: 1px solid #2a3b5c; }
 .plan-title { color: #FFD700; font-size: 12px; margin-bottom: 6px; font-weight: bold; }
@@ -76,6 +86,20 @@ body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; height: 
 .study-stop-head span { color: #b7a77a; white-space: nowrap; }
 .study-travel { margin: 4px 0 8px; padding: 5px 7px; background: #0f1525; border-left: 3px solid #FFD700; color: #f0d9b5; font-size: 12px; }
 .study-tip { margin-top: 4px; color: #d7c8a8; font-size: 11px; }
+.study-plan-tabs { display: flex; gap: 6px; margin: 6px 0; flex-wrap: wrap; }
+.study-plan-tab { padding: 6px 10px; background: #1a2440; color: #d7e0ef; border: 1px solid rgba(255,215,0,0.35); border-radius: 14px; cursor: pointer; font-size: 12px; }
+.study-plan-tab.active { background: #C41E3A; color: #fff; border-color: #FFD700; font-weight: bold; }
+.study-plan-panel { display: block; }
+.study-plan-head { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 5px; color: #ffd0d0; font-size: 12px; font-weight: bold; }
+.study-plan-head span { color: #b7a77a; font-weight: normal; }
+.study-route-links { margin: 4px 0; line-height: 1.7; }
+.study-link { display: inline-block; margin: 2px 4px 2px 0; padding: 2px 7px; color: #8fd18f; border: 1px solid rgba(143,209,143,0.4); border-radius: 12px; font-size: 11px; text-decoration: none; }
+.study-link:hover { border-color: #8fd18f; }
+.study-energy { margin-top: 3px; color: #ffd0d0; font-size: 11px; }
+.study-lodging { margin-top: 3px; color: #f0d9b5; font-size: 11px; }
+.study-why { margin-top: 8px; padding: 6px 8px; background: #141b2c; border: 1px dashed rgba(255,215,0,0.5); border-radius: 6px; font-size: 11px; color: #e8e0d0; line-height: 1.5; }
+.study-why b { color: #FFD700; }
+.study-why div { margin-top: 3px; }
 .study-stop { background: #C41E3A; color: white; border: 2px solid #FFD700; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; }
 .compare-bubble { background: #0f1525; border: 1px solid #4a90e2; }
 .compare-title { color: #4a90e2; font-size: 12px; margin-bottom: 6px; font-weight: bold; }
@@ -112,6 +136,24 @@ body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; height: 
 .welcome { text-align: center; color: rgba(255,255,255,0.4); margin-top: 50px; }
 .welcome .icon { font-size: 48px; margin-bottom: 10px; }
 .welcome h3 { color: #FFD700; font-size: 16px; }
+
+.mode-bar { display:flex; gap:6px; padding:8px 12px; background:rgba(0,0,0,0.18); border-bottom:1px solid rgba(196,30,58,0.25); }
+.mode-btn { flex:1; padding:6px 4px; background:#1a2440; color:#d7e0ef; border:1px solid rgba(196,30,58,0.3); border-radius:14px; cursor:pointer; font-size:11px; white-space:nowrap; }
+.mode-btn.active { background:#C41E3A; color:#fff; border-color:#FFD700; font-weight:bold; }
+.auth-open-btn { margin-left:8px; padding:7px 12px; background:rgba(255,255,255,0.12); color:white; border:1px solid rgba(255,255,255,0.35); border-radius:16px; cursor:pointer; font-size:12px; white-space:nowrap; }
+.user-chip { margin-left:8px; color:#FFD700; font-size:12px; max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.auth-overlay { display:none; position:fixed; inset:0; z-index:3000; background:rgba(8,8,18,0.86); align-items:center; justify-content:center; }
+.auth-overlay.open { display:flex; }
+.auth-box { width:min(360px,92vw); background:#11172a; border:1px solid rgba(196,30,58,0.5); border-radius:12px; padding:18px; color:white; }
+.auth-box h3 { color:#FFD700; font-size:16px; margin-bottom:12px; }
+.auth-box input { width:100%; margin-bottom:10px; padding:10px 12px; background:#1e2d4a; border:1px solid rgba(196,30,58,0.3); border-radius:8px; color:white; outline:none; }
+.auth-box input:focus { border-color:#C41E3A; }
+.auth-actions { display:flex; gap:8px; margin-top:4px; }
+.auth-actions button { flex:1; padding:9px 12px; border:none; border-radius:8px; cursor:pointer; font-size:13px; }
+.auth-login { background:#C41E3A; color:white; }
+.auth-register { background:#1a2440; color:#FFD700; border:1px solid #C41E3A; }
+.auth-status { margin-top:12px; padding:10px; background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.25); border-radius:8px; font-size:12px; color:#FFD700; }
+.auth-logout { margin-top:8px; width:100%; padding:8px 12px; background:rgba(255,255,255,0.08); color:#d7e0ef; border:1px solid rgba(255,255,255,0.2); border-radius:8px; cursor:pointer; }
 
 .chat-input { padding: 12px 16px; background: rgba(0,0,0,0.2); display: flex; gap: 8px; }
 .chat-input input { flex: 1; padding: 10px 14px; background: #1e2d4a; border: 1px solid rgba(196,30,58,0.3); border-radius: 20px; color: white; font-size: 13px; outline: none; }
@@ -173,6 +215,8 @@ body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; height: 
     <h1>红色村寨数字代言人</h1>
     <span class="subtitle">云南省红军长征档案 · DeepSeek RAG</span>
     <button class="kg-open-btn" id="kgOpenBtn">📊 知识图谱</button>
+    <button class="auth-open-btn" id="authBtn">👤 登录 / 注册</button>
+    <span class="user-chip" id="userChip"></span>
 </div>
 
 <div class="main">
@@ -197,6 +241,16 @@ body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; height: 
                 <h3 id="chatName">选择村寨</h3>
                 <p id="chatMeta">点击地图标记，战士会走过去</p>
             </div>
+            <div class="voice-switch" id="voiceSwitch">
+                <button type="button" class="voice-btn active" data-voice="mandarin" onclick="setVoice('mandarin')">普通话</button>
+                <button type="button" class="voice-btn" data-voice="sichuan" onclick="setVoice('sichuan')">四川话</button>
+                <button type="button" class="voice-btn voice-off" data-voice="off" onclick="setVoice('off')">🔇 关闭</button>
+            </div>
+        </div>
+        <div class="mode-bar" id="modeBar">
+            <button class="mode-btn active" data-mode="student" onclick="setMode('student')">🧒 儿童</button>
+            <button class="mode-btn" data-mode="tourist" onclick="setMode('tourist')">🧭 游客</button>
+            <button class="mode-btn" data-mode="researcher" onclick="setMode('researcher')">📚 研究者</button>
         </div>
         <div class="chat-messages" id="chatMessages">
             <div class="welcome">
@@ -204,6 +258,9 @@ body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; height: 
                 <h3>红色村寨数字代言人</h3>
                 <p>点击地图上的村寨标记</p>
             </div>
+        </div>
+        <div class="chat-actions">
+            <button type="button" class="delete-conversation-btn" id="deleteConversationBtn" style="display:none" onclick="deleteCurrentConversation()">🗑️ 删除当前对话</button>
         </div>
         <div class="chat-input">
             <input type="text" id="queryInput" placeholder="问问这个村寨的故事..." onkeypress="if(event.key==='Enter')sendMessage()">
@@ -237,6 +294,20 @@ body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; height: 
     </div>
 </div>
 
+<div id="authOverlay" class="auth-overlay">
+    <div class="auth-box">
+        <h3>用户登录 / 注册</h3>
+        <input id="authUsername" placeholder="用户名" />
+        <input id="authPassword" type="password" placeholder="密码" />
+        <div class="auth-actions">
+            <button class="auth-login" onclick="loginUser()">登录</button>
+            <button class="auth-register" onclick="registerUser()">注册</button>
+        </div>
+        <div class="auth-status" id="authStatus" style="display:none"></div>
+        <button class="auth-logout" id="logoutBtn" style="display:none" onclick="logoutUser()">退出登录</button>
+    </div>
+</div>
+
 <script>
 let currentVillage = null;
 let villageMarkers = {};
@@ -250,10 +321,44 @@ let walkAnimationId = null; // 当前行走动画句柄，避免两段动画同�
 let studyRouteLayer = null;  // 研学路线图层
 
 let voiceEnabled = true;   // 是否开启数字人语音
+let currentVoiceAccent = "mandarin";   // mandarin / sichuan
 let audioPlayer = new Audio();  // 播放 edge-tts 返回的音频
 let villageAvatars = {};        // ?? -> ?? URL
 let villageVoiceGenders = {};   // ?? -> male / female
 let currentVillageVoiceGender = "female";
+let currentUser = null;
+let currentMode = "tourist";
+const TOKEN_KEY = "red_archive_token";
+
+let memoryToken = "";
+
+function getToken() {
+    try {
+        return localStorage.getItem(TOKEN_KEY) || memoryToken;
+    } catch (e) {
+        return memoryToken;
+    }
+}
+
+function setToken(token) {
+    memoryToken = token || "";
+    try {
+        if (token) {
+            localStorage.setItem(TOKEN_KEY, token);
+        } else {
+            localStorage.removeItem(TOKEN_KEY);
+        }
+    } catch (e) {
+        // 浏览器阻止 localStorage 时，仅保留当前页面内存中的 token
+    }
+}
+
+function authHeaders() {
+    const headers = {"Content-Type": "application/json"};
+    const token = getToken();
+    if (token) headers["Authorization"] = "Bearer " + token;
+    return headers;
+}
 
 // ========== 初始化地图 ==========
 map = L.map("map", { center: [25.5, 101.5], zoom: 7, attributionControl: false });
@@ -588,7 +693,8 @@ async function speak(text) {
             body: JSON.stringify({
                 text: text,
                 village: currentVillage || "",
-                gender: currentVillageVoiceGender
+                gender: currentVillageVoiceGender,
+                accent: currentVoiceAccent
             })
         });
 
@@ -618,17 +724,230 @@ async function speak(text) {
     }
 }
 
-function setupVoiceButton() {
-    const btn = document.getElementById("voiceToggle");
-    if (!btn) return;
-    btn.addEventListener("click", () => {
-        voiceEnabled = !voiceEnabled;
-        btn.textContent = voiceEnabled ? "🔊 语音开" : "🔇 语音关";
-        if (!voiceEnabled) {
-            stopAudio();
-            setSpeaking(false);
+function syncVoiceButtons() {
+    document.querySelectorAll(".voice-btn").forEach(btn => {
+        const mode = btn.dataset.voice || "";
+        if (mode === "off") {
+            btn.classList.toggle("active", !voiceEnabled);
+        } else {
+            btn.classList.toggle("active", voiceEnabled && mode === currentVoiceAccent);
         }
     });
+}
+
+function setVoice(mode) {
+    if (mode === "off") {
+        voiceEnabled = false;
+    } else {
+        voiceEnabled = true;
+        currentVoiceAccent = mode === "sichuan" ? "sichuan" : "mandarin";
+    }
+    stopAudio();
+    setSpeaking(false);
+    syncVoiceButtons();
+}
+
+function setupVoiceButton() {
+    syncVoiceButtons();
+}
+
+// ========== 用户画像与长期记忆 ==========
+function modeName(mode) {
+    return {"student":"儿童模式","tourist":"游客模式","researcher":"研究者模式"}[mode] || "游客模式";
+}
+
+function syncModeButtons() {
+    document.querySelectorAll(".mode-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.mode === currentMode);
+    });
+}
+
+function setMode(mode) {
+    currentMode = mode;
+    syncModeButtons();
+    if (currentUser) {
+        fetch("/api/memory/mode", {
+            method: "POST",
+            headers: authHeaders(),
+            body: JSON.stringify({mode: mode})
+        }).catch(() => {});
+    }
+    updateAuthUI();
+}
+
+function openAuth() {
+    document.getElementById("authOverlay").classList.add("open");
+    updateAuthUI();
+}
+
+function closeAuth() {
+    document.getElementById("authOverlay").classList.remove("open");
+}
+
+function updateAuthUI() {
+    const btn = document.getElementById("authBtn");
+    const chip = document.getElementById("userChip");
+    const status = document.getElementById("authStatus");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const deleteBtn = document.getElementById("deleteConversationBtn");
+    if (!btn) return;
+
+    if (currentUser) {
+        btn.textContent = "👤 账户";
+        chip.textContent = currentUser;
+        chip.title = currentUser;
+        if (status) {
+            status.style.display = "block";
+            status.innerHTML = `已登录：${escapeHtml(currentUser)}<br>当前讲解人格：${escapeHtml(modeName(currentMode))}`;
+        }
+        if (logoutBtn) logoutBtn.style.display = "block";
+    } else {
+        btn.textContent = "👤 登录 / 注册";
+        chip.textContent = "";
+        chip.title = "";
+        if (status) status.style.display = "none";
+        if (logoutBtn) logoutBtn.style.display = "none";
+    }
+    if (deleteBtn) deleteBtn.style.display = currentUser ? "inline-block" : "none";
+}
+
+async function refreshUser() {
+    try {
+        const r = await fetch("/api/auth/me", {headers: authHeaders()});
+        const data = await r.json();
+        if (!data.logged_in) setToken("");
+        currentUser = data.logged_in ? data.username : null;
+        if (data.profile) {
+            currentMode = data.profile.persona_mode || "tourist";
+        }
+        syncModeButtons();
+        updateAuthUI();
+        if (currentUser && currentVillage) {
+            loadVillageHistory(currentVillage);
+        }
+    } catch (e) {}
+}
+
+async function loginUser() {
+    const username = document.getElementById("authUsername").value.trim();
+    const password = document.getElementById("authPassword").value;
+    if (!username || !password) {
+        alert("请输入用户名和密码");
+        return;
+    }
+    const r = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({username: username, password: password})
+    });
+    const data = await r.json();
+    if (!r.ok) {
+        alert(data.error || "登录失败");
+        return;
+    }
+    if (data.token) setToken(data.token);
+    currentUser = data.username;
+    document.getElementById("authPassword").value = "";
+    updateAuthUI();
+    closeAuth();
+    await refreshUser();
+    if (currentVillage) loadVillageHistory(currentVillage);
+}
+
+async function registerUser() {
+    const username = document.getElementById("authUsername").value.trim();
+    const password = document.getElementById("authPassword").value;
+    if (!username || !password) {
+        alert("请输入用户名和密码");
+        return;
+    }
+    const r = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({username: username, password: password})
+    });
+    const data = await r.json();
+    if (!r.ok) {
+        alert(data.error || "注册失败");
+        return;
+    }
+    if (data.token) setToken(data.token);
+    currentUser = data.username;
+    document.getElementById("authPassword").value = "";
+    updateAuthUI();
+    closeAuth();
+    await refreshUser();
+    if (currentVillage) loadVillageHistory(currentVillage);
+}
+
+async function logoutUser() {
+    await fetch("/api/auth/logout", {method: "POST", headers: authHeaders()}).catch(() => {});
+    setToken("");
+    currentUser = null;
+    updateAuthUI();
+    closeAuth();
+    if (currentVillage) loadVillageHistory(currentVillage);
+}
+
+async function loadVillageHistory(name) {
+    const msgs = document.getElementById("chatMessages");
+    msgs.innerHTML = "";
+
+    const msg = document.createElement("div");
+    msg.className = "msg agent";
+    msg.innerHTML = `<div class="av-sm">🎖️</div><div class="bubble">你好，我是${escapeHtml(name)}的代言人。想了解这里的红军长征故事吗？</div>`;
+    msgs.appendChild(msg);
+
+    if (!name) return;
+    try {
+        const r = await fetch(`/api/memory/history?village=${encodeURIComponent(name)}`, {headers: authHeaders(), credentials: "same-origin"});
+        const data = await r.json();
+        if (!data.logged_in || !Array.isArray(data.messages)) return;
+        data.messages.forEach(appendHistoryMessage);
+    } catch (e) {}
+}
+
+function appendHistoryMessage(m) {
+    if (!m || !m.content) return;
+    const msgs = document.getElementById("chatMessages");
+    const div = document.createElement("div");
+    const safe = escapeHtml(m.content).replace(/\n/g, "<br>");
+    if (m.role === "user") {
+        div.className = "msg user";
+        div.innerHTML = `<div class="bubble">${safe}</div><div class="av-sm">👤</div>`;
+    } else {
+        div.className = "msg agent";
+        div.innerHTML = `<div class="av-sm">🎖️</div><div class="bubble">${renderMessageHtml(m.content)}</div>`;
+    }
+    msgs.appendChild(div);
+}
+
+async function deleteCurrentConversation() {
+    if (!currentVillage) {
+        alert("请先选择一个村寨");
+        return;
+    }
+    if (!currentUser) {
+        alert("请先登录后再删除对话");
+        return;
+    }
+    const ok = confirm(`确定删除“${currentVillage}代言人”的所有历史对话吗？`);
+    if (!ok) return;
+    try {
+        const r = await fetch(`/api/memory/history?village=${encodeURIComponent(currentVillage)}`, {
+            method: "DELETE",
+            headers: authHeaders(),
+            credentials: "same-origin"
+        });
+        const data = await r.json();
+        if (!r.ok) {
+            alert(data.error || "删除失败");
+            return;
+        }
+        await loadVillageHistory(currentVillage);
+    } catch (e) {
+        alert("删除失败，请检查后端服务是否已启动");
+    }
 }
 
 // ========== 选择村寨 ==========
@@ -657,13 +976,8 @@ function selectVillage(name) {
         });
     }
 
-    // 欢迎语
-    let msgs = document.getElementById("chatMessages");
-    msgs.innerHTML = "";
-    let msg = document.createElement("div");
-    msg.className = "msg agent";
-    msg.innerHTML = `<div class="av-sm">🎖️</div><div class="bubble">你好，我是${name}的代言人。想了解这里的红军长征故事吗？</div>`;
-    msgs.appendChild(msg);
+    // 欢迎语 + 历史记忆
+    loadVillageHistory(name);
 }
 
 function renderStudyRouteFromResult(raw) {
@@ -794,16 +1108,40 @@ function planModuleBody(plan) {
     return html;
 }
 
-function studyRouteModuleBody(data) {
+function switchStudyPlan(btn, idx) {
+    const container = btn.closest(".study-plan-container");
+    if (!container) return;
+    container.querySelectorAll(".study-plan-tab").forEach(t => t.classList.remove("active"));
+    container.querySelectorAll(".study-plan-panel").forEach(p => p.style.display = "none");
+    btn.classList.add("active");
+    const panel = container.querySelector(`[data-plan-panel="${idx}"]`);
+    if (panel) panel.style.display = "block";
+}
+
+function energyText(level) {
+    const n = Number(level);
+    if (n <= 1) return "轻松";
+    if (n >= 3) return "较耗体力";
+    return "适中";
+}
+
+function renderLinkList(label, links) {
+    if (!Array.isArray(links) || !links.length) return "";
+    const items = links.map(l => `<a class="study-link" href="${escapeHtml(l.url || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(l.name || "查看")}</a>`).join("");
+    return `<div class="study-route-links"><span>${escapeHtml(label)}：</span>${items}</div>`;
+}
+
+function renderStudyPlanBody(plan) {
     const segmentMap = {};
-    (data.travel_segments || []).forEach(seg => {
+    (plan.travel_segments || []).forEach(seg => {
         segmentMap[seg.from + "->" + seg.to] = seg;
     });
 
-    let html = `<div class="study-route-title">${escapeHtml(data.route_name || "研学路线")}</div>`;
-    let currentDay = null;
+    let html = `<div class="study-plan-head"><b>${escapeHtml(plan.label || "方案")}</b><span>${escapeHtml(plan.strategy || "")}</span></div>`;
+    if (plan.reason) html += `<div class="study-tip">💡 ${escapeHtml(plan.reason)}</div>`;
 
-    (data.stops || []).forEach((stop, idx) => {
+    let currentDay = null;
+    (plan.stops || []).forEach((stop, idx) => {
         if (stop.day !== currentDay) {
             currentDay = stop.day;
             html += `<div class="study-route-day">第 ${escapeHtml(String(currentDay))} 天</div>`;
@@ -811,24 +1149,66 @@ function studyRouteModuleBody(data) {
 
         const attractions = Array.isArray(stop.attractions) ? stop.attractions.join("、") : "";
         const food = Array.isArray(stop.food) ? stop.food.join("、") : "";
+        const attractionLinks = Array.isArray(stop.attraction_links) ? stop.attraction_links : [];
+        const foodLinks = Array.isArray(stop.food_links) ? stop.food_links : [];
 
+        const next = plan.stops[idx + 1];
         html += `<div class="study-route-stop">
             <div class="study-stop-head"><b>${escapeHtml(stop.name || "")}</b><span>${escapeHtml(stop.visit_time || "")}</span></div>
             <div>${escapeHtml(stop.city || "")}｜${escapeHtml(stop.event || "")}｜${escapeHtml(String(stop.year || ""))}｜${escapeHtml(stop.army || "")}</div>
-            <div><b>景点：</b>${escapeHtml(attractions || "暂无")}</div>
+            <div><b>景点：</b>${escapeHtml(attractions || "暂无")} <b>游玩：</b>${escapeHtml(String(stop.duration_hours || 3))}小时</div>
+            ${renderLinkList("景点参考", attractionLinks)}
             <div><b>美食：</b>${escapeHtml(food || "暂无")}</div>
-            <div><b>建议停留：</b>${escapeHtml(String(stop.duration_hours || 3))}小时</div>
+            ${renderLinkList("美食参考", foodLinks)}
+            <div class="study-energy">⚡ 体力消耗：${escapeHtml(energyText(stop.energy_level))}</div>
+            ${(!next || next.day !== stop.day) && stop.lodging ? `<div class="study-lodging">🏨 住宿建议：${escapeHtml(stop.lodging)}</div>` : ""}
+            ${(!next || next.day !== stop.day) && stop.lodging_link ? renderLinkList("住宿参考", [stop.lodging_link]) : ""}
             ${stop.tips ? `<div class="study-tip">💡 ${escapeHtml(stop.tips)}</div>` : ""}
         </div>`;
 
-        const next = data.stops[idx + 1];
         if (next) {
             const seg = segmentMap[stop.name + "->" + next.name];
-            if (seg) {
-                html += `<div class="study-travel">🚗 ${escapeHtml(stop.name)} → ${escapeHtml(next.name)}：约${escapeHtml(seg.estimated_travel_time || "")} / ${escapeHtml(String(seg.estimated_road_km || ""))}公里</div>`;
-            }
+            if (seg) html += `<div class="study-travel">🚗 ${escapeHtml(stop.name)} → ${escapeHtml(next.name)}：约${escapeHtml(seg.estimated_travel_time || "")} / ${escapeHtml(String(seg.estimated_road_km || ""))}公里</div>`;
         }
     });
+
+    const energy = Array.isArray(plan.daily_energy) ? plan.daily_energy : [];
+    if (energy.length) {
+        html += `<div class="study-route-day">每日体力值</div><div class="study-energy">${energy.map(e => `第${escapeHtml(String(e.day))}天：${escapeHtml(String(e.score))}分（${escapeHtml(e.level || "")}）`).join("；")}</div>`;
+    }
+
+    return html;
+}
+
+function studyRouteModuleBody(data) {
+    const plans = Array.isArray(data.plans) && data.plans.length ? data.plans : [{
+        label: "推荐方案",
+        strategy: "历史顺序",
+        stops: data.stops || [],
+        travel_segments: data.travel_segments || [],
+        daily_energy: data.daily_energy || [],
+        daily_lodging: data.daily_lodging || []
+    }];
+
+    let html = `<div class="study-route-title">${escapeHtml(data.route_name || "研学路线")}</div><div class="study-plan-container">`;
+
+    if (plans.length > 1) {
+        html += `<div class="study-plan-tabs">`;
+        plans.forEach((plan, idx) => {
+            html += `<button type="button" class="study-plan-tab ${idx === 0 ? "active" : ""}" data-plan-index="${idx}" onclick="switchStudyPlan(this, ${idx})">${escapeHtml(plan.label || "方案")}</button>`;
+        });
+        html += `</div>`;
+    }
+
+    plans.forEach((plan, idx) => {
+        html += `<div class="study-plan-panel" data-plan-panel="${idx}" style="${idx === 0 ? "" : "display:none"}">${renderStudyPlanBody(plan)}</div>`;
+    });
+
+    html += `</div>`;
+
+    if (Array.isArray(data.why_not_other_routes) && data.why_not_other_routes.length) {
+        html += `<div class="study-why"><b>为什么不选其他路线</b>${data.why_not_other_routes.map(r => `<div>· ${escapeHtml(r)}</div>`).join("")}</div>`;
+    }
 
     return html;
 }
@@ -1047,6 +1427,19 @@ function escapeHtml(text) {
     });
 }
 
+function renderMessageHtml(text) {
+    let html = escapeHtml(text);
+    html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    return html.replace(/\n/g, "<br>");
+}
+
+function plainTextForSpeech(text) {
+    return String(text || "")
+        .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, "$1")
+        .replace(/\*\*?/g, "")
+        .trim();
+}
+
 function sendMessage() {
     if (!currentVillage) return;
     let input = document.getElementById("queryInput");
@@ -1069,27 +1462,43 @@ function sendMessage() {
 
     fetch("/chat", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({village: currentVillage, question: question})
+        headers: authHeaders(),
+        body: JSON.stringify({village: currentVillage, question: question, mode: currentMode})
     }).then(r => r.json()).then(data => {
-        document.getElementById("typing").remove();
+        const typing = document.getElementById("typing");
+        if (typing) typing.remove();
 
         const answer = data.answer || data.error || "&#20986;&#38169;&#20102;";
         const plan = data.plan;
         const verification = data.verification;
         const toolResults = data.tool_results || [];
         const evidence = data.evidence || [];
+        if (data.mode) {
+            currentMode = data.mode;
+            syncModeButtons();
+        }
 
         let am = document.createElement("div");
         am.className = "msg agent";
-        am.innerHTML = `<div class="av-sm">&#127894;&#65039;</div><div class="bubble">${escapeHtml(answer).replace(/\n/g, "<br>")}</div>`;
+        am.innerHTML = `<div class="av-sm">&#127894;&#65039;</div><div class="bubble">${renderMessageHtml(answer)}</div>`;
         msgs.appendChild(am);
 
         const moduleWrap = renderModuleCards(plan, toolResults, verification, evidence, question, currentVillage);
         if (moduleWrap) msgs.appendChild(moduleWrap);
 
         msgs.scrollTop = msgs.scrollHeight;
-        speak(answer);
+        speak(plainTextForSpeech(answer));
+    }).catch(() => {
+        const typing = document.getElementById("typing");
+        if (typing) typing.remove();
+        const msgs = document.getElementById("chatMessages");
+        if (msgs) {
+            const err = document.createElement("div");
+            err.className = "msg agent";
+            err.innerHTML = `<div class="av-sm">🎖️</div><div class="bubble">网络请求失败，请确认后端服务已启动。</div>`;
+            msgs.appendChild(err);
+            msgs.scrollTop = msgs.scrollHeight;
+        }
     });
 }
 
@@ -1173,9 +1582,15 @@ document.getElementById("kgOverlay").addEventListener("click", function (e) {
     if (e.target && e.target.id === "kgOverlay") closeKnowledgeGraph();
 });
 
+document.getElementById("authBtn").addEventListener("click", openAuth);
+document.getElementById("authOverlay").addEventListener("click", function (e) {
+    if (e.target && e.target.id === "authOverlay") closeAuth();
+});
+refreshUser();
 setupAvatar();
 setupVoiceButton();
 setupPdfOverlay();
 </script>
+
 </body>
 </html>

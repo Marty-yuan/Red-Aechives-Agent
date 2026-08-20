@@ -16,6 +16,12 @@ python-dotenv==1.2.2
 # ===== Web =====
 flask==3.1.2
 
+# ===== 网站真实登录：数据库 + JWT =====
+# 安装完以下依赖后，建议在开发机执行 pip freeze 更新精确版本
+sqlalchemy>=2.0.0
+psycopg[binary]>=3.2.0
+PyJWT>=2.10.0
+
 # ===== 语音 =====
 edge-tts==7.2.8
 

@@ -20,18 +20,50 @@ except Exception:
     edge_tts = None
     HAS_EDGE_TTS = False
 
-# 不同性别使用不同声线
-VOICE_CANDIDATES_MALE = [
-    "zh-CN-sichuan-YunxiNeural",
-    "zh-CN-YunxiNeural",
-]
-
-VOICE_CANDIDATES_FEMALE = [
-    "zh-CN-XiaoxiaoNeural",
-    "zh-CN-XiaoyiNeural",
-]
+# 普通话版声线：
+#   男声：YunxiNeural / YunjianNeural
+#   女声：XiaoxiaoNeural / XiaoyiNeural
+# 后续方言版可在这里加入 zh-CN-sichuan-YunxiNeural 等口音声线，并在 synthesize_speech 中按村寨切换。
+VOICE_CANDIDATES = {
+    "mandarin": {
+        "male": ["zh-CN-YunxiNeural", "zh-CN-YunjianNeural"],
+        "female": ["zh-CN-XiaoxiaoNeural", "zh-CN-XiaoyiNeural"],
+    },
+    "sichuan": {
+        # edge-tts 没有四川话口音声线，这里用普通话声线朗读“川味改写文本”。
+        "male": ["zh-CN-YunxiNeural", "zh-CN-YunjianNeural"],
+        "female": ["zh-CN-XiaoxiaoNeural", "zh-CN-XiaoyiNeural"],
+    },
+}
 
 SPEECH_RATE = "-8%"
+
+SICHUAN_REPLACEMENTS = [
+    ("什么", "啥子"),
+    ("为什么", "为啥子"),
+    ("没有", "没得"),
+    ("是不是", "是不是嘛"),
+    ("好的", "要得"),
+    ("谢谢", "多谢"),
+    ("非常", "硬是"),
+]
+
+
+def _sichuan_style_text(text: str) -> str:
+    """把普通话文本做轻度川味改写，用于当前缺少真实四川话声线时的演示。"""
+    result = text
+    for src, dst in SICHUAN_REPLACEMENTS:
+        result = result.replace(src, dst)
+
+    if not result:
+        return result
+
+    last = result[-1]
+    if last in "。！？!?~～":
+        result = result[:-1] + "嘛" + last
+    else:
+        result += "嘛"
+    return result
 
 
 def _synth_with_edge(text: str, voice: str):
@@ -119,7 +151,7 @@ $synth.Dispose()
                     pass
 
 
-def synthesize_speech(text: str, gender: str = "female"):
+def synthesize_speech(text: str, gender: str = "female", accent: str = "mandarin"):
     """
     把文字合成为语音。
 
@@ -132,19 +164,22 @@ def synthesize_speech(text: str, gender: str = "female"):
         return None
 
     text = text[:500]
+    accent = accent if accent in VOICE_CANDIDATES else "mandarin"
+    speech_text = _sichuan_style_text(text) if accent == "sichuan" else text
 
     if HAS_EDGE_TTS:
-        voices = VOICE_CANDIDATES_MALE if gender == "male" else VOICE_CANDIDATES_FEMALE
+        preset = VOICE_CANDIDATES[accent]
+        voices = preset["male" if gender == "male" else "female"]
         for voice in voices:
             try:
-                audio = _synth_with_edge(text, voice)
+                audio = _synth_with_edge(speech_text, voice)
                 if audio:
                     return audio, voice, "audio/mpeg"
             except Exception:
                 continue
 
     # 网络或 edge-tts 不可用时，用 Windows 本地中文语音兜底
-    audio = _synth_with_windows_sapi(text, gender=gender)
+    audio = _synth_with_windows_sapi(speech_text, gender=gender)
     if audio:
         return audio, "windows-sapi-zh-CN", "audio/wav"
 

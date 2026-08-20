@@ -9,10 +9,13 @@
 这样既保留了 LLM 的语言能力，又用真实档案锚定了历史事实，避免幻觉。
 """
 import json
+from urllib.parse import quote
 
 from openai import OpenAI
 
 from . import config
+from .knowledge import VILLAGE_COORDS, VILLAGE_EXPERIENCE, VILLAGE_LODGING
+from .memory_store import UserMemoryStore
 from .personas import build_system_prompt
 from .orchestrator import OrchestratorAgent
 from .retriever import ArchiveRetriever
@@ -26,6 +29,10 @@ CHITCHAT_KEYWORDS = {
     "你好", "您好", "在吗", "你是谁", "你能做什么", "谢谢", "再见",
     "介绍你自己", "介绍自己", "早上好", "下午好", "晚上好",
 }
+
+LOCAL_GUIDE_ATTRACTION_HINTS = ("景点", "好玩", "游玩", "参观", "纪念馆", "旧址", "古镇", "哪里玩", "有什么玩")
+LOCAL_GUIDE_FOOD_HINTS = ("美食", "好吃", "小吃", "特产", "餐厅", "吃")
+LOCAL_GUIDE_LODGING_HINTS = ("住宿", "酒店", "民宿", "住哪", "住哪里", "过夜")
 
 
 class VillageAgent:
@@ -49,10 +56,13 @@ class VillageAgent:
 
         # 当前对话的村寨（用于切换人格）
         self.current_village = None
+        self.current_user = None
+        self.current_persona_mode = "tourist"
+        self.current_profile = None
 
-        # 多轮对话记忆：每个村寨单独保存，切换村寨时不会串戏
-        # 格式：{村寨名: [{"role": "user" | "assistant", "content": "..."}, ...]}
+        # 未登录游客的临时对话记忆；登录用户改由 UserMemoryStore 持久化
         self.conversation_history = {}
+        self.memory_store = UserMemoryStore()
 
         # ??????????????????
         self.orchestrator = None
@@ -62,27 +72,36 @@ class VillageAgent:
         self.fact_checker = None
         self.last_verification = None
 
-    def ask(self, question: str, village: str = None) -> str:
+    def ask(self, question: str, village: str = None, user_id: str = None, persona_mode: str = None) -> str:
         """
         用户提问，返回村寨代言人的回答。
 
         参数:
-            question: 用户的问题
-            village:  可选，指定村寨（不指定则沿用上次的村寨）
-
-        返回:
-            村寨代言人的回答文本
+            question:     用户的问题
+            village:      可选，指定村寨
+            user_id:      登录用户名；为空时使用游客临时记忆
+            persona_mode: student / tourist / researcher
         """
         if village:
             self.current_village = village
-            self.conversation_history.setdefault(village, [])
+            if self.current_user is None and user_id is None:
+                self.conversation_history.setdefault(village, [])
 
-        history = self.conversation_history.get(self.current_village, [])
+        self.current_user = user_id
+        if self.current_user:
+            self.current_profile = self.memory_store.get_profile(self.current_user)
+            self.current_persona_mode = persona_mode or self.current_profile.get("persona_mode") or "tourist"
+            history = self.memory_store.get_history(self.current_user, self.current_village)
+        else:
+            self.current_profile = None
+            self.current_persona_mode = persona_mode or "tourist"
+            history = self.conversation_history.get(self.current_village, [])
 
         # 0. 如果问题像复杂任务，先尝试 Planner + 工具调用
         orchestrator_result = self._run_orchestrator(question, history)
         if orchestrator_result and orchestrator_result.get("handled"):
             answer = orchestrator_result["answer"]
+            answer = self._attach_local_guide(question, self.current_village, answer)
             self.last_plan = orchestrator_result.get("plan")
             self.last_tool_results = orchestrator_result.get("tool_results")
             self.last_evidence = self._extract_evidence(orchestrator_result.get("tool_results"))
@@ -108,8 +127,12 @@ class VillageAgent:
         # 2. 组装档案资料
         archive_text = self._format_archive(results)
 
-        # 3. 组装 system prompt（村寨人格）
-        system_prompt = build_system_prompt(self.current_village)
+        # 3. 组装 system prompt（村寨人格 + 讲解模式 + 用户画像）
+        system_prompt = build_system_prompt(
+            self.current_village,
+            persona_mode=self.current_persona_mode,
+            user_profile=self.current_profile,
+        )
 
         # 4. 组装 user prompt（问题 + 档案资料）
         user_prompt = self._build_user_prompt(question, archive_text)
@@ -137,6 +160,7 @@ class VillageAgent:
         if verification.get("revised_answer"):
             answer = verification["revised_answer"]
         self.last_verification = verification
+        answer = self._attach_local_guide(question, self.current_village, answer)
         self.last_plan = {
             "is_complex": False,
             "task_type": "archive_qa",
@@ -144,12 +168,8 @@ class VillageAgent:
             "steps": [],
         }
 
-        # 8. 保存本轮对话记忆
-        history.append({"role": "user", "content": question})
-        history.append({"role": "assistant", "content": answer})
-        if len(history) > HISTORY_LIMIT * 2:
-            history = history[-HISTORY_LIMIT * 2:]
-        self.conversation_history[self.current_village] = history
+        # 8. 保存本轮对话记忆：登录用户写入数据库，游客写入页面内存
+        self._remember(question, answer, history)
 
         return answer
 
@@ -175,6 +195,67 @@ class VillageAgent:
                     })
         return evidence
 
+    @staticmethod
+    def _platform_search_url(keyword: str, platform: str = "xiaohongshu") -> str:
+        if platform == "douyin":
+            return "https://www.douyin.com/search/" + quote(keyword)
+        return (
+            "https://www.xiaohongshu.com/search_result?keyword="
+            + quote(keyword)
+            + "&source=web_search_result_notes"
+        )
+
+    def _resolve_guide_village(self, question, village=None):
+        q = question or ""
+        for name in VILLAGE_COORDS:
+            if name and name in q:
+                return name
+        return village or self.current_village
+
+    def _local_guide_block(self, question, village=None):
+        q = question or ""
+        target = self._resolve_guide_village(q, village)
+        if not target:
+            return ""
+
+        exp = VILLAGE_EXPERIENCE.get(target, {})
+        lodging = VILLAGE_LODGING.get(target, "")
+
+        want_attraction = any(hint in q for hint in LOCAL_GUIDE_ATTRACTION_HINTS)
+        want_food = any(hint in q for hint in LOCAL_GUIDE_FOOD_HINTS)
+        want_lodging = any(hint in q for hint in LOCAL_GUIDE_LODGING_HINTS)
+        if not (want_attraction or want_food or want_lodging):
+            return ""
+
+        lines = ["", "📍 本地攻略直达："]
+
+        if want_attraction:
+            for name in exp.get("attractions", [])[:3]:
+                xhs = self._platform_search_url(f"{target} {name} 景点", "xiaohongshu")
+                dy = self._platform_search_url(f"{target} {name}", "douyin")
+                lines.append(f"- {name}：[小红书]({xhs}) · [抖音]({dy})")
+
+        if want_food:
+            for name in exp.get("food", [])[:3]:
+                xhs = self._platform_search_url(f"{target} {name} 美食", "xiaohongshu")
+                dy = self._platform_search_url(f"{target} {name}", "douyin")
+                lines.append(f"- {name}：[小红书]({xhs}) · [抖音]({dy})")
+
+        if want_lodging and lodging:
+            xhs = self._platform_search_url(f"{target} 住宿 {lodging}", "xiaohongshu")
+            dy = self._platform_search_url(f"{target} 住宿", "douyin")
+            lines.append(f"- 住宿参考：[小红书]({xhs}) · [抖音]({dy})")
+
+        if len(lines) == 2:
+            return ""
+        return "\n".join(lines)
+
+    def _attach_local_guide(self, question, village, answer):
+        block = self._local_guide_block(question, village)
+        if not block or not answer:
+            return answer
+        return answer.rstrip() + "\n" + block
+
     def _run_fact_checker(self, question: str, answer: str, evidence_text: str):
         """?????? Agent ????????????"""
         if self.fact_checker is None:
@@ -192,7 +273,18 @@ class VillageAgent:
         )
 
     def _remember(self, question: str, answer: str, history: list) -> None:
-        """?????????????????"""
+        """保存本轮对话：登录用户写入持久化记忆，游客写入内存。"""
+        if self.current_user:
+            self.memory_store.append_turn(self.current_user, self.current_village, "user", question)
+            self.memory_store.append_turn(self.current_user, self.current_village, "assistant", answer)
+            self.memory_store.update_profile(
+                self.current_user,
+                persona_mode=self.current_persona_mode,
+                village=self.current_village,
+                question=question,
+            )
+            return
+
         history.append({"role": "user", "content": question})
         history.append({"role": "assistant", "content": answer})
         if len(history) > HISTORY_LIMIT * 2:

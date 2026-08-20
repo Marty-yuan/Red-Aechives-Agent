@@ -51,6 +51,17 @@ WEB_HOST = os.environ.get("WEB_HOST", "0.0.0.0")
 WEB_PORT = int(os.environ.get("WEB_PORT", "5000"))
 WEB_DEBUG = os.environ.get("WEB_DEBUG", "0") == "1"
 
+# ===================== 用户记忆与登录 =====================
+SECRET_KEY = os.environ.get("RED_ARCHIVE_SECRET_KEY", "red-archives-agent-local-secret")
+USER_MEMORY_DIR = os.path.join(PROJECT_DIR, "data", "user_memory")
+
+# PostgreSQL 数据库：未配置时保持本地 JSON fallback
+DATABASE_URL = os.environ.get("RED_ARCHIVE_DATABASE_URL", "")
+
+# JWT 网站登录
+JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", SECRET_KEY)
+JWT_EXPIRE_HOURS = int(os.environ.get("JWT_EXPIRE_HOURS", "168"))
+
 # ===================== 村寨列表 =====================
 VILLAGES = [
     "皎平渡", "石鼓", "扎西", "寻甸", "柯渡", "楚雄",

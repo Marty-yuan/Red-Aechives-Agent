@@ -1,4 +1,4 @@
-﻿# Python
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -20,6 +20,8 @@ Thumbs.db
 data/ocr_output/
 data/index/
 data/tmp/
+data/user_memory/
+.docker/
 render_out/
 config/
 
@@ -41,3 +43,5 @@ src/ocr/test_mineru.py
 # Office / generated
 *.docx
 *.pdf
+.pytest_cache/
+data/tts/

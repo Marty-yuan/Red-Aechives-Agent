@@ -1,0 +1,19 @@
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: red-archives-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: red_archives
+      POSTGRES_USER: red_agent
+      POSTGRES_PASSWORD: red_agent_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./.docker/pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U red_agent -d red_archives"]
+      interval: 5s
+      timeout: 3s
+      retries: 10

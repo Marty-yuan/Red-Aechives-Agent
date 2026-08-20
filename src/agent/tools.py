@@ -9,10 +9,11 @@ ToolRegistry 负责真正执行工具，并返回可读结果。
 """
 import json
 import math
+from urllib.parse import quote
 from typing import Any, Dict, List, Optional
 
 from . import config
-from .knowledge import ROUTES, TIMELINE, VILLAGE_COORDS, VILLAGE_EXPERIENCE
+from .knowledge import ROUTES, TIMELINE, VILLAGE_COORDS, VILLAGE_ENERGY, VILLAGE_EXPERIENCE, VILLAGE_LODGING
 from .graph_store import KnowledgeGraphStore
 from .retriever import ArchiveRetriever
 
@@ -99,19 +100,24 @@ class ToolRegistry:
                 },
             },
             {
-                "name": "generate_study_route",
-                "description": "根据村寨、天数和主题生成红色研学路线，返回每天的参观点、事件、年份和部队。",
+                                "name": "generate_study_route",
+                "description": "根据村寨、天数和偏好生成多套红色研学路线，包含推荐方案、备选方案、交通时间、住宿建议、每日体力值和景点/美食参考链接。",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "villages": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "可选，指定村寨名称列表，例如：[\"扎西\", \"皎平渡\", \"石鼓\"]"
+                            "description": "可选，指定村寨名称列表，例如：扎西、皎平渡、石鼓"
                         },
                         "days": {"type": "integer", "description": "可选，计划天数，默认按村寨数量自动估算"},
                         "theme": {"type": "string", "description": "可选，主题，例如：中央红军、红二六军团、渡江战役、扎西会议"},
-                        "start": {"type": "string", "description": "可选，起点村寨"}
+                        "start": {"type": "string", "description": "可选，起点村寨"},
+                        "travel_style": {"type": "string", "description": "可选，路线策略：historical=历史顺序，nearest=最少车程，low_energy=低体力精简"},
+                        "low_energy": {"type": "boolean", "description": "可选，是否低体力/轻松"},
+                        "food_focus": {"type": "boolean", "description": "可选，是否重点推荐美食"},
+                        "family": {"type": "boolean", "description": "可选，是否亲子出行"},
+                        "group": {"type": "string", "description": "可选，出行人群，例如：亲子、老人、研究者、学生"}
                     }
                 },
             },
@@ -229,12 +235,29 @@ class ToolRegistry:
         days: Optional[int] = None,
         theme: Optional[str] = None,
         start: Optional[str] = None,
+        travel_style: Optional[str] = None,
+        low_energy: bool = False,
+        food_focus: bool = False,
+        family: bool = False,
+        group: Optional[str] = None,
     ) -> str:
-        """生成结构更完整的研学路线：时间、景点、美食、交通。"""
+        """生成多套红色研学路线：推荐方案、备选方案、交通、住宿、体力值与参考链接。"""
         if isinstance(villages, str):
             villages = [v.strip() for v in villages.replace("，", ",").split(",") if v.strip()]
         if not isinstance(villages, list):
             villages = []
+
+        provided_villages = bool(villages or start)
+
+        preferences = {
+            "travel_style": (travel_style or "historical").lower(),
+            "low_energy": bool(low_energy or family),
+            "food_focus": bool(food_focus),
+            "family": bool(family),
+            "group": group or "通用",
+        }
+        if preferences["travel_style"] not in {"historical", "nearest", "low_energy"}:
+            preferences["travel_style"] = "low_energy" if preferences["low_energy"] else "historical"
 
         if start and start not in villages:
             villages.insert(0, start)
@@ -243,6 +266,7 @@ class ToolRegistry:
             villages = self._default_route_villages()
 
         valid, unknown = self._validate_villages(villages)
+        valid = self._dedupe_villages(valid)
         if not valid:
             return json.dumps({
                 "message": "没有找到可用的村寨，请提供明确村寨名。",
@@ -257,49 +281,306 @@ class ToolRegistry:
 
         if requested_days and len(valid) == 1:
             valid = self._expand_single_route(valid[0], requested_days)
+            valid = self._dedupe_villages(valid)
 
-        ordered = self._order_villages(valid)
-        stop_count = len(ordered)
-        days = max(1, min(int(days or math.ceil(stop_count / 2)), stop_count))
-        per_day = math.ceil(stop_count / days)
+        route_days = self._resolve_route_days(valid, requested_days)
 
+        force_one_per_day = False
+        if not provided_villages and requested_days and len(valid) > route_days:
+            valid = self._select_compact_route(valid, route_days, start)
+            force_one_per_day = True
+
+        historical_order = self._order_villages(valid)
+        nearest_order = self._order_nearest(valid, start)
+        low_order = self._order_low_energy(valid, route_days)
+
+        style = preferences["travel_style"]
+        if style == "nearest":
+            selected_order, selected_label, selected_strategy = nearest_order, "推荐方案", "最少车程"
+        elif style == "low_energy":
+            selected_order, selected_label, selected_strategy = low_order, "推荐方案", "低体力精简"
+        else:
+            selected_order, selected_label, selected_strategy = historical_order, "推荐方案", "历史顺序"
+
+        route_prefix = f"{theme or '云南红军长征'}红色研学路线"
+        selected_payload = self._build_route_payload(selected_order, route_days, route_prefix, selected_strategy, one_per_day=force_one_per_day)
+
+        if style == "nearest":
+            alt_order = historical_order
+            alt_label, alt_strategy = "备选方案", "历史顺序"
+        elif style == "low_energy":
+            alt_order = historical_order if historical_order != low_order else nearest_order
+            alt_label, alt_strategy = "备选方案", "历史顺序" if alt_order == historical_order else "最少车程"
+        else:
+            alt_order = low_order if low_order != historical_order else nearest_order
+            alt_label, alt_strategy = "备选方案", "低体力精简" if alt_order == low_order else "最少车程"
+
+        alt_payload = self._build_route_payload(alt_order, route_days, route_prefix, alt_strategy, one_per_day=force_one_per_day)
+
+        recommended_plan = {
+            "id": "recommended",
+            "label": selected_label,
+            "strategy": selected_strategy,
+            "reason": self._plan_reason(selected_strategy, preferences),
+            **selected_payload,
+        }
+        alternative_plan = {
+            "id": "alternative",
+            "label": alt_label,
+            "strategy": alt_strategy,
+            "reason": self._plan_reason(alt_strategy, preferences),
+            **alt_payload,
+        }
+
+        return json.dumps({
+            **selected_payload,
+            "preferences": preferences,
+            "plans": [recommended_plan, alternative_plan],
+            "why_not_other_routes": self._why_not_other_routes(selected_strategy, alt_strategy, preferences),
+            "unknown_villages": unknown,
+        }, ensure_ascii=False, indent=2)
+
+    def _resolve_route_days(self, villages: List[str], requested_days: Optional[int]) -> int:
+        count = len(villages)
+        if count <= 0:
+            return 1
+        if requested_days is None:
+            return max(1, math.ceil(count / 2))
+        return max(1, min(int(requested_days), count))
+
+    def _build_route_payload(self, ordered: List[str], days: int, route_name: str, strategy: str, one_per_day: bool = False) -> Dict[str, Any]:
+        count = len(ordered)
+        if count == 0:
+            return {
+                "route_name": route_name,
+                "strategy": strategy,
+                "days": 0,
+                "stop_count": 0,
+                "stops": [],
+                "travel_segments": [],
+                "daily_energy": [],
+                "daily_lodging": [],
+            }
+
+        durations = [int(VILLAGE_EXPERIENCE.get(name, {}).get("duration_hours", 3)) for name in ordered]
+        assignments = self._assign_days(ordered, durations, strategy, one_per_day=one_per_day)
+        actual_days = max(assignments) if assignments else 1
+        day_slots = {}
         stops = []
         for idx, name in enumerate(ordered):
-            day = min(days, idx // per_day + 1)
-            slot_index = idx % per_day
-            profile = VILLAGE_COORDS[name]
-            exp = VILLAGE_EXPERIENCE.get(name, {})
-            events = [e for e in TIMELINE if e.get("village") == name]
-            stops.append({
-                "day": day,
-                "order": idx + 1,
-                "name": name,
-                "city": profile.get("city", ""),
-                "event": profile.get("event", ""),
-                "year": profile.get("year", ""),
-                "army": profile.get("army", ""),
-                "lat": profile.get("lat"),
-                "lng": profile.get("lng"),
-                "visit_time": self._visit_window(slot_index),
-                "duration_hours": exp.get("duration_hours", 3),
-                "attractions": exp.get("attractions", []),
-                "food": exp.get("food", []),
-                "tips": exp.get("tips", ""),
-                "timeline_events": events,
-            })
+            day = assignments[idx]
+            slot_index = day_slots.get(day, 0)
+            stops.append(self._build_route_stop(name, day, idx + 1, slot_index))
+            day_slots[day] = slot_index + 1
 
         travel_segments = []
         for i in range(len(ordered) - 1):
             travel_segments.append(self._travel_segment(ordered[i], ordered[i + 1]))
 
-        return json.dumps({
-            "route_name": f"{theme or '云南红军长征'}红色研学路线",
-            "days": days,
-            "stop_count": stop_count,
+        return {
+            "route_name": route_name,
+            "strategy": strategy,
+            "days": actual_days,
+            "stop_count": count,
             "stops": stops,
             "travel_segments": travel_segments,
-            "unknown_villages": unknown,
-        }, ensure_ascii=False, indent=2)
+            "daily_energy": self._summarize_daily_energy(stops),
+            "daily_lodging": self._summarize_daily_lodging(stops),
+        }
+
+    def _assign_days(self, ordered: List[str], durations: List[int], strategy: str, one_per_day: bool = False) -> List[int]:
+        """按车程和游玩时长把村寨分配到每天，避免一天内出现无法完成的长途转场。"""
+        if not ordered:
+            return []
+        if one_per_day:
+            return list(range(1, len(ordered) + 1))
+        max_stops_per_day = 2 if strategy == "低体力精简" else 3
+        daily_capacity = 8.0 if strategy == "低体力精简" else 10.0
+
+        assignments = [1] * len(ordered)
+        day = 1
+        used = float(durations[0])
+        stop_count = 1
+
+        for idx in range(1, len(ordered)):
+            transfer = self._segment_travel_hours(ordered[idx - 1], ordered[idx])
+            duration = float(durations[idx])
+            can_fit = (
+                stop_count < max_stops_per_day
+                and transfer + duration <= daily_capacity - used
+            )
+            if can_fit:
+                used += transfer + duration
+                stop_count += 1
+            else:
+                day += 1
+                used = duration
+                stop_count = 1
+            assignments[idx] = day
+
+        return assignments
+
+    def _segment_travel_hours(self, origin: str, destination: str) -> float:
+        """返回两个村寨之间的估算驾车小时数。"""
+        segment = self._travel_segment(origin, destination)
+        return float(segment.get("estimated_travel_hours", 0.0))
+
+    def _build_route_stop(self, name: str, day: int, order: int, slot_index: int) -> Dict[str, Any]:
+        profile = VILLAGE_COORDS[name]
+        exp = VILLAGE_EXPERIENCE.get(name, {})
+        events = [e for e in TIMELINE if e.get("village") == name]
+        attractions = exp.get("attractions", [])
+        food = exp.get("food", [])
+        lodging = VILLAGE_LODGING.get(name, "")
+        return {
+            "day": day,
+            "order": order,
+            "name": name,
+            "city": profile.get("city", ""),
+            "event": profile.get("event", ""),
+            "year": profile.get("year", ""),
+            "army": profile.get("army", ""),
+            "lat": profile.get("lat"),
+            "lng": profile.get("lng"),
+            "visit_time": self._visit_window(slot_index),
+            "duration_hours": exp.get("duration_hours", 3),
+            "energy_level": int(VILLAGE_ENERGY.get(name, 2)),
+            "attractions": attractions,
+            "attraction_links": self._make_links(attractions, f"{name} 红色旅游 景点"),
+            "food": food,
+            "food_links": self._make_links(food, f"{name} 特色美食"),
+            "lodging": lodging,
+            "lodging_link": self._make_link(lodging, f"{name} 住宿") if lodging else None,
+            "tips": exp.get("tips", ""),
+            "timeline_events": events,
+        }
+
+    def _make_links(self, names: List[str], keyword: str) -> List[Dict[str, str]]:
+        return [{"name": n, "url": self._xhs_search_url(f"{keyword} {n}")} for n in names if n]
+
+    def _make_link(self, name: str, keyword: str) -> Optional[Dict[str, str]]:
+        if not name:
+            return None
+        return {"name": name, "url": self._xhs_search_url(f"{keyword} {name}")}
+
+    @staticmethod
+    def _xhs_search_url(keyword: str) -> str:
+        return "https://www.xiaohongshu.com/search_result?keyword=" + quote(keyword) + "&source=web_search_result_notes"
+
+    def _summarize_daily_energy(self, stops: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        sums = {}
+        for stop in stops:
+            day = stop.get("day", 1)
+            sums[day] = sums.get(day, 0) + int(stop.get("energy_level", 2))
+        result = []
+        for day in sorted(sums):
+            score = sums[day]
+            level = "轻松" if score <= 3 else ("适中" if score <= 6 else "较耗体力")
+            result.append({"day": day, "score": score, "level": level})
+        return result
+
+    def _summarize_daily_lodging(self, stops: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        day_stops = {}
+        for stop in stops:
+            day_stops.setdefault(stop.get("day", 1), []).append(stop)
+        result = []
+        for day in sorted(day_stops):
+            last = day_stops[day][-1]
+            if last.get("lodging"):
+                result.append({
+                    "day": day,
+                    "village": last.get("name", ""),
+                    "lodging": last.get("lodging", ""),
+                    "lodging_link": last.get("lodging_link"),
+                })
+        return result
+
+    def _dedupe_villages(self, villages: List[str]) -> List[str]:
+        """把坐标相同的别名村寨合并，避免生成 0 公里转场。"""
+        result = []
+        seen = set()
+        for name in villages:
+            profile = VILLAGE_COORDS.get(name)
+            key = (round(profile["lat"], 4), round(profile["lng"], 4)) if profile else name
+            if key not in seen:
+                seen.add(key)
+                result.append(name)
+        return result
+
+    def _select_compact_route(self, villages: List[str], max_stops: int, start: Optional[str] = None) -> List[str]:
+        """没有明确村寨时，从候选地里选出一小簇彼此较近的村寨，避免横跨全省。"""
+        villages = list(villages)
+        max_stops = max(1, min(len(villages), int(max_stops or 1)))
+        if len(villages) <= max_stops:
+            return self._order_nearest(villages, start)
+
+        best = None
+        best_cost = float("inf")
+        for anchor in villages:
+            candidate = self._order_nearest(villages, anchor)[:max_stops]
+            cost = self._route_cost(candidate)
+            if cost < best_cost:
+                best_cost = cost
+                best = candidate
+        return best or villages[:max_stops]
+
+    def _route_cost(self, ordered: List[str]) -> float:
+        if len(ordered) <= 1:
+            return 0.0
+        return sum(self._segment_travel_hours(ordered[i], ordered[i + 1]) for i in range(len(ordered) - 1))
+
+    def _order_nearest(self, villages: List[str], start: Optional[str] = None) -> List[str]:
+        remaining = list(villages)
+        if not remaining:
+            return []
+        current = start if start in remaining else self._order_villages(remaining)[0]
+        ordered = []
+        while remaining:
+            if current in remaining:
+                remaining.remove(current)
+            else:
+                current = min(remaining, key=lambda v: self._haversine(
+                    VILLAGE_COORDS[ordered[-1]]["lat"], VILLAGE_COORDS[ordered[-1]]["lng"],
+                    VILLAGE_COORDS[v]["lat"], VILLAGE_COORDS[v]["lng"],
+                ))
+                remaining.remove(current)
+            ordered.append(current)
+            if remaining:
+                current = min(remaining, key=lambda v: self._haversine(
+                    VILLAGE_COORDS[current]["lat"], VILLAGE_COORDS[current]["lng"],
+                    VILLAGE_COORDS[v]["lat"], VILLAGE_COORDS[v]["lng"],
+                ))
+        return ordered
+
+    def _order_low_energy(self, villages: List[str], days: int) -> List[str]:
+        max_stops = max(2, min(len(villages), int(days or 1) * 2))
+        candidates = sorted(villages, key=lambda v: (int(VILLAGE_ENERGY.get(v, 2)), self._earliest_date(v)))
+        selected = set(candidates[:max_stops])
+        return [v for v in self._order_villages(villages) if v in selected]
+
+    def _plan_reason(self, strategy: str, preferences: Dict[str, Any]) -> str:
+        if strategy == "低体力精简":
+            base = "每日只保留核心村寨，减少徒步和转场强度，适合亲子、老人或低体力用户。"
+            if preferences.get("food_focus"):
+                base += "同时突出当地特色美食。"
+            return base
+        if strategy == "最少车程":
+            return "优先选择相邻村寨串线，减少跨地车程，适合时间紧张或不想久坐车的用户。"
+        return "按长征历史时间先后串联，历史脉络最完整，适合研究者或希望系统了解长征的用户。"
+
+    def _why_not_other_routes(self, selected_strategy: str, alt_strategy: str, preferences: Dict[str, Any]) -> List[str]:
+        reasons = []
+        if selected_strategy == "低体力精简":
+            reasons.append("未把历史顺序作为默认：完整历史线村寨更多，每天体力消耗更高，不适合亲子或低体力出行。")
+            reasons.append("未把最少车程作为默认：它会优先省路程，但可能打乱长征事件发生顺序。")
+        elif selected_strategy == "最少车程":
+            reasons.append("未把历史顺序作为默认：历史顺序更完整，但会增加往返车程。")
+            reasons.append("未把低体力精简作为默认：你未明确要求低体力，当前方案优先减少车程。")
+        else:
+            reasons.append("未把低体力精简作为默认：它会减少每日村寨数量，历史覆盖不如完整历史线。")
+            reasons.append("未把最少车程作为默认：它可以少坐车，但会打乱历史叙事顺序。")
+        return reasons
+
 
     def _expand_single_route(self, start: str, target_days) -> List[str]:
         """从单个村寨出发时，按长征路线顺序自动扩展为多日行程。"""
@@ -392,6 +673,7 @@ class ToolRegistry:
             "to": destination,
             "straight_km": round(straight_km, 1),
             "estimated_road_km": road_km,
+            "estimated_travel_hours": round(hours, 2),
             "estimated_travel_time": f"{int(hours)}小时{round((hours - int(hours)) * 60)}分钟",
         }
 

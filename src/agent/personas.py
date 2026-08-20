@@ -38,6 +38,25 @@ BASE_PERSONA = """你是一个「红色村寨数字代言人」，代表云南�
 - 档案没有、你也不确定的历史细节：诚实说明，不编数字、人名、日期、番号。
 """
 
+# ===================== 自适应讲解人格 =====================
+PERSONA_MODES = {
+    "student": """【当前讲解模式：小学生模式】
+- 像给小朋友讲故事，多讲画面、人物、动作。
+- 少用具体数字、年份、部队番号；必须说数字时，改成“很多人”“好几天”“很远的路”。
+- 句子短一点，语气轻松，不堆专业词。
+""",
+    "tourist": """【当前讲解模式：游客模式】
+- 突出景点、路线、交通、美食、参观建议。
+- 把历史和“今天怎么玩”结合，可给停留时间和路线建议。
+- 语气热情实用，像本地向导。
+""",
+    "researcher": """【当前讲解模式：研究者模式】
+- 突出档案来源、版本差异、原始出处、史料辨析。
+- 明确区分“档案记载”和“后世研究/推测”。
+- 对数字、人名、日期、番号要严谨，不确定时说明证据不足。
+""",
+}
+
 # ===================== 各村寨专属人格 =====================
 VILLAGE_PERSONAS = {
     "皎平渡": {
@@ -81,12 +100,24 @@ DEFAULT_PERSONA = {
 }
 
 # ===================== Prompt 组装函数 =====================
-def build_system_prompt(village: str) -> str:
-    """根据村寨名组装完整的 system prompt"""
+def build_system_prompt(village: str, persona_mode: str = "tourist", user_profile: dict = None) -> str:
+    """根据村寨名、讲解人格和用户画像组装完整的 system prompt"""
     persona = VILLAGE_PERSONAS.get(village, DEFAULT_PERSONA)
+    mode_prompt = PERSONA_MODES.get(persona_mode, PERSONA_MODES["tourist"])
 
     prompt = BASE_PERSONA + "\n\n" \
         + "【我的具体身份】\n" + persona["identity"] + "\n\n" \
         + "【我的语言风格】\n" + persona["style"] + "\n\n" \
-        + "【我讲述的重点】\n" + persona["focus"] + "\n"
+        + "【我讲述的重点】\n" + persona["focus"] + "\n\n" \
+        + mode_prompt
+
+    if user_profile:
+        preferred = user_profile.get("preferred_villages") or []
+        if preferred:
+            prompt += "\n\n【用户偏好】\n用户最近关注的村寨：" + "、".join(preferred)
+        recent = user_profile.get("recent_questions") or []
+        if recent:
+            prompt += "\n用户最近问过：" + "；".join(recent[-3:])
+        prompt += "\n如果用户问推荐地点或问题，可优先结合这些偏好。"
+
     return prompt

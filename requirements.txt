@@ -12,6 +12,11 @@ python-dotenv>=1.0.0
 # ===== Web =====
 flask>=3.0.0
 
+# ===== 网站真实登录：数据库 + JWT =====
+sqlalchemy>=2.0.0
+psycopg[binary]>=3.2.0
+PyJWT>=2.10.0
+
 # ===== 语音 =====
 edge-tts>=6.1.0
 
