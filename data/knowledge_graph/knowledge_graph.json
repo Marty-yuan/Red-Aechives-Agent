@@ -3,7 +3,16 @@
     "name": "云南红军长征档案知识图谱（含 OCR 自动抽取）",
     "version": "auto-0.1",
     "base_entity_count": 536,
-    "base_relation_count": 352
+    "base_relation_count": 352,
+    "entity_count": 530,
+    "relation_count": 349,
+    "review_applied_at": "2026-08-20T12:43:34",
+    "review_required_count": 0,
+    "entity_renames": {
+      "红军绝对保护回家工农群伞利益": "红军绝对保护回家工农群众利益",
+      "巡密司": "巡检司",
+      "佘滔鸿": "佘鸿"
+    }
   },
   "entities": [
     {
@@ -5297,18 +5306,20 @@
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "approved"
     },
     {
       "id": "D_4006CDCD",
       "type": "document",
-      "name": "红军绝对保护回家工农群伞利益",
+      "name": "红军绝对保护回家工农群众利益",
       "aliases": [],
       "description": "红军写在清真寺墙上的标语",
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "renamed"
     },
     {
       "id": "P_30C2E2DF",
@@ -5374,7 +5385,8 @@
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "approved"
     },
     {
       "id": "L_60985D38",
@@ -5396,7 +5408,8 @@
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "approved"
     },
     {
       "id": "L_AE971B47",
@@ -5407,7 +5420,8 @@
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "approved"
     },
     {
       "id": "L_88191444",
@@ -5418,18 +5432,20 @@
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "approved"
     },
     {
       "id": "L_26CF443A",
       "type": "location",
-      "name": "巡密司",
+      "name": "巡检司",
       "aliases": [],
       "description": "地名",
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "renamed"
     },
     {
       "id": "L_7038134E",
@@ -5440,7 +5456,8 @@
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "approved"
     },
     {
       "id": "L_E915ADD0",
@@ -5462,7 +5479,8 @@
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "approved"
     },
     {
       "id": "L_E6304603",
@@ -5473,7 +5491,8 @@
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "approved"
     },
     {
       "id": "L_4D74C8E0",
@@ -5484,7 +5503,8 @@
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "approved"
     },
     {
       "id": "L_B9E4BC0B",
@@ -5506,7 +5526,8 @@
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "approved"
     },
     {
       "id": "A_53093410",
@@ -5740,17 +5761,6 @@
       "confidence": 0.8
     },
     {
-      "id": "P_7FD9831C",
-      "type": "person",
-      "name": "刘云",
-      "aliases": [],
-      "description": "红军将领",
-      "properties": {},
-      "source": "reextract",
-      "evidence": "",
-      "confidence": 0.8
-    },
-    {
       "id": "P_D9A57210",
       "type": "person",
       "name": "张伟",
@@ -5759,7 +5769,8 @@
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "approved"
     },
     {
       "id": "L_4055A5E6",
@@ -5770,7 +5781,8 @@
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "approved"
     },
     {
       "id": "L_3A103C91",
@@ -5781,18 +5793,8 @@
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
-    },
-    {
-      "id": "P_7829A0CF",
-      "type": "person",
-      "name": "杨裁缝",
-      "aliases": [],
-      "description": "丽江裁缝，红军请他缝米袋",
-      "properties": {},
-      "source": "reextract",
-      "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "approved"
     },
     {
       "id": "P_D283B175",
@@ -5830,46 +5832,14 @@
     {
       "id": "P_54B8EB4F",
       "type": "person",
-      "name": "佘滔鸿",
+      "name": "佘鸿",
       "aliases": [],
       "description": "干部团上下队政委",
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
-    },
-    {
-      "id": "P_8041309C",
-      "type": "person",
-      "name": "夏才蚁",
-      "aliases": [],
-      "description": "干部团干部",
-      "properties": {},
-      "source": "reextract",
-      "evidence": "",
-      "confidence": 0.8
-    },
-    {
-      "id": "L_1B8376FD",
-      "type": "location",
-      "name": "七林夫",
-      "aliases": [],
-      "description": "威信县地名",
-      "properties": {},
-      "source": "reextract",
-      "evidence": "",
-      "confidence": 0.8
-    },
-    {
-      "id": "L_88BE0779",
-      "type": "location",
-      "name": "林风",
-      "aliases": [],
-      "description": "威信县地名",
-      "properties": {},
-      "source": "reextract",
-      "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "renamed"
     },
     {
       "id": "O_7771BDCA",
@@ -5902,18 +5872,8 @@
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
-    },
-    {
-      "id": "P_D727D629",
-      "type": "person",
-      "name": "陈参谋",
-      "aliases": [],
-      "description": "军委参谋",
-      "properties": {},
-      "source": "reextract",
-      "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "approved"
     },
     {
       "id": "L_CBAA0237",
@@ -5935,7 +5895,8 @@
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "approved"
     },
     {
       "id": "L_197760F6",
@@ -5957,7 +5918,8 @@
       "properties": {},
       "source": "reextract",
       "evidence": "",
-      "confidence": 0.8
+      "confidence": 0.8,
+      "review_status": "approved"
     },
     {
       "id": "O_2840FFDB",
@@ -9399,17 +9361,6 @@
       "confidence": 0.8
     },
     {
-      "id": "X_DD203962",
-      "source": "A_23870286",
-      "target": "P_7829A0CF",
-      "relation": "related_to",
-      "label": "求助对象",
-      "properties": {},
-      "source_file": "reextract",
-      "evidence": "",
-      "confidence": 0.8
-    },
-    {
       "id": "X_4308CD36",
       "source": "A_23870286",
       "target": "P_D283B175",
@@ -9586,17 +9537,6 @@
       "confidence": 0.8
     },
     {
-      "id": "X_49E51B62",
-      "source": "P_8041309C",
-      "target": "O_AF564221",
-      "relation": "member_of",
-      "label": "成员",
-      "properties": {},
-      "source_file": "reextract",
-      "evidence": "",
-      "confidence": 0.8
-    },
-    {
       "id": "X_355CD84B",
       "source": "A_66EBB4A0",
       "target": "P_40186CB2",
@@ -9624,17 +9564,6 @@
       "target": "O_C729DDA0",
       "relation": "member_of",
       "label": "区长",
-      "properties": {},
-      "source_file": "reextract",
-      "evidence": "",
-      "confidence": 0.8
-    },
-    {
-      "id": "X_F435A92C",
-      "source": "P_D727D629",
-      "target": "O_2840FFDB",
-      "relation": "member_of",
-      "label": "参谋",
       "properties": {},
       "source_file": "reextract",
       "evidence": "",

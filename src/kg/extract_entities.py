@@ -56,6 +56,8 @@ TYPE_PREFIX = {
 }
 
 ALLOWED_ENTITY_TYPES = set(TYPE_PREFIX)
+_JUNK_ENTITY_NAMES = {"", "...", "…", "。。", "??", "未命名", "不详"}
+
 ALLOWED_RELATIONS = {
     "commander", "participant", "occurred_at", "located_in", "army",
     "next_event", "next_on_route", "alias", "member_of", "related_to",
@@ -145,19 +147,70 @@ def chunk_text(text: str, max_chars: int = 3500, overlap: int = 300) -> List[str
     return chunks
 
 
+def _extract_balanced_json(text: str, start: int) -> Optional[str]:
+    """从 start 处的左花括号开始，提取第一个配对完整的 JSON 对象字符串。"""
+    depth = 0
+    in_string = False
+    escaped = False
+    for idx in range(start, len(text)):
+        ch = text[idx]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:idx + 1]
+    return None
+
+
 def parse_llm_json(content: str) -> Dict[str, Any]:
-    """稳健解析 LLM 返回的 JSON。"""
+    """稳健解析 LLM 返回的 JSON，兼容多余文本和多个 JSON 对象。"""
     content = (content or "").strip()
     content = re.sub(r"^```(?:json)?\s*", "", content)
     content = re.sub(r"\s*```$", "", content)
     try:
         return json.loads(content)
     except Exception:
-        start = content.find("{")
-        end = content.rfind("}")
-        if start == -1 or end == -1:
-            raise
-        return json.loads(content[start:end + 1])
+        pass
+
+    candidates: List[Tuple[int, Dict[str, Any]]] = []
+    search_from = 0
+    while True:
+        start = content.find("{", search_from)
+        if start == -1:
+            break
+        obj_text = _extract_balanced_json(content, start)
+        if obj_text is None:
+            break
+        search_from = start + len(obj_text)
+        try:
+            parsed = json.loads(obj_text)
+        except Exception:
+            continue
+        if isinstance(parsed, dict):
+            candidates.append((start, parsed))
+
+    for _, data in candidates:
+        if "entities" in data or "relations" in data:
+            return data
+    for _, data in candidates:
+        return data
+
+    start = content.find("{")
+    end = content.rfind("}")
+    if start == -1 or end == -1:
+        raise ValueError("no JSON object found")
+    return json.loads(content[start:end + 1])
 
 
 def coerce_entity_type(raw_type: str) -> str:
@@ -194,6 +247,7 @@ class LLMExtractor:
             self.client = OpenAI(
                 api_key=self.api_key,
                 base_url=config.BASE_URL,
+                timeout=60.0,
             )
 
     def extract_chunk(self, text: str, source: str, existing_names: List[str]) -> Dict[str, Any]:
@@ -243,17 +297,25 @@ class LLMExtractor:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            temperature=0.1,
-            max_tokens=4000,
+            temperature=0.0,
+            max_tokens=8192,
             response_format={"type": "json_object"},
         )
 
-        content = response.choices[0].message.content or "{}"
+        message = response.choices[0].message
+        content = getattr(message, "content", "") or ""
+        if not content.strip():
+            content = getattr(message, "reasoning_content", "") or ""
+        if not content.strip():
+            return {"entities": [], "relations": []}
         try:
             return parse_llm_json(content)
         except Exception as first_error:
-            print(f"  JSON 解析失败，尝试让模型修复：{first_error}")
-            return self._repair_json(content)
+            if "{" not in (content or ""):
+                print(f"  JSON 解析失败，内容无 JSON 对象，跳过修复：{first_error}")
+                return {"entities": [], "relations": []}
+            print(f"  JSON 解析失败，跳过修复并返回空结果：{first_error}")
+            return {"entities": [], "relations": []}
 
     def _repair_json(self, broken_json: str) -> Dict[str, Any]:
         """让模型把不合法 JSON 修复为合法 JSON。"""
@@ -262,7 +324,7 @@ class LLMExtractor:
             messages=[
                 {
                     "role": "system",
-                    "content": "你是 JSON 修复器。只输出修复后的合法 JSON，不要解释。",
+                    "content": "你是 JSON 修复器。只输出修复后的合法 JSON，不要解释，不要输出思考过程。",
                 },
                 {
                     "role": "user",
@@ -270,10 +332,16 @@ class LLMExtractor:
                 },
             ],
             temperature=0,
-            max_tokens=4000,
+            max_tokens=8192,
             response_format={"type": "json_object"},
         )
-        return parse_llm_json(repair_response.choices[0].message.content or "{}")
+        message = repair_response.choices[0].message
+        content = getattr(message, "content", "") or ""
+        if not content.strip():
+            content = getattr(message, "reasoning_content", "") or ""
+        if not content.strip():
+            raise ValueError("repair response is empty")
+        return parse_llm_json(content)
 
 class RuleExtractor:
     """无 API 的规则抽取器，用于快速验证和离线演示。"""
@@ -530,6 +598,7 @@ def extract_from_ocr(
     limit_files: Optional[int] = None,
     max_chars_per_file: int = 6000,
     only_patterns: Optional[List[str]] = None,
+    max_chunks_per_file: int = 1,
 ) -> Dict[str, Any]:
     """对 OCR 文本执行实体抽取，返回抽取原始结果。"""
     extractor = LLMExtractor() if mode == "llm" else RuleExtractor()
@@ -548,24 +617,58 @@ def extract_from_ocr(
             continue
 
         # 跳过封面/版权页（约前 12%），避免抽出编委会、监制等非历史噪声；
-        # 短文件保护：保证至少取 max_chars_per_file 字符
+        # 支持按 max_chunks_per_file 在正文中均匀采样多段，避免只抽最前一段。
         skip = int(len(text) * 0.12)
-        if len(text) - skip < int(max_chars_per_file):
-            skip = max(0, len(text) - int(max_chars_per_file))
-        limited_text = text[skip : skip + int(max_chars_per_file)]
-        for chunk in chunk_text(limited_text, max_chars=max_chars_per_file):
-            try:
-                result = extractor.extract_chunk(chunk, file_path.name, existing_names)
-            except Exception as e:
-                print(f"  抽取失败：{e}")
-                continue
+        body = text[skip:]
+        max_chars = int(max_chars_per_file)
 
-            for entity in result.get("entities", []):
-                entity["source"] = file_path.name
-                all_entities.append(entity)
-            for relation in result.get("relations", []):
-                relation["source_file"] = file_path.name
-                all_relations.append(relation)
+        if max_chunks_per_file <= 1 or len(body) <= max_chars:
+            segments = [body[:max_chars]]
+        else:
+            segments = []
+            step = max(1, len(body) // max_chunks_per_file)
+            for idx in range(max_chunks_per_file):
+                start = min(idx * step, max(0, len(body) - max_chars))
+                segment = body[start:start + max_chars]
+                if segment.strip():
+                    segments.append(segment)
+            if not segments:
+                segments = [body[:max_chars]]
+
+        file_entity_count = 0
+        for segment in segments:
+            for chunk in chunk_text(segment, max_chars=max_chars):
+                try:
+                    result = extractor.extract_chunk(chunk, file_path.name, existing_names)
+                except Exception as e:
+                    print(f"  抽取失败：{e}")
+                    continue
+
+                for entity in result.get("entities", []):
+                    name = str(entity.get("name", "")).strip()
+                    if name in _JUNK_ENTITY_NAMES or len(name) < 2:
+                        continue
+                    entity["source"] = file_path.name
+                    all_entities.append(entity)
+                for relation in result.get("relations", []):
+                    relation["source_file"] = file_path.name
+                    all_relations.append(relation)
+                file_entity_count += len(result.get("entities", []))
+
+        if mode == "llm" and file_entity_count == 0:
+            print("  LLM 返回 0 实体，使用规则模式补充")
+            rule_extractor = RuleExtractor()
+            for segment in segments:
+                result = rule_extractor.extract_chunk(segment, file_path.name, existing_names)
+                for entity in result.get("entities", []):
+                    name = str(entity.get("name", "")).strip()
+                    if name in _JUNK_ENTITY_NAMES or len(name) < 2:
+                        continue
+                    entity["source"] = file_path.name
+                    all_entities.append(entity)
+                for relation in result.get("relations", []):
+                    relation["source_file"] = file_path.name
+                    all_relations.append(relation)
 
     return {
         "meta": {

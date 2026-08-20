@@ -78,6 +78,7 @@ def main() -> None:
         mode="llm",
         max_chars_per_file=args.max_chars,
         only_patterns=MISSING_KEYWORDS,
+        max_chunks_per_file=4,
     )
     print(f"新抽取: {len(new_part.get('entities', []))} 实体, {len(new_part.get('relations', []))} 关系")
 
