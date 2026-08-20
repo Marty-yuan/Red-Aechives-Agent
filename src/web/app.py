@@ -7,7 +7,10 @@ Web 服务 - 红色村寨数字代言人
     python src/web/app.py
 然后浏览器打开 http://localhost:5000
 """
-import os, sys, json
+import difflib
+import os, re, sys, json
+from pathlib import Path
+from opencc import OpenCC
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from flask import Flask, render_template, request, jsonify, Response
@@ -21,6 +24,116 @@ app = Flask(__name__)
 
 # 初始化 Agent（全局单例）
 agent = VillageAgent()
+
+
+def _find_source_pdf(source):
+    """根据证据来源文件名匹配原始 OCR PDF。"""
+    base = Path(source or "").stem.lower()
+    pdf_dir = Path(config.PDF_DIR)
+    if not pdf_dir.exists():
+        return None
+    candidates = list(pdf_dir.glob("*.pdf"))
+    if not candidates:
+        return None
+
+    def score(pdf_path):
+        return difflib.SequenceMatcher(None, base, pdf_path.stem.lower()).ratio()
+
+    best = max(candidates, key=score)
+    return best if score(best) >= 0.55 else None
+
+
+_CC = OpenCC("t2s")
+_PDF_PAGE_TEXT_CACHE = {}
+
+
+def _normalize_trace_text(text):
+    """繁体转简体，并去掉空格和标点，减少 OCR 差异对匹配的影响。"""
+    text = _CC.convert(text or "")
+    return re.sub(r"[^\u4e00-\u9fffA-Za-z0-9]", "", text)
+
+
+def _get_pdf_page_texts(pdf_path):
+    """按 PDF 缓存每页规范化后的文本，避免每次点击都重新解析整个 PDF。"""
+    key = str(pdf_path)
+    if key in _PDF_PAGE_TEXT_CACHE:
+        return _PDF_PAGE_TEXT_CACHE[key]
+
+    import fitz
+
+    doc = fitz.open(pdf_path)
+    try:
+        texts = [_normalize_trace_text(page.get_text()) for page in doc]
+    finally:
+        doc.close()
+
+    _PDF_PAGE_TEXT_CACHE[key] = texts
+    return texts
+
+
+def _find_page_by_text(pdf_path, text):
+    """返回 (页码索引, 置信度)；若置信度过低则页码为 None。"""
+    page_texts = _get_pdf_page_texts(pdf_path)
+    if not page_texts:
+        return None, 0.0
+
+    q = _normalize_trace_text(text)
+    if not q:
+        return None, 0.0
+
+    best_idx = None
+    best_score = -1.0
+    for idx, page_text in enumerate(page_texts):
+        if not page_text:
+            continue
+
+        # 优先精确匹配，OCR 同源时最快也最稳
+        if q in page_text:
+            return idx, 1.0
+
+        score = difflib.SequenceMatcher(None, q, page_text, autojunk=False).ratio()
+        if score > best_score:
+            best_score = score
+            best_idx = idx
+
+    # 阈值过低说明没找到可信页面，返回 None，不再错误落到第 1 页
+    if best_score < 0.45:
+        return None, best_score
+    return best_idx, best_score
+
+
+@app.route("/api/pdf/page")
+def api_pdf_page():
+    """返回证据来源 PDF 的原始页面图片。"""
+    source = request.args.get("source", "")
+    text = request.args.get("text", "")
+    if not source:
+        return jsonify({"error": "缺少 source"}), 400
+
+    pdf_path = _find_source_pdf(source)
+    if not pdf_path:
+        return jsonify({"error": "找不到对应 PDF"}), 404
+
+    try:
+        import fitz
+    except Exception:
+        return jsonify({"error": "PyMuPDF 不可用"}), 500
+
+    page_index, confidence = _find_page_by_text(pdf_path, text)
+    if page_index is None:
+        return jsonify({"error": "未能定位到相关页面"}), 404
+
+    doc = fitz.open(pdf_path)
+    try:
+        page_index = max(0, min(page_index, doc.page_count - 1))
+        pix = doc.load_page(page_index).get_pixmap(matrix=fitz.Matrix(1.2, 1.2))
+        resp = Response(pix.tobytes("png"), mimetype="image/png")
+        resp.headers["X-Page"] = str(page_index + 1)
+        resp.headers["X-Page-Count"] = str(doc.page_count)
+        resp.headers["X-Confidence"] = f"{confidence:.3f}"
+        return resp
+    finally:
+        doc.close()
 
 # ===================== 村寨地理坐标 =====================
 VILLAGE_COORDS = {
@@ -135,6 +248,8 @@ def chat():
             "village": village,
             "answer": answer,
             "plan": agent.last_plan,
+            "tool_results": agent.last_tool_results,
+            "evidence": agent.last_evidence,
             "verification": agent.last_verification,
         })
     except Exception as e:
@@ -230,4 +345,8 @@ def api_tts():
     )
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app.run(
+        host=config.WEB_HOST,
+        port=config.WEB_PORT,
+        debug=config.WEB_DEBUG,
+    )

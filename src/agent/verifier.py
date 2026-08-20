@@ -92,15 +92,16 @@ class FactCheckerAgent:
                 ],
                 temperature=0.0,
                 max_tokens=1200,
-                response_format={"type": "json_object"},
             )
             content = response.choices[0].message.content or "{}"
             return self._parse_json(content, draft_answer)
-        except Exception:
+        except Exception as exc:
+            import sys
+            print(f"[fact-checker] unavailable: {type(exc).__name__}: {exc}", file=sys.stderr)
             return {
                 "verified": None,
-                "confidence": 0.0,
-                "issues": [{"claim": "校验器不可用", "evidence": "无", "severity": "low"}],
+                "confidence": None,
+                "issues": [{"claim": "自动事实校验暂时不可用，本轮未修改回答", "evidence": "无", "severity": "low", "kind": "checker_unavailable"}],
                 "revised_answer": draft_answer,
             }
 
@@ -128,9 +129,26 @@ class FactCheckerAgent:
         if not isinstance(revised, str) or not revised.strip():
             revised = draft_answer
 
+        try:
+            confidence = float(data.get("confidence"))
+        except Exception:
+            confidence = None
+
+        if confidence is None or confidence <= 0:
+            high_issues = [i for i in issues if isinstance(i, dict) and i.get("severity") == "high"]
+            medium_issues = [i for i in issues if isinstance(i, dict) and i.get("severity") == "medium"]
+            if not issues:
+                confidence = 0.85
+            elif high_issues:
+                confidence = 0.35
+            elif medium_issues:
+                confidence = 0.60
+            else:
+                confidence = 0.75
+
         return {
             "verified": bool(data.get("verified", False)),
-            "confidence": float(data.get("confidence", 0.0)),
+            "confidence": round(confidence, 2),
             "issues": issues,
             "revised_answer": revised,
         }
