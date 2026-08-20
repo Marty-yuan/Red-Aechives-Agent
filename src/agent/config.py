@@ -45,6 +45,8 @@ PDF_DIR = os.environ.get("RED_ARCHIVE_PDF_DIR", "")
 # ===================== 检索参数 =====================
 TOP_K = 4
 MIN_SCORE = 0.0
+# 1=优先混合检索（char TF-IDF + word TF-IDF/BGE + RRF），0=仅 char TF-IDF
+USE_HYBRID_RETRIEVER = os.environ.get("RED_ARCHIVE_USE_HYBRID", "1") != "0"
 
 # ===================== Web 服务配置 =====================
 WEB_HOST = os.environ.get("WEB_HOST", "0.0.0.0")

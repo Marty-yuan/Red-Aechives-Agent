@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "created_at": "2026-08-20",
+    "reviewer": "A部分负责人",
+    "note": "36 条存疑实体人工复核结论。action: approve=保留 | rename=改名并保留 | remove=从正式图谱删除"
+  },
+  "decisions": [
+    {"name": "鲁口哨", "action": "approve", "note": "寻甸境内地名，保留"},
+    {"name": "大汤姑", "action": "approve", "note": "寻甸境内地名，保留"},
+    {
+      "name": "红军绝对保护回家工农群伞利益",
+      "action": "rename",
+      "canonical_name": "红军绝对保护回家工农群众利益",
+      "note": "OCR 错字，规范为标语原文"
+    },
+    {"name": "雍家涛", "action": "approve", "note": "长宁县地名变体，保留"},
+    {"name": "轿顶山", "action": "approve", "note": "保留"},
+    {"name": "落柏林", "action": "approve", "note": "兴文县地名，保留"},
+    {"name": "徐箕圳", "action": "approve", "note": "威信县地名，保留"},
+    {"name": "下乐亢", "action": "approve", "note": "保留"},
+    {"name": "巡密司", "action": "rename", "canonical_name": "巡检司", "note": "OCR 误写"},
+    {"name": "附安场", "action": "approve", "note": "长宁县地名，保留"},
+    {"name": "安旅", "action": "approve", "note": "国民党军部队简称，保留"},
+    {"name": "果果圭", "action": "approve", "note": "四川境内地名，保留"},
+    {"name": "班坊潮", "action": "approve", "note": "四川境内地名，保留"},
+    {"name": "赤站", "action": "approve", "note": "昆明周边地名，保留"},
+    {"name": "李崧独立团", "action": "approve", "note": "滇军部队，保留"},
+    {"name": "皎平渡", "action": "approve", "note": "核心点位，误标存疑，保留"},
+    {"name": "国民党军", "action": "approve", "note": "通用部队称谓，保留"},
+    {"name": "万急渡江令", "action": "approve", "note": "核心文献名，保留"},
+    {"name": "刘云", "action": "remove", "note": "多为编者姓名，非长征人物实体"},
+    {"name": "张朝满", "action": "approve", "note": "昭通当地人物，保留"},
+    {"name": "李正芳", "action": "approve", "note": "昭通当地人物，保留"},
+    {"name": "陈月清", "action": "approve", "note": "昭通当地人物，保留"},
+    {"name": "张伟", "action": "approve", "note": "沾益伪县长，保留"},
+    {"name": "现云阁", "action": "approve", "note": "丽江地点，保留"},
+    {"name": "红石岩", "action": "approve", "note": "丽江地点，保留"},
+    {"name": "杨裁缝", "action": "remove", "note": "仅有职业称呼，无规范姓名"},
+    {"name": "甘孜", "action": "approve", "note": "会合地点，保留"},
+    {"name": "佘滔鸿", "action": "rename", "canonical_name": "佘鸿", "note": "干部团政委，规范为人名"},
+    {"name": "夏才蚁", "action": "remove", "note": "OCR 人名不确定，暂不纳入正式图谱"},
+    {"name": "七林夫", "action": "remove", "note": "地名 OCR 不确定"},
+    {"name": "林风", "action": "remove", "note": "地名 OCR 不确定"},
+    {"name": "杨亚楼", "action": "remove", "note": "与史实人物不符，疑似 OCR 误读"},
+    {"name": "夷顺璧", "action": "approve", "note": "滇军旅长，保留"},
+    {"name": "陈参谋", "action": "remove", "note": "仅有职务称呼"},
+    {"name": "马军", "action": "approve", "note": "云南地名，保留"},
+    {"name": "得食村", "action": "approve", "note": "云南地名，保留"}
+  ]
+}

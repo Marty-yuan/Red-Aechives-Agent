@@ -508,13 +508,18 @@ class GraphMerger:
         }
 
 
-def collect_ocr_files(limit_files: Optional[int] = None) -> List[Path]:
+def collect_ocr_files(
+    limit_files: Optional[int] = None,
+    only_patterns: Optional[List[str]] = None,
+) -> List[Path]:
     """收集 OCR 文本文件。"""
     if not OCR_DIR.exists():
         print(f"OCR 目录不存在：{OCR_DIR}")
         return []
 
     files = sorted(OCR_DIR.glob("*.txt"))
+    if only_patterns:
+        files = [f for f in files if any(p in f.name for p in only_patterns)]
     if limit_files:
         files = files[: int(limit_files)]
     return files
@@ -524,6 +529,7 @@ def extract_from_ocr(
     mode: str,
     limit_files: Optional[int] = None,
     max_chars_per_file: int = 6000,
+    only_patterns: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """对 OCR 文本执行实体抽取，返回抽取原始结果。"""
     extractor = LLMExtractor() if mode == "llm" else RuleExtractor()
@@ -533,7 +539,7 @@ def extract_from_ocr(
     all_entities: List[Dict[str, Any]] = []
     all_relations: List[Dict[str, Any]] = []
 
-    for file_path in collect_ocr_files(limit_files):
+    for file_path in collect_ocr_files(limit_files, only_patterns=only_patterns):
         print(f"处理：{file_path.name}")
         try:
             text = file_path.read_text(encoding="utf-8-sig", errors="ignore")
@@ -565,7 +571,7 @@ def extract_from_ocr(
         "meta": {
             "mode": mode,
             "created_at": datetime.now().isoformat(timespec="seconds"),
-            "source_files": [f.name for f in collect_ocr_files(limit_files)],
+            "source_files": [f.name for f in collect_ocr_files(limit_files, only_patterns=only_patterns)],
             "entity_count": len(all_entities),
             "relation_count": len(all_relations),
         },
@@ -578,6 +584,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="从 OCR 文本自动抽取知识图谱实体")
     parser.add_argument("--mode", choices=["llm", "rule"], default="llm", help="抽取模式")
     parser.add_argument("--limit-files", type=int, default=None, help="最多处理多少个 OCR 文件")
+    parser.add_argument("--only", action="append", default=None, help="只处理文件名包含该子串的 OCR 文件，可重复")
     parser.add_argument("--max-chars", type=int, default=4500, help="每个文件最多参与抽取的字符数")
     parser.add_argument("--project-dir", type=str, default=None, help="项目根目录，默认读取 config.PROJECT_DIR")
     parser.add_argument("--remerge", action="store_true", help="Use existing auto_extracted.json and re-merge without calling LLM")
@@ -631,6 +638,7 @@ def main() -> None:
         mode=args.mode,
         limit_files=args.limit_files,
         max_chars_per_file=args.max_chars,
+        only_patterns=args.only,
     )
     save_json(AUTO_RAW_PATH, extracted)
 

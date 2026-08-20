@@ -15,14 +15,14 @@ from typing import Any, Dict, List, Optional
 from . import config
 from .knowledge import ROUTES, TIMELINE, VILLAGE_COORDS, VILLAGE_ENERGY, VILLAGE_EXPERIENCE, VILLAGE_LODGING
 from .graph_store import KnowledgeGraphStore
-from .retriever import ArchiveRetriever
+from .retriever_factory import create_retriever
 
 
 class ToolRegistry:
     """工具注册与执行器。"""
 
-    def __init__(self, retriever: Optional[ArchiveRetriever] = None):
-        self.retriever = retriever or ArchiveRetriever()
+    def __init__(self, retriever=None):
+        self.retriever = retriever or create_retriever()
         self.graph_store = KnowledgeGraphStore()
 
     def tool_specs(self) -> List[Dict[str, Any]]:

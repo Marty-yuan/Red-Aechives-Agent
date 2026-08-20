@@ -2,10 +2,8 @@
   "meta": {
     "name": "云南红军长征档案知识图谱（含 OCR 自动抽取）",
     "version": "auto-0.1",
-    "base_entity_count": 56,
-    "base_relation_count": 40,
-    "validation_mode": "llm",
-    "review_required_count": 36
+    "base_entity_count": 536,
+    "base_relation_count": 352
   },
   "entities": [
     {
@@ -136,7 +134,8 @@
       "aliases": [
         "寻甸",
         "柯渡",
-        "丹桂村"
+        "丹桂村",
+        "寻甸县"
       ],
       "description": "万急渡江令发出地。",
       "properties": {
@@ -185,7 +184,8 @@
         "lat": 26.3,
         "lng": 102.42,
         "city": "禄劝县"
-      }
+      },
+      "review_status": "approved"
     },
     {
       "id": "L_XUANWEI",
@@ -234,7 +234,8 @@
       "type": "location",
       "name": "石鼓",
       "aliases": [
-        "石鼓镇"
+        "石鼓镇",
+        "丽江市"
       ],
       "description": "红二、六军团1936年石鼓渡江的主要渡口。",
       "properties": {
@@ -267,7 +268,8 @@
       "properties": {
         "date": "1935-04-29",
         "year": 1935
-      }
+      },
+      "review_status": "approved"
     },
     {
       "id": "E_CROSS_JINSHA",
@@ -307,17 +309,6 @@
         "date": "1936-04-25",
         "year": 1936
       }
-    },
-    {
-      "id": "P_7FD9831C",
-      "type": "person",
-      "name": "刘云",
-      "aliases": [],
-      "description": "《万急渡江令》主编",
-      "properties": {},
-      "source": "validated",
-      "evidence": "",
-      "confidence": 0.9
     },
     {
       "id": "P_CE98886F",
@@ -394,7 +385,8 @@
       "properties": {},
       "source": "validated",
       "evidence": "",
-      "confidence": 0.9
+      "confidence": 0.9,
+      "review_status": "approved"
     },
     {
       "id": "P_D4AEFD97",
@@ -405,7 +397,8 @@
       "properties": {},
       "source": "validated",
       "evidence": "",
-      "confidence": 0.9
+      "confidence": 0.9,
+      "review_status": "approved"
     },
     {
       "id": "P_48A3707E",
@@ -416,7 +409,8 @@
       "properties": {},
       "source": "validated",
       "evidence": "",
-      "confidence": 0.9
+      "confidence": 0.9,
+      "review_status": "approved"
     },
     {
       "id": "P_9B983121",
@@ -433,7 +427,9 @@
       "id": "P_7D93CC35",
       "type": "person",
       "name": "朱德",
-      "aliases": [],
+      "aliases": [
+        "朱总司令"
+      ],
       "description": "红军领导人",
       "properties": {},
       "source": "validated",
@@ -4288,7 +4284,8 @@
       "properties": {},
       "source": "validated",
       "evidence": "",
-      "confidence": 1.0
+      "confidence": 1.0,
+      "review_status": "approved"
     },
     {
       "id": "L_25D7B177",
@@ -5268,6 +5265,710 @@
       "source": "validated",
       "evidence": "",
       "confidence": 0.95
+    },
+    {
+      "id": "L_69F88E9A",
+      "type": "location",
+      "name": "清真寺",
+      "aliases": [],
+      "description": "柯渡回辉村的清真寺，红军标语所在地",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_DFCE1C99",
+      "type": "location",
+      "name": "鲁口啃",
+      "aliases": [],
+      "description": "寻甸境内地名，中央军委发布渡江指示",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_8012FEC9",
+      "type": "location",
+      "name": "大汤姑",
+      "aliases": [],
+      "description": "寻甸境内地名，中央军委发布渡江指示",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "D_4006CDCD",
+      "type": "document",
+      "name": "红军绝对保护回家工农群伞利益",
+      "aliases": [],
+      "description": "红军写在清真寺墙上的标语",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "P_30C2E2DF",
+      "type": "person",
+      "name": "肖克",
+      "aliases": [],
+      "description": "红六军团军团长，川滇黔省革命委员会委员",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "E_500306D8",
+      "type": "event",
+      "name": "黑西会议",
+      "aliases": [],
+      "description": "红二、六军团在贵州黑西召开的会议，决定建立川滇黔根据地",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "P_106502E5",
+      "type": "person",
+      "name": "陈万例",
+      "aliases": [],
+      "description": "国民党二十一军第五师师长，任南路剿匪军第二路指挥",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "P_9DA81EB3",
+      "type": "person",
+      "name": "安恩浦",
+      "aliases": [],
+      "description": "滇军第二旅旅长，驻昭通",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "P_70CBFC8B",
+      "type": "person",
+      "name": "郝梦麟",
+      "aliases": [],
+      "description": "国民党五十四师师长",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_219B296D",
+      "type": "location",
+      "name": "雍家涛",
+      "aliases": [],
+      "description": "长宁县雍家涛",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_60985D38",
+      "type": "location",
+      "name": "轿天山",
+      "aliases": [],
+      "description": "山区名",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_3F5A2769",
+      "type": "location",
+      "name": "落柏林",
+      "aliases": [],
+      "description": "兴文县地名",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_AE971B47",
+      "type": "location",
+      "name": "徐箕圳",
+      "aliases": [],
+      "description": "威信县地名",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_88191444",
+      "type": "location",
+      "name": "下乐亢",
+      "aliases": [],
+      "description": "地名",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_26CF443A",
+      "type": "location",
+      "name": "巡密司",
+      "aliases": [],
+      "description": "地名",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_7038134E",
+      "type": "location",
+      "name": "附安场",
+      "aliases": [],
+      "description": "长宁县地名",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_E915ADD0",
+      "type": "location",
+      "name": "琪县洛亥",
+      "aliases": [],
+      "description": "地名",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "A_D2A84EB7",
+      "type": "army",
+      "name": "安旅",
+      "aliases": [],
+      "description": "国民党军部队，安旅长率领",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_E6304603",
+      "type": "location",
+      "name": "果果圭",
+      "aliases": [],
+      "description": "四川境内地名",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_4D74C8E0",
+      "type": "location",
+      "name": "班坊潮",
+      "aliases": [],
+      "description": "四川境内地名",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_B9E4BC0B",
+      "type": "location",
+      "name": "大定",
+      "aliases": [],
+      "description": "贵州省大方县旧称",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_E624E788",
+      "type": "location",
+      "name": "赤站",
+      "aliases": [],
+      "description": "云南的一个地区，红六军团曾进入",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "A_53093410",
+      "type": "army",
+      "name": "四方面军",
+      "aliases": [],
+      "description": "红军长征中的主力部队之一",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_E3DB22AA",
+      "type": "location",
+      "name": "湘鄂川黔根据地",
+      "aliases": [],
+      "description": "红二、六军团创建的根据地",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "P_EE2E64BA",
+      "type": "person",
+      "name": "徐总",
+      "aliases": [],
+      "description": "红四方面军总指挥，制定强渡嘉陵江和攻打剑门关的作战方案",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "A_49C39AC5",
+      "type": "army",
+      "name": "三十军",
+      "aliases": [],
+      "description": "红四方面军下属部队，在塔子山偷渡成功",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "A_AA86273C",
+      "type": "army",
+      "name": "三十一军",
+      "aliases": [],
+      "description": "红四方面军下属部队，参与强渡嘉陵江和攻打剑门关",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "A_A0B9B7D9",
+      "type": "army",
+      "name": "九军",
+      "aliases": [],
+      "description": "红四方面军下属部队，在阆中强渡成功",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "A_BE0CFB16",
+      "type": "army",
+      "name": "四军",
+      "aliases": [],
+      "description": "红四方面军下属部队，协同九军攻克南部县城",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "A_60C87C56",
+      "type": "army",
+      "name": "二七四团二营",
+      "aliases": [],
+      "description": "红四方面军三十一军下属部队，陈康带领，作为预备队",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_207D18EF",
+      "type": "location",
+      "name": "川陕根据地",
+      "aliases": [],
+      "description": "红四方面军建立的根据地，在嘉陵江以东",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "A_1DAD8D62",
+      "type": "army",
+      "name": "李菘独立团",
+      "aliases": [],
+      "description": "滇军独立团，被红军消灭",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_F1FFC79D",
+      "type": "other",
+      "name": "藤竹拐棍",
+      "aliases": [],
+      "description": "红军战士送给刘晓祥的拐棍，现藏中国革命历史博物馆",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_3FE4F117",
+      "type": "other",
+      "name": "铜元",
+      "aliases": [],
+      "description": "红军战士给方有娣的一枚铜元",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_64FBEBC5",
+      "type": "location",
+      "name": "交西渡",
+      "aliases": [],
+      "description": "红军主力渡金沙江的渡口",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "A_603B8C60",
+      "type": "army",
+      "name": "南京军",
+      "aliases": [],
+      "description": "国民党军队",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "O_03C4F0D1",
+      "type": "organization",
+      "name": "共产党中央委员会",
+      "aliases": [],
+      "description": "中国共产党中央领导机构",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "P_0A88A0B8",
+      "type": "person",
+      "name": "诸葛武侯",
+      "aliases": [],
+      "description": "三国时期人物，诸葛亮",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "A_F07314A6",
+      "type": "army",
+      "name": "五军团",
+      "aliases": [],
+      "description": "红军第五军团",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "A_115964A6",
+      "type": "army",
+      "name": "九军团",
+      "aliases": [],
+      "description": "红军第九军团",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "A_C7488C8F",
+      "type": "army",
+      "name": "三军团",
+      "aliases": [],
+      "description": "红军第三军团",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "A_321173A6",
+      "type": "army",
+      "name": "一军团",
+      "aliases": [],
+      "description": "红军第一军团",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "O_7BD3BAB4",
+      "type": "organization",
+      "name": "军委",
+      "aliases": [],
+      "description": "中央革命军事委员会",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "P_7FD9831C",
+      "type": "person",
+      "name": "刘云",
+      "aliases": [],
+      "description": "红军将领",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "P_D9A57210",
+      "type": "person",
+      "name": "张伟",
+      "aliases": [],
+      "description": "沾益县伪县长，组织守城",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_4055A5E6",
+      "type": "location",
+      "name": "现云阁",
+      "aliases": [],
+      "description": "桑乐天继母住处，红军连队驻扎地",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_3A103C91",
+      "type": "location",
+      "name": "红石岩",
+      "aliases": [],
+      "description": "桑乐天熟悉的地点，红军询问的地方",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "P_7829A0CF",
+      "type": "person",
+      "name": "杨裁缝",
+      "aliases": [],
+      "description": "丽江裁缝，红军请他缝米袋",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "P_D283B175",
+      "type": "person",
+      "name": "卖柴人",
+      "aliases": [],
+      "description": "丽江卖柴的穷人，得到红军帮助",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_26214DB5",
+      "type": "location",
+      "name": "甘书仿字",
+      "aliases": [],
+      "description": "中央红军与红二、六军团会合地",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "E_4B786C17",
+      "type": "event",
+      "name": "会师甘孜",
+      "aliases": [],
+      "description": "红二、六军团与红四方面军会师",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "P_54B8EB4F",
+      "type": "person",
+      "name": "佘滔鸿",
+      "aliases": [],
+      "description": "干部团上下队政委",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "P_8041309C",
+      "type": "person",
+      "name": "夏才蚁",
+      "aliases": [],
+      "description": "干部团干部",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_1B8376FD",
+      "type": "location",
+      "name": "七林夫",
+      "aliases": [],
+      "description": "威信县地名",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_88BE0779",
+      "type": "location",
+      "name": "林风",
+      "aliases": [],
+      "description": "威信县地名",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "O_7771BDCA",
+      "type": "organization",
+      "name": "苏维埃国家银行",
+      "aliases": [],
+      "description": "中华苏维埃共和国国家银行",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "P_40186CB2",
+      "type": "person",
+      "name": "廊亚楼",
+      "aliases": [],
+      "description": "红一军团二师政委",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "P_175C629A",
+      "type": "person",
+      "name": "夷顺璧",
+      "aliases": [],
+      "description": "滇军旅长",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "P_D727D629",
+      "type": "person",
+      "name": "陈参谋",
+      "aliases": [],
+      "description": "军委参谋",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_CBAA0237",
+      "type": "location",
+      "name": "宣良",
+      "aliases": [],
+      "description": "云南地名",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_97FFEA4F",
+      "type": "location",
+      "name": "马军",
+      "aliases": [],
+      "description": "云南地名",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_197760F6",
+      "type": "location",
+      "name": "邵伺",
+      "aliases": [],
+      "description": "今白邑",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "L_C7FBD015",
+      "type": "location",
+      "name": "得食村",
+      "aliases": [],
+      "description": "云南地名",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "O_2840FFDB",
+      "type": "organization",
+      "name": "中央军委",
+      "aliases": [],
+      "description": "红军最高军事指挥机构",
+      "properties": {},
+      "source": "reextract",
+      "evidence": "",
+      "confidence": 0.8
     }
   ],
   "relations": [
@@ -8254,6 +8955,776 @@
       "label": "包含",
       "properties": {},
       "source_file": "validated",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_4288B424",
+      "source": "P_30C2E2DF",
+      "target": "O_98625369",
+      "relation": "member_of",
+      "label": "委员",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_6EDDDC85",
+      "source": "E_500306D8",
+      "target": "O_310E20B2",
+      "relation": "related_to",
+      "label": "决定成立",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_E23F912C",
+      "source": "E_500306D8",
+      "target": "P_30C2E2DF",
+      "relation": "participant",
+      "label": "参与者",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_4A749E08",
+      "source": "P_809F3D78",
+      "target": "P_30C2E2DF",
+      "relation": "related_to",
+      "label": "采访者",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_758B0AEC",
+      "source": "P_9DA81EB3",
+      "target": "A_7B90E8BD",
+      "relation": "member_of",
+      "label": "属于",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_7DBC106E",
+      "source": "L_219B296D",
+      "target": "L_7D2096C1",
+      "relation": "located_in",
+      "label": "位于",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_72A795D6",
+      "source": "L_60985D38",
+      "target": "L_7D2096C1",
+      "relation": "located_in",
+      "label": "位于",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_D9695420",
+      "source": "L_3F5A2769",
+      "target": "L_5AC8E94D",
+      "relation": "located_in",
+      "label": "位于",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_7A23F203",
+      "source": "L_AE971B47",
+      "target": "L_ZAXI",
+      "relation": "located_in",
+      "label": "位于",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_4E1379DF",
+      "source": "L_88191444",
+      "target": "L_3D18C9C8",
+      "relation": "located_in",
+      "label": "位于",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_13089DEF",
+      "source": "L_26CF443A",
+      "target": "L_3D18C9C8",
+      "relation": "located_in",
+      "label": "位于",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_AE5C056A",
+      "source": "L_7038134E",
+      "target": "L_7D2096C1",
+      "relation": "located_in",
+      "label": "位于",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_F9346906",
+      "source": "L_E915ADD0",
+      "target": "L_3D18C9C8",
+      "relation": "located_in",
+      "label": "位于",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_7C818909",
+      "source": "O_C729DDA0",
+      "target": "A_CENTRAL",
+      "relation": "related_to",
+      "label": "敌对",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_77BA0C2E",
+      "source": "A_6EA49AB5",
+      "target": "P_30C2E2DF",
+      "relation": "commander",
+      "label": "军团长",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_1C9D7348",
+      "source": "P_30C2E2DF",
+      "target": "O_C08A29B3",
+      "relation": "member_of",
+      "label": "委员",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_C82E0733",
+      "source": "A_60C87C56",
+      "target": "P_C6969BA1",
+      "relation": "commander",
+      "label": "指挥者",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_B93C45E0",
+      "source": "A_C5B8FE35",
+      "target": "P_EE2E64BA",
+      "relation": "commander",
+      "label": "总指挥",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_CA6922D2",
+      "source": "A_49C39AC5",
+      "target": "A_C5B8FE35",
+      "relation": "member_of",
+      "label": "隶属",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_069BB79D",
+      "source": "A_AA86273C",
+      "target": "A_C5B8FE35",
+      "relation": "member_of",
+      "label": "隶属",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_DC0D470B",
+      "source": "A_A0B9B7D9",
+      "target": "A_C5B8FE35",
+      "relation": "member_of",
+      "label": "隶属",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_631CA87D",
+      "source": "A_BE0CFB16",
+      "target": "A_C5B8FE35",
+      "relation": "member_of",
+      "label": "隶属",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_23FAA785",
+      "source": "A_60C87C56",
+      "target": "A_AA86273C",
+      "relation": "member_of",
+      "label": "隶属",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_0FE6C1DB",
+      "source": "A_1DAD8D62",
+      "target": "P_954859A3",
+      "relation": "commander",
+      "label": "团长",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_AFC82B3B",
+      "source": "P_2151B80B",
+      "target": "A_23870286",
+      "relation": "related_to",
+      "label": "军民关系",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_E82F9854",
+      "source": "P_53699B06",
+      "target": "A_23870286",
+      "relation": "related_to",
+      "label": "军民关系",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_E458B6B3",
+      "source": "X_F1FFC79D",
+      "target": "P_2151B80B",
+      "relation": "related_to",
+      "label": "赠予",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_94C6CE2E",
+      "source": "X_3FE4F117",
+      "target": "P_53699B06",
+      "relation": "related_to",
+      "label": "赠予",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_6FC6E0E3",
+      "source": "P_7D93CC35",
+      "target": "A_23870286",
+      "relation": "member_of",
+      "label": "属于",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_A622AD1C",
+      "source": "A_CENTRAL",
+      "target": "A_23870286",
+      "relation": "member_of",
+      "label": "属于",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_3B2A999F",
+      "source": "A_9ADDE92C",
+      "target": "A_23870286",
+      "relation": "member_of",
+      "label": "属于",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_3B040492",
+      "source": "O_A51FB81E",
+      "target": "A_23870286",
+      "relation": "member_of",
+      "label": "属于",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_A2942706",
+      "source": "O_03C4F0D1",
+      "target": "A_23870286",
+      "relation": "member_of",
+      "label": "属于",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_5286B230",
+      "source": "O_8C908AFE",
+      "target": "A_23870286",
+      "relation": "member_of",
+      "label": "属于",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_5341EC57",
+      "source": "P_0A88A0B8",
+      "target": "L_8D315E32",
+      "relation": "related_to",
+      "label": "相关",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_24A83AD0",
+      "source": "A_D2A84EB7",
+      "target": "A_7B90E8BD",
+      "relation": "member_of",
+      "label": "所属",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_C56E0AB2",
+      "source": "A_7B90E8BD",
+      "target": "O_C729DDA0",
+      "relation": "related_to",
+      "label": "相关",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_87BEC9AB",
+      "source": "A_54162E4A",
+      "target": "O_C729DDA0",
+      "relation": "related_to",
+      "label": "相关",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_95B3E02C",
+      "source": "P_292A694A",
+      "target": "A_23870286",
+      "relation": "member_of",
+      "label": "成员",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_161D0E7C",
+      "source": "A_23870286",
+      "target": "P_43098E3D",
+      "relation": "related_to",
+      "label": "调查对象",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_DD203962",
+      "source": "A_23870286",
+      "target": "P_7829A0CF",
+      "relation": "related_to",
+      "label": "求助对象",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_4308CD36",
+      "source": "A_23870286",
+      "target": "P_D283B175",
+      "relation": "related_to",
+      "label": "帮助对象",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_C1CBCDED",
+      "source": "P_F7FA4840",
+      "target": "A_23870286",
+      "relation": "related_to",
+      "label": "敌对",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_8A035A89",
+      "source": "E_4B786C17",
+      "target": "A_RED26",
+      "relation": "participant",
+      "label": "参与",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_7557E0C5",
+      "source": "E_4B786C17",
+      "target": "A_C5B8FE35",
+      "relation": "participant",
+      "label": "参与",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_275D3319",
+      "source": "E_RED26_ENTER_YUNNAN",
+      "target": "L_CD4E8CD5",
+      "relation": "occurred_at",
+      "label": "发生地点",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_3AFD643E",
+      "source": "E_4B786C17",
+      "target": "L_9B0C4899",
+      "relation": "occurred_at",
+      "label": "发生地点",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_8CE70AAA",
+      "source": "P_30C2E2DF",
+      "target": "D_6983A878",
+      "relation": "related_to",
+      "label": "作者",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_82AB8AFB",
+      "source": "X_B1F3EBA7",
+      "target": "A_23870286",
+      "relation": "related_to",
+      "label": "帮助",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_EABEF587",
+      "source": "X_9ABC6215",
+      "target": "A_23870286",
+      "relation": "related_to",
+      "label": "使用",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_15D8EDCB",
+      "source": "P_30C2E2DF",
+      "target": "P_CE98886F",
+      "relation": "related_to",
+      "label": "同事",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_863C2C33",
+      "source": "P_033BBB33",
+      "target": "A_23870286",
+      "relation": "related_to",
+      "label": "欢迎",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_DA9BEC8C",
+      "source": "P_391506CC",
+      "target": "A_23870286",
+      "relation": "related_to",
+      "label": "迎接",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_950D4080",
+      "source": "P_8EA8A380",
+      "target": "A_23870286",
+      "relation": "related_to",
+      "label": "卖东西给红军",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_03F508E3",
+      "source": "P_13DCEF2A",
+      "target": "A_23870286",
+      "relation": "member_of",
+      "label": "战士",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_5C6562BE",
+      "source": "P_06BAF62F",
+      "target": "A_23870286",
+      "relation": "related_to",
+      "label": "帮助",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_830204EB",
+      "source": "P_54B8EB4F",
+      "target": "O_AF564221",
+      "relation": "member_of",
+      "label": "成员",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_49E51B62",
+      "source": "P_8041309C",
+      "target": "O_AF564221",
+      "relation": "member_of",
+      "label": "成员",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_355CD84B",
+      "source": "A_66EBB4A0",
+      "target": "P_40186CB2",
+      "relation": "commander",
+      "label": "政委",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_C9284C76",
+      "source": "P_175C629A",
+      "target": "A_7B90E8BD",
+      "relation": "member_of",
+      "label": "旅长",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_D2CCB3C8",
+      "source": "P_B8EF47C5",
+      "target": "O_C729DDA0",
+      "relation": "member_of",
+      "label": "区长",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_F435A92C",
+      "source": "P_D727D629",
+      "target": "O_2840FFDB",
+      "relation": "member_of",
+      "label": "参谋",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_F010A883",
+      "source": "A_89761C2C",
+      "target": "O_2840FFDB",
+      "relation": "related_to",
+      "label": "受指挥",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_C240DB25",
+      "source": "A_025ECA90",
+      "target": "O_2840FFDB",
+      "relation": "related_to",
+      "label": "受指挥",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_E3A6712F",
+      "source": "A_CENTRAL",
+      "target": "O_2840FFDB",
+      "relation": "related_to",
+      "label": "受指挥",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_54F5FAAC",
+      "source": "A_23870286",
+      "target": "A_CENTRAL",
+      "relation": "related_to",
+      "label": "包含",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_BD0A6503",
+      "source": "A_23870286",
+      "target": "A_025ECA90",
+      "relation": "related_to",
+      "label": "包含",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_19940C16",
+      "source": "A_23870286",
+      "target": "A_66EBB4A0",
+      "relation": "related_to",
+      "label": "包含",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_AF65ABFB",
+      "source": "A_23870286",
+      "target": "A_89761C2C",
+      "relation": "related_to",
+      "label": "包含",
+      "properties": {},
+      "source_file": "reextract",
+      "evidence": "",
+      "confidence": 0.8
+    },
+    {
+      "id": "X_B27CF728",
+      "source": "A_23870286",
+      "target": "A_E591E102",
+      "relation": "related_to",
+      "label": "包含",
+      "properties": {},
+      "source_file": "reextract",
       "evidence": "",
       "confidence": 0.8
     }

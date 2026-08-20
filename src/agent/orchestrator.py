@@ -22,7 +22,7 @@ from . import config
 from .knowledge import VILLAGE_COORDS
 from .personas import build_system_prompt
 from .planner import PlannerAgent
-from .retriever import ArchiveRetriever
+from .retriever_factory import create_retriever
 from .tools import ToolRegistry
 from .verifier import FactCheckerAgent
 
@@ -44,12 +44,12 @@ COMPARE_TOOL_HINTS = ["对比", "比较", "不同", "区别", "差异"]
 class OrchestratorAgent:
     """负责任务规划、工具调用和结果汇总。"""
 
-    def __init__(self, api_key: Optional[str] = None, retriever: Optional[ArchiveRetriever] = None):
+    def __init__(self, api_key: Optional[str] = None, retriever=None):
         self.client = OpenAI(
             api_key=api_key or config.DEEPSEEK_API_KEY,
             base_url=config.BASE_URL,
         )
-        self.retriever = retriever or ArchiveRetriever()
+        self.retriever = retriever or create_retriever()
         self.tools = ToolRegistry(self.retriever)
         self.planner = PlannerAgent(api_key=api_key)
         self.fact_checker = FactCheckerAgent(api_key=api_key)

@@ -27,3 +27,7 @@ edge-tts==7.2.8
 
 # ===== 测试（可选）=====
 pytest==8.4.2
+
+# ===== 语义检索（可选，混合检索需要）=====
+# 安装：python -m pip install sentence-transformers
+# sentence-transformers>=3.0.0

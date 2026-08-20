@@ -18,7 +18,7 @@ from .knowledge import VILLAGE_COORDS, VILLAGE_EXPERIENCE, VILLAGE_LODGING
 from .memory_store import UserMemoryStore
 from .personas import build_system_prompt
 from .orchestrator import OrchestratorAgent
-from .retriever import ArchiveRetriever
+from .retriever_factory import create_retriever
 from .verifier import FactCheckerAgent
 
 # 最多向模型回传多少轮历史消息
@@ -52,7 +52,7 @@ class VillageAgent:
         )
 
         # 初始化检索器
-        self.retriever = ArchiveRetriever()
+        self.retriever = create_retriever()
 
         # 当前对话的村寨（用于切换人格）
         self.current_village = None
