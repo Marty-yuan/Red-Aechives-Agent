@@ -1,14 +1,13 @@
-
 """
 JWT 鉴权
 -------
 网站版真实登录使用 Bearer Token：
 前端把 token 保存在 localStorage，后续请求通过 Authorization 头携带。
+（FastAPI 版：auth.py 不再依赖 Flask request/session。）
 """
 import datetime
 
 import jwt
-from flask import request, session
 
 from agent import config
 
@@ -34,12 +33,10 @@ def decode_access_token(token: str):
         return None
 
 
-def get_current_username():
-    """优先从 Authorization 头读取 JWT，其次兼容旧版 Session 登录。"""
-    auth_header = request.headers.get("Authorization", "")
-    if auth_header.startswith("Bearer "):
+def get_current_username(auth_header: str = "") -> str | None:
+    """从 Authorization 头解析 Bearer JWT，返回用户名；无有效令牌返回 None。"""
+    if auth_header and auth_header.startswith("Bearer "):
         payload = decode_access_token(auth_header[7:])
         if payload:
             return payload.get("sub")
-
-    return session.get("user")
+    return None

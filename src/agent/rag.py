@@ -72,7 +72,7 @@ class VillageAgent:
         self.fact_checker = None
         self.last_verification = None
 
-    def ask(self, question: str, village: str = None, user_id: str = None, persona_mode: str = None) -> str:
+    def ask(self, question: str, village: str = None, user_id: str = None, persona_mode: str = None, remember: bool = True) -> str:
         """
         用户提问，返回村寨代言人的回答。
 
@@ -106,7 +106,8 @@ class VillageAgent:
             self.last_tool_results = orchestrator_result.get("tool_results")
             self.last_evidence = self._extract_evidence(orchestrator_result.get("tool_results"))
             self.last_verification = orchestrator_result.get("verification")
-            self._remember(question, answer, history)
+            if remember:
+                self._remember(question, answer, history)
             return answer
 
         self.last_plan = None

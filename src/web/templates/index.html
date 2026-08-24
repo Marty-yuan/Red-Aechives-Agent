@@ -22,10 +22,15 @@ body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; height: 
 
 .map-legend { position: absolute; top: 10px; right: 10px; z-index: 1000; background: rgba(26,26,46,0.92); border: 1px solid rgba(196,30,58,0.4); border-radius: 8px; padding: 10px 14px; color: white; font-size: 12px; max-width: 180px; max-height: 55%; overflow-y: auto; }
 .map-legend h4 { color: #FFD700; margin-bottom: 6px; font-size: 12px; }
-.legend-route { margin: 4px 0; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
-.legend-route .color-line { display: inline-block; width: 20px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.legend-route { display: flex; align-items: center; gap: 6px; width: 100%; margin: 4px 0; padding: 5px 6px; border: none; border-bottom: 1px solid rgba(255,255,255,0.1); background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: 5px; transition: background 0.15s; }
+.legend-route:hover { background: rgba(196,30,58,0.28); }
+.legend-route.active { background: rgba(196,30,58,0.5); box-shadow: 0 0 0 1px #FFD700 inset; }
+.legend-route .color-line { display: inline-block; width: 20px; height: 3px; border-radius: 2px; margin-right: 2px; flex-shrink: 0; vertical-align: middle; }
 .legend-route .route-name { font-size: 11px; font-weight: bold; }
-.legend-route .route-dir { font-size: 10px; opacity: 0.6; margin-left: 26px; }
+.legend-route .route-dir { font-size: 10px; opacity: 0.6; }
+.legend-route .route-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.legend-route .play-badge { width: 20px; height: 20px; border-radius: 50%; background: #C41E3A; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+.legend-route.active .play-badge { background: #FFD700; color: #1a1a2e; }
 .map-legend .legend-item { display: flex; align-items: center; gap: 6px; margin: 3px 0; cursor: pointer; padding: 2px 4px; border-radius: 4px; }
 .map-legend .legend-item:hover { background: rgba(196,30,58,0.3); }
 .map-legend .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; border: 2px solid white; background: #C41E3A; }
@@ -140,6 +145,9 @@ body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; height: 
 .mode-bar { display:flex; gap:6px; padding:8px 12px; background:rgba(0,0,0,0.18); border-bottom:1px solid rgba(196,30,58,0.25); }
 .mode-btn { flex:1; padding:6px 4px; background:#1a2440; color:#d7e0ef; border:1px solid rgba(196,30,58,0.3); border-radius:14px; cursor:pointer; font-size:11px; white-space:nowrap; }
 .mode-btn.active { background:#C41E3A; color:#fff; border-color:#FFD700; font-weight:bold; }
+.compare-btn { margin-left:8px; padding:6px 10px; background:#1a2440; color:#FFD700; border:1px solid rgba(196,30,58,0.5); border-radius:14px; cursor:pointer; font-size:12px; }
+.speak-btn { display:inline-block; margin-top:8px; padding:4px 10px; background:#1a2440; color:#d7e0ef; border:1px solid rgba(196,30,58,0.4); border-radius:12px; cursor:pointer; font-size:11px; }
+.speak-btn.playing { color:#fff; background:#C41E3A; border-color:#FFD700; }
 .auth-open-btn { margin-left:8px; padding:7px 12px; background:rgba(255,255,255,0.12); color:white; border:1px solid rgba(255,255,255,0.35); border-radius:16px; cursor:pointer; font-size:12px; white-space:nowrap; }
 .user-chip { margin-left:8px; color:#FFD700; font-size:12px; max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .auth-overlay { display:none; position:fixed; inset:0; z-index:3000; background:rgba(8,8,18,0.86); align-items:center; justify-content:center; }
@@ -174,6 +182,12 @@ body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; height: 
 
 /* 方向箭头 */
 .route-arrow { background: transparent !important; border: none !important; font-size: 18px; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+.route-play-start, .route-play-end { background: rgba(26,26,46,0.9); border: 1px solid #FFD700; border-radius: 50%; color: #FFD700; font-size: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 6px rgba(255,215,0,0.7); }
+
+/* 途径点 */
+.waypoint-tip { background: #16213e !important; border: 1px solid #FFD700 !important; color: #fff !important; font-size: 11px; font-weight: bold; border-radius: 5px; padding: 2px 7px; box-shadow: 0 2px 6px rgba(0,0,0,0.45); }
+.leaflet-tooltip.waypoint-tip::before { border-top-color: #16213e !important; }
+.tl-event .tl-dot.passed { background: #FFD700; }
 
 /* 时间轴 */
 .timeline-bar { height: 96px; background: #0f1525; border-top: 2px solid rgba(196,30,58,0.4); display: flex; align-items: center; padding: 0 20px; overflow-x: auto; position: relative; }
@@ -243,7 +257,6 @@ body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; height: 
             </div>
             <div class="voice-switch" id="voiceSwitch">
                 <button type="button" class="voice-btn active" data-voice="mandarin" onclick="setVoice('mandarin')">普通话</button>
-                <button type="button" class="voice-btn" data-voice="sichuan" onclick="setVoice('sichuan')">四川话</button>
                 <button type="button" class="voice-btn voice-off" data-voice="off" onclick="setVoice('off')">🔇 关闭</button>
             </div>
         </div>
@@ -261,6 +274,7 @@ body { font-family: "Microsoft YaHei", sans-serif; background: #1a1a2e; height: 
         </div>
         <div class="chat-actions">
             <button type="button" class="delete-conversation-btn" id="deleteConversationBtn" style="display:none" onclick="deleteCurrentConversation()">🗑️ 删除当前对话</button>
+            <button type="button" class="compare-btn" onclick="runCompare()">🆚 模式对照</button>
         </div>
         <div class="chat-input">
             <input type="text" id="queryInput" placeholder="问问这个村寨的故事..." onkeypress="if(event.key==='Enter')sendMessage()">
@@ -319,10 +333,17 @@ let soldierPos = { route: 0, idx: 0 };
 let soldierLatLng = null;   // 战士当前实际坐标 [lat, lng]
 let walkAnimationId = null; // 当前行走动画句柄，避免两段动画同时抢位置
 let studyRouteLayer = null;  // 研学路线图层
+let routePlayLayer = null;         // 路线播放图层
+let routePlayAnimationId = null;   // 路线播放动画句柄
+let routePlayActive = false;       // 当前正在播放的路线索引，-1 表示未播放
+let routeLegendBtns = [];          // 路线图例按钮引用
+let routeLayers = [];              // 每条路线的图层容器（折线+箭头）
+let routeWaypoints = [];          // 每条路线的途径点 [{name, latlng, idx, marker, passed}]
 
 let voiceEnabled = true;   // 是否开启数字人语音
 let currentVoiceAccent = "mandarin";   // mandarin / sichuan
 let audioPlayer = new Audio();  // 播放 edge-tts 返回的音频
+let activeSpeakBtn = null;      // 当前正在朗读的“朗读”按钮
 let villageAvatars = {};        // ?? -> ?? URL
 let villageVoiceGenders = {};   // ?? -> male / female
 let currentVillageVoiceGender = "female";
@@ -382,39 +403,136 @@ function createSoldierMarker(latlng) {
 }
 
 // ========== 加载两条路线 ==========
+// 绘制某条路线的折线与方向箭头（使用当前 route.points，数据为详细路网）
+function drawRouteGeometry(route, ri) {
+    if (!map || !route || !Array.isArray(route.points) || route.points.length < 2) return;
+    if (!routeLayers[ri]) routeLayers[ri] = L.layerGroup().addTo(map);
+    const layer = routeLayers[ri];
+    layer.clearLayers();
+
+    // 白色描边增强层次，主线用军团颜色
+    L.polyline(route.points, { color: "#000000", weight: 7, opacity: 0.18 }).addTo(layer);
+    L.polyline(route.points, { color: route.color, weight: 4, opacity: 0.92 }).addTo(layer);
+
+    // 沿路径均匀放置方向箭头
+    const count = Math.min(6, route.points.length - 1);
+    for (let a = 0; a < count; a++) {
+        const idx = Math.max(0, Math.min(route.points.length - 2, Math.round((a + 0.5) * (route.points.length - 1) / count)));
+        const p1 = map.project(route.points[idx], 10);
+        const p2 = map.project(route.points[idx + 1], 10);
+        const mid = p1.add(p2.subtract(p1).divideBy(2));
+        const latlng = map.unproject(mid, 10);
+        const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI;
+        const arrowIcon = L.divIcon({ className: "route-arrow", html: `<div style="transform: rotate(${angle}deg); font-size:18px;">➤</div>`, iconSize: [20, 20], iconAnchor: [10, 10] });
+        L.marker(latlng, { icon: arrowIcon, interactive: false }).addTo(layer);
+    }
+}
+
+// ========== 详细途径点 ==========
+// 每支队伍在云南境内的主要途经城镇，按顺序给出（仅用于在路线邻近处标注，不改变路线几何）。
+const ROUTE_WAYPOINTS = [
+    [ // 中央红军（1935年）
+        { "name": "马龙",   "lat": 25.43, "lng": 103.58 },
+        { "name": "嵩明",   "lat": 25.34, "lng": 103.03 },
+        { "name": "昆明",   "lat": 25.04, "lng": 102.71 },
+        { "name": "富民",   "lat": 25.22, "lng": 102.50 },
+    ],
+    [ // 红二、六军团（1936年）
+        { "name": "昆明",   "lat": 25.04, "lng": 102.71 },
+        { "name": "安宁",   "lat": 24.92, "lng": 102.48 },
+        { "name": "禄丰",   "lat": 25.15, "lng": 102.08 },
+        { "name": "大理",   "lat": 25.61, "lng": 100.27 },
+        { "name": "鹤庆",   "lat": 26.56, "lng": 100.18 },
+    ],
+];
+
+const WAYPOINT_MAX_OFFSET = 320;  // 城镇坐标距路线几何的最大投影像素（zoom10），超出则说明不在该路线走廊上，忽略
+const WAYPOINT_REVEAL_PX = 24;    // 战士经过时触发显示的判据（zoom10 投影像素）
+
+// 显示并高亮某个途径点
+function revealWaypoint(w) {
+    if (!w || w.passed) return;
+    w.passed = true;
+    w.marker.setStyle({ radius: 7, color: "#FFD700", fillColor: "#FFD700", fillOpacity: 1 });
+    w.marker.unbindTooltip();
+    w.marker.bindTooltip(w.name, { permanent: true, direction: "top", className: "waypoint-tip", offset: L.point(0, -8) });
+    w.marker.openTooltip();
+}
+
+// 根据战士当前位置，显示附近尚未经过的途径点（“经过则展示”）
+function revealNearbyWaypoints(routeIdx, latlng) {
+    const list = routeWaypoints[routeIdx] || [];
+    if (!list.length || !latlng) return;
+    const p = map.project(latlng, 10);
+    list.forEach(w => {
+        if (w.passed) return;
+        const q = map.project(w.latlng, 10);
+        if (p.distanceTo(q) < WAYPOINT_REVEAL_PX) revealWaypoint(w);
+    });
+}
+
+// 把某条途经道路线邻近的详细途经点落在地图上（吸附到最近道路点，保证在线上）
+function createRouteWaypoints(route, ri) {
+    const data = ROUTE_WAYPOINTS[ri] || [];
+    const entries = [];
+    data.forEach(w => {
+        const ll = [w.lat, w.lng];
+        const idx = nearestPointIndexOnRoute(ll, route.points);
+        const snapped = route.points[idx];
+        const p1 = map.project(ll, 10);
+        const p2 = map.project(snapped, 10);
+        if (p1.distanceTo(p2) > WAYPOINT_MAX_OFFSET) return;  // 距路线过远，忽略避免错位
+        entries.push({ name: w.name, latlng: snapped, idx });
+    });
+
+    // 按路线前进顺序排序，并剔除顺序重复项，保证“经过”顺序正确
+    entries.sort((a, b) => a.idx - b.idx);
+    const final = [];
+    entries.forEach(w => {
+        if (final.length && w.idx <= final[final.length - 1].idx) return;
+        final.push(w);
+    });
+
+    final.forEach(w => {
+        const m = L.circleMarker(w.latlng, {
+            radius: 5, color: "#fff", weight: 2, fillColor: route.color, fillOpacity: 0.9, interactive: true
+        }).addTo(map);
+        m.bindTooltip(w.name, { permanent: false, direction: "top", className: "waypoint-tip", offset: L.point(0, -8) });
+        m.on("click", () => revealWaypoint(w));
+        w.marker = m;
+        w.passed = false;
+    });
+
+    routeWaypoints[ri] = final;
+}
+
+// 一次显示某条路线上全部剩余途径点（播放/行走结束兜底）
+function revealAllWaypoints(routeIdx) {
+    (routeWaypoints[routeIdx] || []).forEach(w => revealWaypoint(w));
+}
+
 fetch("/api/routes").then(r => r.json()).then(data => {
     routes = data.routes;
     const legend = document.getElementById("routeLegend");
     const allPoints = [];
 
     routes.forEach((route, ri) => {
-        // 画路线
-        L.polyline(route.points, {
-            color: route.color, weight: 4, opacity: 0.8
-        }).addTo(map);
         allPoints.push(...route.points);
 
-        // 图例
-        let item = document.createElement("div");
+        // 图例：做成可点击的播放按钮
+        let item = document.createElement("button");
         item.className = "legend-route";
-        item.innerHTML = `<span class="color-line" style="background:${route.color}"></span><span class="route-name">${route.name}</span><div class="route-dir">方向：${route.direction}</div>`;
+        item.type = "button";
+        item.title = "点击播放 " + route.name + " 的行军时序";
+        item.innerHTML = `<span class="color-line" style="background:${route.color}"></span><span class="route-main"><span class="route-name">${route.name}</span><div class="route-dir">方向：${route.direction}</div></span><span class="play-badge">▶</span>`;
+        item.onclick = () => playRoute(ri);
         legend.appendChild(item);
+        routeLegendBtns[ri] = item;
 
-        // 方向箭头：在每段中点放置，旋转指向行进方向
-        for (let i = 0; i < route.points.length - 1; i++) {
-            const p1 = map.project(route.points[i], 10);
-            const p2 = map.project(route.points[i + 1], 10);
-            const mid = p1.add(p2.subtract(p1).divideBy(2));
-            const latlng = map.unproject(mid, 10);
-            const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI;
-            const arrowIcon = L.divIcon({
-                className: "route-arrow",
-                html: `<div style="transform: rotate(${angle}deg); font-size:18px;">➤</div>`,
-                iconSize: [20, 20],
-                iconAnchor: [10, 10]
-            });
-            L.marker(latlng, { icon: arrowIcon, interactive: false }).addTo(map);
-        }
+        // 绘制详细路网（真实公路走向，不再只是直线）
+        drawRouteGeometry(route, ri);
+        // 标注详细途径点（吸附到道路上）
+        createRouteWaypoints(route, ri);
     });
 
     // 地图视野
@@ -433,7 +551,7 @@ fetch("/api/villages").then(r => r.json()).then(villages => {
         let armyIdx = 0;
         routes.forEach((route, ri) => {
             route.points.forEach(p => {
-                if (Math.abs(p[0] - v.lat) < 0.01 && Math.abs(p[1] - v.lng) < 0.01) {
+                if (Math.abs(p[0] - v.lat) < 0.05 && Math.abs(p[1] - v.lng) < 0.05) {
                     armyIdx = ri;
                 }
             });
@@ -495,6 +613,9 @@ function nearestPointIndexOnRoute(latlng, points) {
 function walkSoldierAlongPath(path, routeIdx, targetIdx, durationMs) {
     if (!soldierMarker) return;
 
+    // 若正在播放路线，先停止，避免两段动画同时抢位置
+    stopRoutePlayback();
+
     // 新指令到达时，取消上一次还没走完的动画
     if (walkAnimationId !== null) {
         cancelAnimationFrame(walkAnimationId);
@@ -551,6 +672,7 @@ function walkSoldierAlongPath(path, routeIdx, targetIdx, durationMs) {
         if (newPos) {
             soldierMarker.setLatLng(newPos);
             soldierLatLng = [newPos.lat, newPos.lng];
+            revealNearbyWaypoints(routeIdx, soldierLatLng);
         }
 
         if (t < 1) {
@@ -561,6 +683,7 @@ function walkSoldierAlongPath(path, routeIdx, targetIdx, durationMs) {
             soldierLatLng = last;
             soldierPos = { route: routeIdx, idx: targetIdx };
             walkAnimationId = null;
+            revealAllWaypoints(routeIdx);
         }
     }
 
@@ -605,6 +728,124 @@ function walkSoldierTo(targetLatlng, routeIdx) {
     }
 
     walkSoldierAlongPath(path, routeIdx, targetIdx);
+}
+
+// ========== 路线时序播放 ==========
+function stopRoutePlayback() {
+    if (routePlayAnimationId !== null) {
+        cancelAnimationFrame(routePlayAnimationId);
+        routePlayAnimationId = null;
+    }
+    if (routePlayLayer) {
+        map.removeLayer(routePlayLayer);
+        routePlayLayer = null;
+    }
+    routePlayActive = false;
+    syncRouteButtons(-1);
+}
+
+function syncRouteButtons(activeIdx) {
+    routeLegendBtns.forEach((btn, i) => {
+        if (!btn) return;
+        const active = i === activeIdx;
+        btn.classList.toggle("active", active);
+        btn.querySelector(".play-badge").textContent = active ? "⏹" : "▶";
+        btn.title = active ? "点击停止播放" : "点击播放该路线行军时序";
+    });
+}
+
+function playRoute(routeIdx) {
+    const route = routes[routeIdx];
+    if (!route || !map || !soldierMarker) return;
+
+    // 再次点击正在播放的路线 -> 停止
+    if (routePlayActive === routeIdx) {
+        stopRoutePlayback();
+        return;
+    }
+
+    stopRoutePlayback();
+    const points = route.points.map(toLatLngArray);
+    if (points.length < 2) return;
+
+    // 聚焦到该路线范围
+    map.flyToBounds(L.polyline(points).getBounds().pad(0.2), { duration: 1.0 });
+
+    // 播放图层：随时间逐步延展的路线 + 起点/终点标记
+    routePlayLayer = L.layerGroup().addTo(map);
+    const playLine = L.polyline([], {
+        color: route.color, weight: 6, opacity: 0.95, lineCap: "round", lineJoin: "round"
+    }).addTo(routePlayLayer);
+
+    const startIcon = L.divIcon({ className: "route-play-start", html: "▶", iconSize: [22, 22], iconAnchor: [11, 11] });
+    L.marker(points[0], { icon: startIcon }).addTo(routePlayLayer);
+    const endIcon = L.divIcon({ className: "route-play-end", html: "★", iconSize: [22, 22], iconAnchor: [11, 11] });
+    L.marker(points[points.length - 1], { icon: endIcon }).addTo(routePlayLayer);
+
+    // 计算每段投影距离
+    const segments = [];
+    let totalDist = 0;
+    for (let i = 0; i < points.length - 1; i++) {
+        const p1 = map.project(points[i], 10);
+        const p2 = map.project(points[i + 1], 10);
+        const d = p1.distanceTo(p2);
+        segments.push({ start: points[i], end: points[i + 1], dist: d, cumStart: totalDist });
+        totalDist += d;
+    }
+
+    const SPEED = 200;  // 全程播放速度（像素/秒，zoom=10 投影）；随距离自动调节时长
+    const duration = Math.min(14000, Math.max(7000, totalDist / SPEED));
+    const startTime = performance.now();
+    routePlayActive = routeIdx;
+    syncRouteButtons(routeIdx);
+
+    function frame(now) {
+        const t = Math.min((now - startTime) / duration, 1);
+        const targetDist = t * totalDist;
+
+        let linePoints = [];
+        let headPoint = null;
+        for (let si = 0; si < segments.length; si++) {
+            const seg = segments[si];
+            const isLast = si === segments.length - 1;
+            if (targetDist <= seg.cumStart + seg.dist || isLast) {
+                for (let k = 0; k <= si; k++) linePoints.push(segments[k].start);
+                const segT = seg.dist > 0 ? Math.min(1, (targetDist - seg.cumStart) / seg.dist) : 1;
+                if (segT >= 1 && isLast) {
+                    headPoint = seg.end;
+                } else {
+                    const mp1 = map.project(seg.start, 10);
+                    const mp2 = map.project(seg.end, 10);
+                    const mid = mp1.add(mp2.subtract(mp1).multiplyBy(segT));
+                    headPoint = map.unproject(mid, 10);
+                }
+                linePoints.push([headPoint.lat, headPoint.lng]);
+                break;
+            }
+        }
+
+        playLine.setLatLngs(linePoints);
+
+        // 战士跟随路线头部行进（时序展示）
+        soldierMarker.setLatLng(headPoint);
+        soldierLatLng = [headPoint.lat, headPoint.lng];
+        revealNearbyWaypoints(routeIdx, soldierLatLng);
+
+        if (t < 1) {
+            routePlayAnimationId = requestAnimationFrame(frame);
+        } else {
+            playLine.setLatLngs(points);
+            soldierMarker.setLatLng(points[points.length - 1]);
+            soldierLatLng = points[points.length - 1];
+            soldierPos = { route: routeIdx, idx: points.length - 1 };
+            routePlayAnimationId = null;
+            routePlayActive = false;
+            syncRouteButtons(-1);
+            revealAllWaypoints(routeIdx);
+        }
+    }
+
+    routePlayAnimationId = requestAnimationFrame(frame);
 }
 
 // ========== 数字人语音 ==========
@@ -661,6 +902,64 @@ function stopAudio() {
     audioPlayer.currentTime = 0;
     if ("speechSynthesis" in window) {
         window.speechSynthesis.cancel();
+    }
+}
+
+function resetSpeakBtn(btn) {
+    if (!btn) return;
+    btn.classList.remove("playing");
+    btn.textContent = "🔊 朗读";
+    if (activeSpeakBtn === btn) activeSpeakBtn = null;
+    setSpeaking(false);
+}
+
+async function speakAnswer(text, btn) {
+    const raw = String(text || "").trim();
+    if (!raw) return;
+    // 正在朗读这条回答 -> 再点一次停止
+    if (activeSpeakBtn === btn) {
+        stopAudio();
+        resetSpeakBtn(btn);
+        return;
+    }
+    stopAudio();
+    if (activeSpeakBtn) resetSpeakBtn(activeSpeakBtn);
+
+    btn.classList.add("playing");
+    btn.textContent = "⏹ 停止";
+    activeSpeakBtn = btn;
+    setSpeaking(true);
+
+    try {
+        const response = await fetch("/api/tts", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                text: plainTextForSpeech(raw),
+                village: currentVillage || "",
+                gender: currentVillageVoiceGender,
+                accent: "mandarin"
+            })
+        });
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            audioPlayer.src = url;
+            audioPlayer.onended = () => { URL.revokeObjectURL(url); resetSpeakBtn(btn); };
+            audioPlayer.onerror = () => { URL.revokeObjectURL(url); resetSpeakBtn(btn); browserSpeak(raw); };
+            try {
+                await audioPlayer.play();
+            } catch (e) {
+                resetSpeakBtn(btn);
+                browserSpeak(raw);
+            }
+        } else {
+            resetSpeakBtn(btn);
+            browserSpeak(raw);
+        }
+    } catch (e) {
+        resetSpeakBtn(btn);
+        browserSpeak(raw);
     }
 }
 
@@ -1480,14 +1779,15 @@ function sendMessage() {
 
         let am = document.createElement("div");
         am.className = "msg agent";
-        am.innerHTML = `<div class="av-sm">&#127894;&#65039;</div><div class="bubble">${renderMessageHtml(answer)}</div>`;
+        am.innerHTML = `<div class="av-sm">&#127894;&#65039;</div><div class="bubble">${renderMessageHtml(answer)}<button class="speak-btn" title="朗读此回答">🔊 朗读</button></div>`;
+        const vb = am.querySelector(".speak-btn");
+        if (vb) vb.addEventListener("click", () => speakAnswer(answer, vb));
         msgs.appendChild(am);
 
         const moduleWrap = renderModuleCards(plan, toolResults, verification, evidence, question, currentVillage);
         if (moduleWrap) msgs.appendChild(moduleWrap);
 
         msgs.scrollTop = msgs.scrollHeight;
-        speak(plainTextForSpeech(answer));
     }).catch(() => {
         const typing = document.getElementById("typing");
         if (typing) typing.remove();
@@ -1500,6 +1800,53 @@ function sendMessage() {
             msgs.scrollTop = msgs.scrollHeight;
         }
     });
+}
+
+function runCompare() {
+    const q = ((document.getElementById("queryInput") || {}).value || "").trim();
+    if (!q) { alert("请先在输入框输入一个问题，再点「模式对照」"); return; }
+    const msgs = document.getElementById("chatMessages");
+    if (!msgs) return;
+    const tm = document.createElement("div");
+    tm.className = "msg agent";
+    tm.id = "compareTyping";
+    tm.innerHTML = '<div class="av-sm">🆚</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+    msgs.appendChild(tm);
+    msgs.scrollTop = msgs.scrollHeight;
+    fetch("/api/chat/compare", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({village: currentVillage, question: q})
+    }).then(r => r.json()).then(d => {
+        const t = document.getElementById("compareTyping");
+        if (t) t.remove();
+        const answers = (d && d.answers) || {};
+        const wrap = document.createElement("div");
+        wrap.className = "msg agent";
+        wrap.innerHTML = '<div class="av-sm">🆚</div><div class="bubble">' +
+            '<div style="font-weight:bold;margin-bottom:6px;">同一问题的三种讲解模式对照</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">' +
+            compareCol("🧒 儿童", answers.student) +
+            compareCol("🧭 游客", answers.tourist) +
+            compareCol("📚 研究者", answers.researcher) +
+            '</div></div>';
+        msgs.appendChild(wrap);
+        msgs.scrollTop = msgs.scrollHeight;
+    }).catch(() => {
+        const t = document.getElementById("compareTyping");
+        if (t) t.remove();
+        const err = document.createElement("div");
+        err.className = "msg agent";
+        err.innerHTML = '<div class="av-sm">🆚</div><div class="bubble">模式对照生成失败，请确认后端服务已启动。</div>';
+        msgs.appendChild(err);
+        msgs.scrollTop = msgs.scrollHeight;
+    });
+}
+
+function compareCol(title, text) {
+    return '<div style="border:1px solid rgba(196,30,58,0.4);border-radius:10px;padding:8px;background:rgba(0,0,0,0.15);">' +
+        '<div style="font-weight:bold;color:#FFD700;margin-bottom:4px;">' + title + '</div>' +
+        '<div>' + renderMessageHtml(text || "（无）") + '</div></div>';
 }
 
 // ========== ??????? ==========

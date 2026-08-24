@@ -9,7 +9,7 @@
 - DeepSeek 驱动的复杂任务规划与工具调用
 - 事实校验 Agent
 - 档案知识图谱：手工图谱 + OCR 自动抽取 + 实体自动校验
-- Flask Web：地图、双路线、时间轴、战士动画、语音朗读、知识图谱可视化
+- FastAPI Web：地图、双路线、时间轴、战士动画、语音朗读、知识图谱可视化
 
 ## 目录
 
@@ -19,7 +19,7 @@ src/
 ├── knowledge/    # 文本清洗、索引构建
 ├── kg/           # 知识图谱抽取、校验、合并
 ├── ocr/          # OCR 相关脚本
-└── web/          # Flask 后端与前端页面
+└── web/          # FastAPI 后端与前端页面
 
 data/
 ├── ocr_output/        # OCR 档案文本
@@ -119,6 +119,13 @@ python src/web/app.py
 ```
 
 浏览器打开：`http://127.0.0.1:5000`
+
+> 该服务基于 **FastAPI + Uvicorn**。如需热重载或更完整的 ASGI 部署，也可以在项目根目录运行：
+> ```powershell
+> $env:PYTHONPATH = "src"
+> python -m uvicorn web.app:app --reload --port 5000
+> ```
+> 交互式 API 文档见 `http://127.0.0.1:5000/docs`。
 
 ## 详细文档
 
