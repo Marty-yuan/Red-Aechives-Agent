@@ -161,9 +161,55 @@ body::after {
   color: var(--text-primary);
   font-size: 12px;
   max-width: 200px;
-  max-height: 60%;
-  overflow-y: auto;
+  overflow: visible;
   box-shadow: var(--shadow-card), var(--shadow-glow-red);
+  transition: right 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease;
+}
+
+.map-legend-scroll {
+  max-height: 50vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.map-legend.collapsed {
+  right: -320px;
+  opacity: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.legend-toggle {
+  position: absolute;
+  top: 50%;
+  right: 246px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 48px;
+  background: linear-gradient(135deg, rgba(17,24,39,0.95), rgba(10,14,23,0.95));
+  border: 1px solid var(--border-red);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  color: var(--gold-primary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: -2px 0 8px rgba(0,0,0,0.3);
+  transition: right 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.2s, color 0.2s, width 0.2s;
+  z-index: 1001;
+}
+
+.map-legend.collapsed ~ .legend-toggle {
+  right: 16px;
+  border-radius: 8px 0 0 8px;
+}
+
+.legend-toggle:hover {
+  background: linear-gradient(135deg, var(--red-primary), var(--red-deep));
+  color: white;
+  width: 32px;
 }
 
 .map-legend h4 {
@@ -1164,6 +1210,286 @@ body::after {
 }
 .chat-input button:active { transform: translateY(0); }
 
+/* ========== 快捷问题栏 ========== */
+.quick-questions {
+    padding: 8px 14px 6px;
+    background: rgba(15,22,35,0.35);
+    backdrop-filter: blur(2px);
+    border-top: 1px solid rgba(212,32,44,0.1);
+}
+.qq-title {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.qq-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.qq-btn {
+    padding: 5px 10px;
+    background: rgba(212,32,44,0.15);
+    color: var(--gold-soft);
+    border: 1px solid rgba(245,200,66,0.25);
+    border-radius: 14px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.qq-btn:hover {
+    background: rgba(212,32,44,0.3);
+    border-color: var(--gold-primary);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(212,32,44,0.3);
+}
+.qq-btn:active { transform: translateY(0); }
+
+/* ========== 打字机光标 ========== */
+.typing-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 14px;
+    background: var(--gold-primary);
+    margin-left: 2px;
+    vertical-align: middle;
+    animation: cursorBlink 0.8s infinite;
+}
+@keyframes cursorBlink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+/* ========== 时间轴悬停详情 ========== */
+.tl-event { position: relative; }
+.tl-tooltip {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    background: linear-gradient(135deg, rgba(15,22,35,0.95), rgba(10,14,23,0.95));
+    border: 1px solid var(--border-gold);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    min-width: 200px;
+    max-width: 280px;
+    color: var(--text-primary);
+    font-size: 11px;
+    line-height: 1.6;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.25s ease;
+    z-index: 9999;
+    pointer-events: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5), var(--shadow-glow-gold);
+}
+.tl-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(245,200,66,0.3);
+}
+.tl-event:hover .tl-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+.tl-tooltip-date {
+    color: var(--text-gold);
+    font-weight: 600;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+.tl-tooltip-label {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.tl-tooltip-army {
+    color: var(--gold-soft);
+    font-size: 10px;
+    margin-bottom: 6px;
+}
+.tl-tooltip-desc {
+    color: var(--text-secondary);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+/* ========== 全局时间轴Tooltip（固定定位） ========== */
+.global-tl-tooltip {
+    position: fixed;
+    background: linear-gradient(135deg, rgba(15,22,35,0.97), rgba(10,14,23,0.97));
+    border: 1px solid var(--border-gold);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    min-width: 200px;
+    max-width: 280px;
+    color: var(--text-primary);
+    font-size: 11px;
+    line-height: 1.6;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease;
+    z-index: 99999;
+    pointer-events: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 16px rgba(245,200,66,0.2);
+    backdrop-filter: blur(8px);
+}
+.global-tl-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(245,200,66,0.4);
+}
+.global-tl-tooltip.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ========== 地图悬停Tooltip样式 ========== */
+.leaflet-tooltip.village-hover-tooltip {
+    background: linear-gradient(135deg, rgba(15,22,35,0.95), rgba(10,14,23,0.95));
+    border: 1px solid rgba(245,200,66,0.4);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #e0e0e0;
+    font-size: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5), 0 0 12px rgba(245,200,66,0.15);
+    white-space: nowrap;
+}
+.leaflet-tooltip.village-hover-tooltip::before {
+    border-top-color: rgba(245,200,66,0.4);
+}
+
+/* ========== 2D数字人角色舞台 ========== */
+.character-stage {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 260px;
+    height: 300px;
+    pointer-events: none;
+    z-index: 500;
+}
+.character-sprite {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    transform: translateX(320px);
+    transition: transform 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    pointer-events: auto;
+    cursor: pointer;
+}
+.character-sprite.show {
+    transform: translateX(0);
+    animation: charFloat 3s ease-in-out infinite;
+}
+.character-sprite img {
+    height: 260px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4)) drop-shadow(0 0 8px rgba(212,32,44,0.2));
+    transition: transform 0.2s, filter 0.2s;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+@keyframes charFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+.character-sprite.speaking img {
+    animation: charSpeak 0.4s ease-in-out infinite;
+}
+@keyframes charSpeak {
+    0%, 100% { transform: rotate(-1deg) scale(1); }
+    50% { transform: rotate(1deg) scale(1.02); }
+}
+.character-sprite:hover img {
+    transform: scale(1.08) translateY(-4px);
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5)) drop-shadow(0 0 16px rgba(245,200,66,0.4));
+}
+.character-sprite:active img { transform: scale(0.95); }
+.character-sprite.jump { animation: charJump 0.5s ease-out !important; }
+@keyframes charJump {
+    0% { transform: translateY(0) scale(1); }
+    30% { transform: translateY(-30px) scale(1.1); }
+    60% { transform: translateY(0) scale(0.95); }
+    100% { transform: translateY(0) scale(1); }
+}
+.character-bubble {
+    position: absolute;
+    bottom: 165px;
+    right: 170px;
+    max-width: 180px;
+    background: linear-gradient(135deg, #fffef5, #fff8e1);
+    border: 2px solid #D4202C;
+    border-radius: 16px;
+    padding: 10px 14px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #1a1a1a;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2), 0 0 8px rgba(212,32,44,0.2);
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+    z-index: 501;
+}
+.character-bubble.visible {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+.character-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    right: 30px;
+    border: 8px solid transparent;
+    border-top-color: #D4202C;
+}
+.character-bubble::before {
+    content: '';
+    position: absolute;
+    bottom: -7px;
+    right: 32px;
+    border: 6px solid transparent;
+    border-top-color: #fffef5;
+    z-index: 1;
+}
+.bubble-text { font-weight: 500; }
+.character-name-tag {
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #D4202C, #8B0000);
+    color: #F5C842;
+    padding: 3px 12px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    border: 1px solid rgba(245,200,66,0.5);
+}
+
 /* ========== 打字动画 ========== */
 .typing { display: flex; gap: 5px; padding: 4px 0; }
 .typing span {
@@ -1266,8 +1592,9 @@ body::after {
   align-items: center;
   padding: 0 24px;
   overflow-x: auto;
+  overflow-y: visible;
   position: relative;
-  z-index: 1;
+  z-index: 500;
 }
 
 .timeline-bar::before {
@@ -1771,11 +2098,23 @@ body::after {
                 <button class="avatar-panel-chat-btn" onclick="focusChatInput()">💬 与代言人对话</button>
             </div>
         </div>
-        <div class="map-legend">
-            <h4>🗺️ 长征路线</h4>
-            <div id="routeLegend"></div>
-            <h4 style="margin-top:8px">🏘️ 村寨代言人</h4>
-            <div id="legendList"></div>
+        <div class="map-legend" id="mapLegend">
+            <div class="map-legend-scroll">
+                <h4>🗺️ 长征路线</h4>
+                <div id="routeLegend"></div>
+                <h4 style="margin-top:8px">🏘️ 村寨代言人</h4>
+                <div id="legendList"></div>
+            </div>
+        </div>
+        <button class="legend-toggle" id="legendToggle" onclick="toggleLegend()" title="收起面板">▶</button>
+        <!-- 2D数字人角色舞台 -->
+        <div class="character-stage" id="characterStage">
+            <div class="character-sprite" id="characterSprite">
+                <img id="characterImg" src="" alt="数字人">
+            </div>
+            <div class="character-bubble" id="characterBubble">
+                <div class="bubble-text" id="bubbleText"></div>
+            </div>
         </div>
     </div>
 
@@ -1810,6 +2149,11 @@ body::after {
         <div class="chat-actions">
             <button type="button" class="delete-conversation-btn" id="deleteConversationBtn" style="display:none" onclick="deleteCurrentConversation()">🗑️ 删除当前对话</button>
             <button type="button" class="compare-btn" onclick="runCompare()">🆚 模式对照</button>
+        </div>
+        <!-- 快捷问题栏 -->
+        <div class="quick-questions" id="quickQuestions">
+            <div class="qq-title">💡 快捷提问</div>
+            <div class="qq-buttons" id="qqButtons"></div>
         </div>
         <div class="chat-input">
             <input type="text" id="queryInput" placeholder="问问这个村寨的故事..." onkeypress="if(event.key==='Enter')sendMessage()">
@@ -2112,6 +2456,20 @@ fetch("/api/villages").then(r => r.json()).then(villages => {
         // 弹窗放在下方，避免挡住战士
         marker.bindPopup(`<b>${v.name}</b><br>${v.event} · ${v.year}<br>${v.army}`, { className: "village-popup", offset: L.point(0, -70), autoPan: false, autoClose: false, closeButton: false });
         marker.on("click", () => selectVillage(v.name));
+        // 悬停交互：放大发光+预览卡片
+        marker.on("mouseover", function() {
+            this.setStyle({ radius: 14, fillOpacity: 1, weight: 3, color: "#FFFFFF" });
+            this.bindTooltip(`<div style="font-weight:bold;color:#F5C842;font-size:13px;">${v.name}</div><div style="font-size:11px;color:#e0e0e0;margin-top:2px;">${v.event}</div><div style="font-size:10px;color:#94A3B8;margin-top:2px;">${v.year} · ${v.army}</div>`, {
+                direction: "top",
+                offset: [0, -10],
+                className: "village-hover-tooltip",
+                permanent: false
+            }).openTooltip();
+        });
+        marker.on("mouseout", function() {
+            this.setStyle({ radius: 10, fillOpacity: 0.85, weight: 2, color: "#FFD700" });
+            this.closeTooltip();
+        });
         villageMarkers[v.name] = marker;
 
         let item = document.createElement("div");
@@ -2128,6 +2486,10 @@ fetch("/api/timeline").then(r => r.json()).then(events => {
     events.forEach(ev => {
         let el = document.createElement("div");
         el.className = "tl-event";
+        el.setAttribute("data-date", ev.date);
+        el.setAttribute("data-label", ev.label);
+        el.setAttribute("data-army", ev.army);
+        el.setAttribute("data-desc", ev.desc || "点击查看详情");
         el.innerHTML = `
             <div class="tl-dot"></div>
             <div class="tl-date">${ev.date}</div>
@@ -2135,6 +2497,8 @@ fetch("/api/timeline").then(r => r.json()).then(events => {
             <div class="tl-army">${ev.army}</div>`;
         el.title = ev.desc;
         el.onclick = () => selectVillage(ev.village);
+        el.addEventListener("mouseenter", showTlTooltip);
+        el.addEventListener("mouseleave", hideTlTooltip);
         track.appendChild(el);
     });
 });
@@ -2827,6 +3191,10 @@ function selectVillage(name) {
     openAvatarPanel(name);
     // 设置对话框背景图
     setChatBackground(name);
+    // 渲染快捷问题
+    renderQuickQuestions(name);
+    // 显示2D数字人角色
+    showCharacter(name);
 }
 
 // 村寨对话框背景图映射
@@ -2844,6 +3212,217 @@ const CHAT_BG_MAP = {
     "宣威": "/static/chat_bg/xuanwei.jpg",
     "禄劝": "/static/chat_bg/luquan.jpg"
 };
+
+// 快捷问题列表
+const QUICK_QUESTIONS = [
+    "这里发生了什么历史事件？",
+    "给我讲一个红色故事",
+    "有哪些值得参观的红色景点？",
+    "红军在这里经历了什么？"
+];
+
+// 渲染快捷问题按钮
+function renderQuickQuestions(village) {
+    const container = document.getElementById("qqButtons");
+    if (!container) return;
+    container.innerHTML = "";
+    QUICK_QUESTIONS.forEach(q => {
+        const btn = document.createElement("button");
+        btn.className = "qq-btn";
+        btn.textContent = q;
+        btn.onclick = function() {
+            const input = document.getElementById("queryInput");
+            if (input) input.value = q;
+            sendMessage();
+        };
+        container.appendChild(btn);
+    });
+}
+
+// 打字机效果
+function typeWriter(element, text, speed, callback) {
+    let i = 0;
+    element.innerHTML = "";
+    const cursor = document.createElement("span");
+    cursor.className = "typing-cursor";
+    element.appendChild(cursor);
+    
+    // 开始说话动画
+    const avatarWrap = document.getElementById("avatarWrap");
+    if (avatarWrap) avatarWrap.classList.add("speaking");
+    
+    function type() {
+        if (i < text.length) {
+            const char = text.charAt(i);
+            cursor.insertAdjacentText("beforebegin", char);
+            i++;
+            setTimeout(type, speed || 25);
+        } else {
+            cursor.remove();
+            // 停止说话动画
+            if (avatarWrap) avatarWrap.classList.remove("speaking");
+            if (callback) callback();
+        }
+    }
+    type();
+}
+
+// 全局时间轴Tooltip显示
+function showTlTooltip(e) {
+    const el = e.currentTarget;
+    const tooltip = document.getElementById("globalTlTooltip");
+    if (!tooltip) return;
+    
+    document.getElementById("gttDate").textContent = el.getAttribute("data-date") || "";
+    document.getElementById("gttLabel").textContent = el.getAttribute("data-label") || "";
+    document.getElementById("gttArmy").textContent = el.getAttribute("data-army") || "";
+    document.getElementById("gttDesc").textContent = el.getAttribute("data-desc") || "";
+    
+    // 先显示以获取尺寸（透明但可见）
+    tooltip.style.visibility = "visible";
+    tooltip.style.opacity = "0";
+    
+    const rect = el.getBoundingClientRect();
+    const tipRect = tooltip.getBoundingClientRect();
+    
+    // 计算位置：上方居中
+    let left = rect.left + rect.width / 2 - tipRect.width / 2;
+    let top = rect.top - tipRect.height - 12;
+    
+    // 边界处理
+    left = Math.max(8, Math.min(left, window.innerWidth - tipRect.width - 8));
+    if (top < 8) top = rect.bottom + 12;
+    
+    tooltip.style.left = left + "px";
+    tooltip.style.top = top + "px";
+    
+    // 淡入显示（用内联样式，避免类选择器优先级问题）
+    requestAnimationFrame(() => {
+        tooltip.style.opacity = "1";
+    });
+}
+
+function hideTlTooltip() {
+    const tooltip = document.getElementById("globalTlTooltip");
+    if (!tooltip) return;
+    tooltip.style.opacity = "0";
+    // 过渡结束后隐藏
+    setTimeout(() => {
+        if (tooltip.style.opacity === "0") {
+            tooltip.style.visibility = "hidden";
+        }
+    }, 200);
+}
+
+// ========== 2D数字人角色 ==========
+const CHARACTER_DATA = {
+    "皎平渡": { img: "/static/characters/jiaopingdu.png", name: "皎平渡老船工", greeting: "同志，我是皎平渡的老船工，当年就是我划着船送红军过江的！" },
+    "石鼓": { img: "/static/characters/shigu.png", name: "石鼓纳西姑娘", greeting: "你好呀，我是石鼓的纳西族姑娘，长江第一湾的故事我最清楚啦！" },
+    "扎西": { img: "/static/characters/zaxi.png", name: "扎西苗族小伙", greeting: "欢迎来到扎西！我是苗族小伙，扎西会议的故事听我慢慢讲。" },
+    "寻甸柯渡": { img: "/static/characters/xundian_kedu.png", name: "柯渡回族姑娘", greeting: "色俩目，我是柯渡的回族姑娘，红军长征过柯渡的故事我都知道。" },
+    "楚雄": { img: "/static/characters/chuxiong.png", name: "楚雄彝族汉子", greeting: "阿老表，我是楚雄的彝族汉子，红军两过楚雄的故事可多了！" },
+    "曲靖": { img: "/static/characters/qujing.png", name: "曲靖红军战士", greeting: "同志好！我是红军战士，曲靖是红军入滇的重要一站。" },
+    "丽江": { img: "/static/characters/lijiang.png", name: "丽江纳西奶奶", greeting: "孩子，我是丽江的纳西族奶奶，红军过丽江的故事，奶奶给你讲。" },
+    "宣威": { img: "/static/characters/xuanwei.png", name: "宣威彝族大哥", greeting: "老表，我是宣威的彝族大哥，宣威战役的故事，我最清楚！" },
+    "禄劝": { img: "/static/characters/luquan.png", name: "禄劝彝族姑娘", greeting: "你好呀，我是禄劝的彝族姑娘，红军过禄劝的故事，我来讲给你听。" }
+};
+
+const CHARACTER_RANDOM_LINES = [
+    "你好呀，同志！",
+    "有什么想知道的吗？",
+    "红军的故事，我最清楚啦！",
+    "来，我给你讲个故事！",
+    "欢迎来到我们的村寨！",
+    "长征路上的故事，三天三夜讲不完！",
+    "想了解更多，可以在右边和我对话哦！"
+];
+
+let currentCharacterVillage = null;
+let characterBubbleTimer = null;
+
+function showCharacter(village) {
+    const data = CHARACTER_DATA[village];
+    if (!data) return;
+    
+    const sprite = document.getElementById("characterSprite");
+    const img = document.getElementById("characterImg");
+    const bubble = document.getElementById("characterBubble");
+    const bubbleText = document.getElementById("bubbleText");
+    
+    if (!sprite || !img || !bubble) return;
+    
+    if (currentCharacterVillage === village) {
+        sayCharacterLine(data.greeting);
+        return;
+    }
+    
+    currentCharacterVillage = village;
+    sprite.classList.remove("show");
+    
+    setTimeout(() => {
+        img.src = data.img;
+        img.alt = data.name;
+        
+        requestAnimationFrame(() => {
+            sprite.classList.add("show");
+        });
+        
+        setTimeout(() => {
+            sayCharacterLine(data.greeting);
+        }, 1600);
+    }, 300);
+}
+
+function sayCharacterLine(text) {
+    const sprite = document.getElementById("characterSprite");
+    const bubble = document.getElementById("characterBubble");
+    const bubbleText = document.getElementById("bubbleText");
+    
+    if (!sprite || !bubble || !bubbleText) return;
+    
+    if (characterBubbleTimer) {
+        clearTimeout(characterBubbleTimer);
+        characterBubbleTimer = null;
+    }
+    
+    sprite.classList.add("speaking");
+    bubbleText.textContent = text;
+    bubble.classList.add("visible");
+    
+    characterBubbleTimer = setTimeout(() => {
+        bubble.classList.remove("visible");
+        sprite.classList.remove("speaking");
+    }, 3500);
+}
+
+function initCharacterInteractions() {
+    const sprite = document.getElementById("characterSprite");
+    if (!sprite) return;
+    
+    sprite.addEventListener("click", function() {
+        this.classList.remove("jump");
+        void this.offsetWidth;
+        this.classList.add("jump");
+        
+        const randomLine = CHARACTER_RANDOM_LINES[Math.floor(Math.random() * CHARACTER_RANDOM_LINES.length)];
+        sayCharacterLine(randomLine);
+    });
+}
+
+// 图例面板收起/展开
+function toggleLegend() {
+    const legend = document.getElementById("mapLegend");
+    const btn = document.getElementById("legendToggle");
+    if (!legend || !btn) return;
+    legend.classList.toggle("collapsed");
+    if (legend.classList.contains("collapsed")) {
+        btn.textContent = "◀";
+        btn.title = "展开面板";
+    } else {
+        btn.textContent = "▶";
+        btn.title = "收起面板";
+    }
+}
 
 // 设置对话框背景图
 function setChatBackground(name) {
@@ -3476,10 +4055,22 @@ function sendMessage() {
 
         let am = document.createElement("div");
         am.className = "msg agent";
-        am.innerHTML = `<div class="av-sm">&#127894;&#65039;</div><div class="bubble">${renderMessageHtml(answer)}<button class="speak-btn" title="朗读此回答">🔊 朗读</button></div>`;
-        const vb = am.querySelector(".speak-btn");
-        if (vb) vb.addEventListener("click", () => speakAnswer(answer, vb));
+        am.innerHTML = `<div class="av-sm">&#127894;&#65039;</div><div class="bubble"></div>`;
+        const bubble = am.querySelector(".bubble");
         msgs.appendChild(am);
+        msgs.scrollTop = msgs.scrollHeight;
+        
+        // 打字机效果：逐字显示，完成后替换为格式化HTML并添加朗读按钮
+        typeWriter(bubble, answer, 22, function() {
+            bubble.innerHTML = renderMessageHtml(answer);
+            const speakBtn = document.createElement("button");
+            speakBtn.className = "speak-btn";
+            speakBtn.title = "朗读此回答";
+            speakBtn.textContent = "🔊 朗读";
+            speakBtn.addEventListener("click", () => speakAnswer(answer, speakBtn));
+            bubble.appendChild(speakBtn);
+            msgs.scrollTop = msgs.scrollHeight;
+        });
 
         const moduleWrap = renderModuleCards(plan, toolResults, verification, evidence, question, currentVillage);
         if (moduleWrap) msgs.appendChild(moduleWrap);
@@ -3634,7 +4225,16 @@ refreshUser();
 setupAvatar();
 setupVoiceButton();
 setupPdfOverlay();
+initCharacterInteractions();
 </script>
+
+<!-- 全局时间轴Tooltip（固定定位，脱离父容器overflow限制） -->
+<div class="global-tl-tooltip" id="globalTlTooltip">
+    <div class="tl-tooltip-date" id="gttDate"></div>
+    <div class="tl-tooltip-label" id="gttLabel"></div>
+    <div class="tl-tooltip-army" id="gttArmy"></div>
+    <div class="tl-tooltip-desc" id="gttDesc"></div>
+</div>
 
 </body>
 </html>
