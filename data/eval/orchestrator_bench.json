@@ -1,0 +1,118 @@
+{
+  "summary": {
+    "n": 10,
+    "avg_latency_s": 20.31,
+    "by_path": {
+      "direct_rag": {
+        "n": 8,
+        "avg_s": 20.38,
+        "min_s": 8.33,
+        "max_s": 31.19
+      },
+      "orchestrator": {
+        "n": 2,
+        "avg_s": 20.04,
+        "min_s": 14.47,
+        "max_s": 25.61
+      }
+    },
+    "rule_complex_count": 0,
+    "actual_complex_count": 2,
+    "projected_saving_if_rule_gate": {
+      "questions_reroutable": 0,
+      "saved_s_per_q": -0.34
+    }
+  },
+  "records": [
+    {
+      "qid": 1,
+      "question": "扎西会议是什么时候召开的？",
+      "village": "扎西",
+      "rule_complex": false,
+      "actual_path": "direct_rag",
+      "latency_s": 8.33,
+      "answer_len": 219
+    },
+    {
+      "qid": 2,
+      "question": "扎西会议主要做出了哪些决策？",
+      "village": "扎西",
+      "rule_complex": false,
+      "actual_path": "orchestrator",
+      "latency_s": 14.47,
+      "answer_len": 341
+    },
+    {
+      "qid": 3,
+      "question": "万急渡江令是在哪里发出的？",
+      "village": "寻甸",
+      "rule_complex": false,
+      "actual_path": "direct_rag",
+      "latency_s": 17.88,
+      "answer_len": 263
+    },
+    {
+      "qid": 4,
+      "question": "中央红军是怎么渡过金沙江的？",
+      "village": "皎平渡",
+      "rule_complex": false,
+      "actual_path": "direct_rag",
+      "latency_s": 25.25,
+      "answer_len": 334
+    },
+    {
+      "qid": 5,
+      "question": "皎平渡渡江用了多少条木船？",
+      "village": "皎平渡",
+      "rule_complex": false,
+      "actual_path": "direct_rag",
+      "latency_s": 31.19,
+      "answer_len": 242
+    },
+    {
+      "qid": 6,
+      "question": "红二、六军团是什么时候进入云南的？",
+      "village": "宣威",
+      "rule_complex": false,
+      "actual_path": "direct_rag",
+      "latency_s": 18.65,
+      "answer_len": 285
+    },
+    {
+      "qid": 7,
+      "question": "石鼓渡江发生在哪一年？",
+      "village": "石鼓",
+      "rule_complex": false,
+      "actual_path": "direct_rag",
+      "latency_s": 16.69,
+      "answer_len": 347
+    },
+    {
+      "qid": 8,
+      "question": "贺龙在哪一年率部渡过金沙江？",
+      "village": "石鼓",
+      "rule_complex": false,
+      "actual_path": "direct_rag",
+      "latency_s": 17.19,
+      "answer_len": 318
+    },
+    {
+      "qid": 9,
+      "question": "中央红军长征是什么时候经过云南的？",
+      "village": "皎平渡",
+      "rule_complex": false,
+      "actual_path": "direct_rag",
+      "latency_s": 27.84,
+      "answer_len": 213
+    },
+    {
+      "qid": 10,
+      "question": "红二、六军团长征经过了云南哪些地方？",
+      "village": "皎平渡",
+      "rule_complex": false,
+      "actual_path": "orchestrator",
+      "latency_s": 25.61,
+      "answer_len": 387
+    }
+  ]
+}

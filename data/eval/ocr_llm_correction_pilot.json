@@ -1,0 +1,58 @@
+{
+  "n_chunks": 12,
+  "known_occurrences": 12,
+  "known_fixed_by_llm": 0,
+  "recall_on_known": 0.0,
+  "total_llm_edits": 0,
+  "records": [
+    {
+      "idx": 2906,
+      "ok": false
+    },
+    {
+      "idx": 2562,
+      "ok": false
+    },
+    {
+      "idx": 2874,
+      "ok": false
+    },
+    {
+      "idx": 7261,
+      "ok": false
+    },
+    {
+      "idx": 2840,
+      "ok": false
+    },
+    {
+      "idx": 2474,
+      "ok": false
+    },
+    {
+      "idx": 2922,
+      "ok": false
+    },
+    {
+      "idx": 3059,
+      "ok": false
+    },
+    {
+      "idx": 2564,
+      "ok": false
+    },
+    {
+      "idx": 2449,
+      "ok": false
+    },
+    {
+      "idx": 2483,
+      "ok": false
+    },
+    {
+      "idx": 2742,
+      "ok": false
+    }
+  ],
+  "sample_edits_for_review": []
+}
