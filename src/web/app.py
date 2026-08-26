@@ -1395,6 +1395,31 @@ def chat(req: ChatRequest, authorization: str = Header(default="")):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+class ChatCompareRequest(BaseModel):
+    village: str = "皎平渡"
+    question: str = ""
+
+
+@app.post("/api/chat/compare")
+def api_chat_compare(req: ChatCompareRequest, authorization: str = Header(default="")):
+    """同一问题用三种讲解模式各生成一份回答，便于并排对照演示。"""
+    question = (req.question or "").strip()
+    if not question:
+        return JSONResponse({"error": "问题不能为空"}, status_code=400)
+    user_id = get_current_username(authorization)
+
+    answers = {}
+    for mode in ("student", "tourist", "researcher"):
+        try:
+            answers[mode] = agent.ask(
+                question, village=req.village or "皎平渡",
+                user_id=user_id, persona_mode=mode, remember=False,
+            )
+        except Exception as e:
+            answers[mode] = "（%s 模式生成失败：%s）" % (mode, e)
+    return {"village": req.village, "question": question, "answers": answers}
+
+
 @app.get("/api/villages")
 def get_villages():
     """返回村寨列表（含坐标、年份、所属队伍）"""
