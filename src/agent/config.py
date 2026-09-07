@@ -20,7 +20,7 @@ try:
     from dotenv import load_dotenv
 
     if _ENV_FILE.exists():
-        load_dotenv(_ENV_FILE, encoding="utf-8-sig")
+        load_dotenv(_ENV_FILE, encoding="utf-8-sig", override=True)
 except Exception:
     pass
 
