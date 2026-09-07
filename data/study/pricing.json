@@ -1,0 +1,32 @@
+{
+  "_note": "演示用研学课程价格模型，非真实商业报价",
+  "currency": "元",
+  "stages": {
+    "小学": {
+      "per_student_day": 98,
+      "guide_student_ratio": 20,
+      "daily_hours": 6,
+      "focus": "故事化、体验式教学，避免抽象年份与部队番号，多用人物和场景"
+    },
+    "初中": {
+      "per_student_day": 118,
+      "guide_student_ratio": 20,
+      "daily_hours": 7,
+      "focus": "梳理史实脉络，配合任务探究与小组汇报"
+    },
+    "高中": {
+      "per_student_day": 138,
+      "guide_student_ratio": 15,
+      "daily_hours": 8,
+      "focus": "史料辨析、研究性学习与开题报告"
+    },
+    "党校/成人": {
+      "per_student_day": 198,
+      "guide_student_ratio": 25,
+      "daily_hours": 8,
+      "focus": "党史理论、现场教学与专题研讨"
+    }
+  },
+  "included": ["研学手册", "保险", "导师讲解", "任务物料"],
+  "excluded": ["往返大交通", "住宿", "正餐"]
+}

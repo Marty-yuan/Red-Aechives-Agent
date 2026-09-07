@@ -1760,7 +1760,6 @@ body::after {
 
 /* ========== 知识图谱按钮 & 弹窗 ========== */
 .kg-open-btn {
-  margin-left: auto;
   padding: 8px 16px;
   background: rgba(255,255,255,0.1);
   color: white;
@@ -1777,6 +1776,8 @@ body::after {
   border-color: var(--gold-primary);
   box-shadow: 0 0 12px rgba(245,200,66,0.2);
 }
+/* 右侧按钮组：第一个按钮（客流热力）整体推到右边，与知识图谱紧挨成组 */
+#flowToggleBtn { margin-left: auto; }
 
 .kg-overlay {
   display: none;
@@ -2057,6 +2058,87 @@ body::after {
     box-shadow: 0 4px 18px rgba(212,32,44,0.55);
     background: linear-gradient(135deg, var(--red-light), var(--red-primary));
 }
+/* ========== 客流热力（治理层 L2） ========== */
+.flow-panel {
+    position: absolute; top: 16px; right: 16px; z-index: 800;
+    width: 286px; max-height: calc(100% - 32px); overflow-y: auto;
+    background: rgba(13,17,23,0.93);
+    border: 1px solid rgba(245,200,66,0.3);
+    border-radius: 12px; padding: 14px; color: #e5e7eb;
+    font-size: 12px; display: none; backdrop-filter: blur(8px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+.flow-panel.active { display: block; }
+.flow-panel::-webkit-scrollbar { width: 5px; }
+.flow-panel::-webkit-scrollbar-thumb { background: rgba(245,200,66,0.3); border-radius: 3px; }
+.flow-summary { display: flex; gap: 10px; margin: 10px 0; }
+.flow-stat { flex: 1; background: rgba(255,255,255,0.05); border-radius: 8px; padding: 8px; text-align: center; }
+.flow-stat .num { font-size: 19px; font-weight: 700; color: #f5c842; }
+.flow-stat .lbl { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+.flow-alert-box { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.4);
+    border-radius: 8px; padding: 7px 9px; color: #fca5a5; font-size: 11px; margin-bottom: 8px; line-height: 1.5; }
+.flow-slider { width: 100%; margin: 6px 0 2px; accent-color: #c41e3a; }
+.flow-time-row { display: flex; gap: 6px; margin: 8px 0; }
+.flow-time-row button { flex: 1; padding: 5px 4px; font-size: 11px; border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.06); color: #e5e7eb; cursor: pointer; transition: all .2s; }
+.flow-time-row button:hover { border-color: #f5c842; }
+.flow-legend { display: flex; gap: 10px; margin: 8px 0; font-size: 10px; color: #cbd5e1; }
+.flow-legend span { display: flex; align-items: center; gap: 3px; }
+.flow-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.flow-site-row { display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 7px; border-radius: 6px; cursor: pointer; }
+.flow-site-row:hover { background: rgba(255,255,255,0.07); }
+.flow-site-name { display: flex; align-items: center; gap: 7px; }
+.flow-badge { font-size: 10px; padding: 1px 7px; border-radius: 9px; font-weight: 600; }
+.flow-note { font-size: 10px; color: #9ca3af; margin-top: 10px; line-height: 1.6;
+    border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px; }
+.flow-context { display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; color: #cbd5e1; margin: 4px 0 6px; gap: 8px; flex-wrap: wrap; }
+.flow-context #flowWeatherStatus { color: #7DD3FC; }
+.flow-site-weather { font-size: 10.5px; color: #94a3b8; margin-top: 2px; padding-left: 18px; }
+.flow-site-weather b { color: #e2e8f0; font-weight: 500; }
+.flow-popup { font-size: 12px; min-width: 168px; }
+.flow-popup .row { display: flex; justify-content: space-between; gap: 14px; margin: 3px 0; }
+.flow-curve-bars { display: flex; align-items: flex-end; gap: 1px; height: 46px; margin-top: 6px; }
+.flow-curve-bars i { flex: 1; background: linear-gradient(180deg, #f5c842, #c41e3a);
+    border-radius: 1px 1px 0 0; min-width: 2px; }
+/* ========== 研学课程包模块卡片 ========== */
+.course-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
+.course-chip { padding: 2px 10px; font-size: 11px; border-radius: 12px;
+    background: rgba(245,200,66,0.08); border: 1px solid rgba(245,200,66,0.25); color: var(--gold-soft); }
+.course-price { background: linear-gradient(135deg, rgba(196,30,58,0.12), rgba(245,200,66,0.08));
+    border: 1px solid var(--border-gold); border-radius: var(--radius-sm);
+    padding: 8px 10px; margin: 6px 0; font-size: 12px; color: var(--text-secondary); line-height: 1.8; }
+.course-price b { color: var(--text-gold); font-size: 14px; }
+.course-goals { background: var(--bg-card); border-radius: var(--radius-sm); padding: 7px 10px;
+    margin: 6px 0; font-size: 12px; color: var(--text-secondary); line-height: 1.7; }
+.course-activity { background: var(--bg-card); border: 1px solid rgba(212,32,44,0.2);
+    border-radius: var(--radius-sm); padding: 7px 10px; margin: 6px 0;
+    font-size: 12px; color: var(--text-secondary); line-height: 1.7; transition: border-color 0.2s; }
+.course-activity:hover { border-color: var(--border-gold); }
+.course-act-head { display: flex; justify-content: space-between; gap: 6px;
+    color: var(--text-gold); font-weight: 600; margin-bottom: 3px; }
+.course-act-head span { color: var(--text-muted); font-weight: normal; font-size: 11px; white-space: nowrap; }
+.course-task { color: var(--gold-soft); }
+.course-social { margin-top: 5px; }
+.course-social .study-link.xhs { color: #FF6B9D; border-color: rgba(255,107,157,0.35); }
+.course-social .study-link.xhs:hover { background: rgba(255,107,157,0.08); border-color: #FF6B9D; }
+.course-social .study-link.dy:hover { background: rgba(125,211,252,0.08); }
+.course-foot { margin-top: 8px; font-size: 11px; color: var(--text-muted); line-height: 1.7;
+    border-top: 1px solid rgba(255,255,255,0.08); padding-top: 7px; }
+.course-transit { background: rgba(125,211,252,0.07); border: 1px solid rgba(125,211,252,0.25);
+    border-radius: var(--radius-sm); padding: 8px 10px; margin: 6px 0; font-size: 12px;
+    color: var(--text-secondary); line-height: 1.8; }
+.course-transit-line { color: var(--text-muted); font-size: 11px; }
+.course-transit-warn { color: var(--gold-soft); font-size: 11px; line-height: 1.7; }
+.course-day-transit { margin: 4px 0; padding: 5px 10px; font-size: 11px; color: #7DD3FC;
+    background: rgba(125,211,252,0.06); border-left: 3px solid rgba(125,211,252,0.4);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.course-day-lodging { margin: 4px 0 8px; padding: 5px 10px; font-size: 11px; color: var(--gold-soft);
+    background: rgba(245,200,66,0.06); border-left: 3px solid var(--gold-primary);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.course-source { display: inline-block; margin-left: 6px; font-size: 10px; padding: 1px 8px;
+    border-radius: 10px; background: rgba(125,211,252,0.1); border: 1px solid rgba(125,211,252,0.3); color: #7DD3FC; }
 </style>
 </head>
 <body>
@@ -2065,6 +2147,7 @@ body::after {
     <span class="logo">🏘️</span>
     <h1>红色村寨数字代言人</h1>
     <span class="subtitle">云南省红军长征档案 · DeepSeek RAG</span>
+    <button class="kg-open-btn" id="flowToggleBtn">🔥 客流热力</button>
     <button class="kg-open-btn" id="kgOpenBtn">📊 知识图谱</button>
     <button class="auth-open-btn" id="authBtn">👤 登录 / 注册</button>
     <span class="user-chip" id="userChip"></span>
@@ -2107,6 +2190,38 @@ body::after {
             </div>
         </div>
         <button class="legend-toggle" id="legendToggle" onclick="toggleLegend()" title="收起面板">▶</button>
+        <div class="flow-panel" id="flowPanel">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;font-size:13px;color:#f5c842;letter-spacing:1px;">🔥 景区实时客流热力</h3>
+        <button id="flowCloseBtn" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;">✕</button>
+    </div>
+    <div class="flow-summary">
+        <div class="flow-stat"><div class="num" id="flowTotal">--</div><div class="lbl">当前在园(人次)</div></div>
+        <div class="flow-stat"><div class="num" id="flowAlertNum">0</div><div class="lbl">预警点位</div></div>
+    </div>
+    <div class="flow-alert-box" id="flowAlertBox" style="display:none;"></div>
+    <div class="flow-context" id="flowContext">
+        <span id="flowDayType">--</span><span id="flowWeatherStatus"></span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:#cbd5e1;">
+        <span>时段回放</span><span id="flowHourLabel">实时</span>
+    </div>
+    <input type="range" min="0" max="23" value="12" class="flow-slider" id="flowHourSlider">
+    <div class="flow-time-row">
+        <button type="button" data-flow-time="realtime">实时</button>
+        <button type="button" data-flow-slot="morning">上午</button>
+        <button type="button" data-flow-slot="afternoon">下午</button>
+        <button type="button" data-flow-slot="evening">傍晚</button>
+    </div>
+    <div class="flow-legend">
+        <span><i class="flow-dot" style="background:#22c55e"></i>宽松</span>
+        <span><i class="flow-dot" style="background:#eab308"></i>适中</span>
+        <span><i class="flow-dot" style="background:#f97316"></i>拥挤</span>
+        <span><i class="flow-dot" style="background:#ef4444"></i>预警</span>
+    </div>
+    <div id="flowSiteList"></div>
+    <div class="flow-note" id="flowNote">* 数据为仿真演示数据，非真实客流；生产环境对接票务闸机 / LBS 合规数据源，计算逻辑不变。</div>
+</div>
         <!-- 2D数字人角色舞台 -->
         <div class="character-stage" id="characterStage">
             <div class="character-sprite" id="characterSprite">
@@ -3575,7 +3690,7 @@ function renderStudyRoute(routeData) {
 
     const div = document.createElement("div");
     div.className = "msg agent";
-    let html = `<div class="av-sm">&#129517;</div><div class="bubble study-route-bubble"><div class="study-route-title">&#128506;&#65039; ${escapeHtml(routeData.route_name || "研学路线")}</div>`;
+    let html = `<div class="av-sm">&#129517;</div><div class="bubble study-route-bubble"><div class="study-route-title">&#128506;&#65039; ${escapeHtml(routeData.route_name || "红旅路线")}</div>`;
 
     Object.keys(days).sort((a, b) => Number(a) - Number(b)).forEach(day => {
         html += `<div class="study-route-day">第 ${escapeHtml(day)} 天</div>`;
@@ -3755,7 +3870,103 @@ function renderStudyPlanBody(plan) {
     return html;
 }
 
-function studyRouteModuleBody(data) {
+// 真实教学点的小红书/抖音搜索跳转（只给课程 payload 里的真实村寨挂链接，营地教室等不挂）
+function socialLinksForSite(site, realVillages) {
+    if (!site || !Array.isArray(realVillages) || !realVillages.includes(site)) return "";
+    const kw = encodeURIComponent(site + " 红色研学");
+    const xhs = `https://www.xiaohongshu.com/search_result?keyword=${kw}`;
+    const dy = `https://www.douyin.com/search/${kw}`;
+    return `<div class="course-social">` +
+        `<a class="study-link xhs" href="${xhs}" target="_blank" rel="noopener noreferrer">📕 小红书看${escapeHtml(site)}</a>` +
+        `<a class="study-link dy" href="${dy}" target="_blank" rel="noopener noreferrer">🎵 抖音看${escapeHtml(site)}</a></div>`;
+}
+
+function coursePackModuleBody(data) {
+    const pricing = data.pricing || {};
+    const curriculum = data.curriculum || {};
+    const realVillages = Array.isArray(data.villages) ? data.villages : [];
+    const cur = pricing.currency || "元";
+
+    let html = `<div class="study-route-title">📚 ${escapeHtml(data.theme || "研学课程包")}` +
+        `<span class="course-source">${data.curriculum_source === "llm" ? "AI 课程化" : "模板课程"}</span></div>`;
+
+    html += `<div class="course-meta">` +
+        `<span class="course-chip">学段：${escapeHtml(pricing.stage || "")}</span>` +
+        `<span class="course-chip">共 ${escapeHtml(String(data.days || ""))} 天</span>` +
+        `<span class="course-chip">班额 ${escapeHtml(String(pricing.group_size || ""))} 人</span>` +
+        `<span class="course-chip">师生比 1:${escapeHtml(String(pricing.guide_student_ratio || ""))}</span>` +
+        `<span class="course-chip">配导师 ${escapeHtml(String(pricing.required_guides || ""))} 名</span></div>`;
+
+    html += `<div class="course-price">💰 费用测算（代码确定性计算 · 演示价格模型）<br>` +
+        `人均 <b>${escapeHtml(String(pricing.per_student_fee || ""))}${escapeHtml(cur)}</b>` +
+        ` ｜ 整团约 <b>${escapeHtml(String(pricing.total_fee || ""))}${escapeHtml(cur)}</b>`;
+    if (Array.isArray(pricing.included) && pricing.included.length) {
+        html += `<br>费用包含：${escapeHtml(pricing.included.join("、"))}`;
+    }
+    if (Array.isArray(pricing.excluded) && pricing.excluded.length) {
+        html += `<br>费用不含：${escapeHtml(pricing.excluded.join("、"))}`;
+    }
+    html += `</div>`;
+
+    // 往返交通总览（代码按真实坐标测算）
+    const logistics = data.logistics || {};
+    if (logistics.departure) {
+        const segLine = seg => seg ? `${escapeHtml(seg.from)} → ${escapeHtml(seg.to)}：${escapeHtml(String(seg.estimated_road_km))} km / ${escapeHtml(seg.estimated_travel_time || "")}` : "";
+        html += `<div class="course-transit">🚗 往返交通（从 ${escapeHtml(logistics.departure)} 出发，` +
+            `城际方式：<b>${escapeHtml(logistics.mode_label || "旅游大巴")}</b>，全程约 ` +
+            `${escapeHtml(String(logistics.total_road_km || ""))} km、累计在途约 ${escapeHtml(String(logistics.total_travel_hours || ""))} 小时）<br>` +
+            `<span class="course-transit-line">去程：${segLine(logistics.outbound)}</span><br>` +
+            `<span class="course-transit-line">返程：${segLine(logistics.return)}</span>` +
+            (logistics.mode_note ? `<br><span class="course-transit-warn">⚙️ ${escapeHtml(logistics.mode_note)}</span>` : "") +
+            (logistics.trimmed_note ? `<br><span class="course-transit-warn">📌 ${escapeHtml(logistics.trimmed_note)}</span>` : "") +
+            `</div>`;
+    }
+
+    const goals = Array.isArray(curriculum.course_goals) ? curriculum.course_goals : [];
+    if (goals.length) {
+        html += `<div class="course-goals">🎯 课程目标：${goals.map(g => escapeHtml(g)).join("；")}</div>`;
+    }
+
+    (curriculum.daily_plans || []).forEach(plan => {
+        if (!plan || typeof plan !== "object") return;
+        html += `<div class="study-route-day">第 ${escapeHtml(String(plan.day || ""))} 天 · ${escapeHtml(plan.theme || "")}</div>`;
+        (plan.activities || []).forEach(act => {
+            if (!act || typeof act !== "object") return;
+            const knowledge = Array.isArray(act.knowledge) ? act.knowledge.filter(Boolean) : [];
+            html += `<div class="course-activity">` +
+                `<div class="course-act-head"><b>📍 ${escapeHtml(act.site || "")}</b><span>${escapeHtml(act.slot || "")}</span></div>` +
+                (knowledge.length ? `<div>📖 知识点：${knowledge.map(k => escapeHtml(k)).join("；")}</div>` : "") +
+                (act.task ? `<div class="course-task">✏️ 探究任务：${escapeHtml(act.task)}</div>` : "") +
+                socialLinksForSite(act.site, realVillages) +
+                `</div>`;
+        });
+        // 当日交通衔接（代码确定性计算）
+        (Array.isArray(plan.transit) ? plan.transit : []).forEach(seg => {
+            if (!seg || !seg.from) return;
+            html += `<div class="course-day-transit">🚗 ${escapeHtml(seg.from)} → ${escapeHtml(seg.to)}：` +
+                `约 ${escapeHtml(String(seg.estimated_road_km))} km / ${escapeHtml(seg.estimated_travel_time)}</div>`;
+        });
+        // 当日住宿 / 返程
+        if (plan.return && plan.return.from) {
+            html += `<div class="course-day-lodging">🏁 返程：${escapeHtml(plan.return.from)} → ${escapeHtml(plan.return.to)}，` +
+                `${escapeHtml(plan.return.estimated_travel_time)}，当晚返回出发地、不安排住宿</div>`;
+        } else if (plan.lodging) {
+            html += `<div class="course-day-lodging">🏨 住宿：${escapeHtml(plan.lodging)}</div>`;
+        }
+    });
+
+    const handbooks = Array.isArray(curriculum.handbook_tasks) ? curriculum.handbook_tasks : [];
+    if (handbooks.length) {
+        html += `<div class="course-goals">📓 研学手册任务：${handbooks.map(t => escapeHtml(t)).join("；")}</div>`;
+    }
+    if (curriculum.closing) {
+        html += `<div class="course-goals">🏁 结营安排：${escapeHtml(curriculum.closing)}</div>`;
+    }
+
+    html += `<div class="course-foot">* ${escapeHtml(pricing.note || "演示数据，非真实商业报价")}；课程知识点均来自项目档案，未虚构史实。<br>` +
+        `* 小红书/抖音为按地点跳转的搜索链接，可查看该地点的游客实拍与攻略参考。</div>`;
+    return html;
+}function studyRouteModuleBody(data) {
     const plans = Array.isArray(data.plans) && data.plans.length ? data.plans : [{
         label: "推荐方案",
         strategy: "历史顺序",
@@ -3765,7 +3976,7 @@ function studyRouteModuleBody(data) {
         daily_lodging: data.daily_lodging || []
     }];
 
-    let html = `<div class="study-route-title">${escapeHtml(data.route_name || "研学路线")}</div><div class="study-plan-container">`;
+    let html = `<div class="study-route-title">${escapeHtml(data.route_name || "红旅路线")}</div><div class="study-plan-container">`;
 
     if (plans.length > 1) {
         html += `<div class="study-plan-tabs">`;
@@ -3947,14 +4158,20 @@ function renderModuleCards(plan, toolResults, verification, evidence, question, 
         const routeData = parseToolJson(routeTool.result);
         if (routeData && Array.isArray(routeData.stops) && routeData.stops.length) {
             modules.push({
-                title: "🗺️ 研学路线",
+                title: "🗺️ 红旅路线",
                 body: studyRouteModuleBody(routeData),
                 onOpen: function () { drawStudyRouteOnMap(routeData); }
             });
         }
     }
 
-    const compareTool = findToolResult(toolResults, "compare_villages");
+    const courseTool = findToolResult(toolResults, "generate_course_pack");
+    if (courseTool) {
+        const courseData = parseToolJson(courseTool.result);
+        if (courseData && courseData.curriculum) {
+            modules.push({ title: "📚 研学课程包", body: coursePackModuleBody(courseData) });
+        }
+    }    const compareTool = findToolResult(toolResults, "compare_villages");
     if (compareTool) {
         const compareData = parseToolJson(compareTool.result);
         if (compareData) {
@@ -4043,7 +4260,7 @@ function sendMessage() {
         const typing = document.getElementById("typing");
         if (typing) typing.remove();
 
-        const answer = data.answer || data.error || "&#20986;&#38169;&#20102;";
+        const answer = (data.answer && String(data.answer).trim()) || data.error || "服务暂时没有生成有效回答，请稍后再试一次。";
         const plan = data.plan;
         const verification = data.verification;
         const toolResults = data.tool_results || [];
@@ -4212,6 +4429,139 @@ function loadKnowledgeGraph() {
 }
 
 document.getElementById("kgOpenBtn").addEventListener("click", openKnowledgeGraph);
+// ========== 客流热力（治理层 L2） ==========
+let flowLayer = null;
+let flowActive = false;
+let flowLastParams = null;
+let flowLastSnapshot = null;
+
+async function loadFlowHeatmap(params) {
+    flowLastParams = params || null;
+    const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+    try {
+        const resp = await fetch("/api/governance/heatmap" + qs);
+        if (!resp.ok) return;
+        const snap = await resp.json();
+        flowLastSnapshot = snap;
+        renderFlowHeatmap(snap);
+        renderFlowPanel(snap, params);
+    } catch (e) { console.warn("客流数据加载失败", e); }
+}
+
+function renderFlowHeatmap(snap) {
+    if (!flowLayer) flowLayer = L.layerGroup().addTo(map);
+    flowLayer.clearLayers();
+    const maxVal = Math.max(1, ...snap.points.map(p => p.value));
+    snap.points.forEach(p => {
+        const radius = 12 + 28 * (p.value / maxVal);
+        const marker = L.circleMarker([p.lat, p.lng], {
+            radius: radius, color: "#ffffff", weight: 1, opacity: 0.7,
+            fillColor: p.color, fillOpacity: 0.55
+        });
+        marker.bindPopup(buildFlowPopup(p));
+        marker.bindTooltip(p.name + " · " + p.level_label + " " + p.value + "人", { direction: "top" });
+        marker.addTo(flowLayer);
+    });
+}
+
+function buildFlowPopup(p) {
+    const pct = Math.round(p.load_ratio * 100);
+    const w = p.weather;
+    const weatherRow = w
+        ? '<div class="row"><span>实时天气</span><b>' + (w.icon_emoji || "🌡️") + ' ' +
+          escapeHtml(w.text || "") + ' ' + escapeHtml(String(w.temp != null ? w.temp : "--")) + '°C</b></div>'
+        : '';
+    return '<div class="flow-popup">' +
+        '<b style="color:#f5c842">' + p.name + '</b>（' + p.city + '）' +
+        weatherRow +
+        '<div class="row"><span>当前客流</span><b>' + p.value + ' 人次</b></div>' +
+        '<div class="row"><span>承载率</span><b style="color:' + p.color + '">' + pct + '% · ' + p.level_label + '</b></div>' +
+        '<div class="row"><span>最大承载</span><span>' + p.capacity + ' 人</span></div>' +
+        '<div id="flowCurveBox_' + p.name + '"></div>' +
+        '<div style="margin-top:4px;"><a href="javascript:loadFlowCurve(\'' + p.name + '\')">▸ 查看 24 小时曲线</a></div>' +
+        '</div>';
+}
+
+async function loadFlowCurve(name) {
+    const box = document.getElementById("flowCurveBox_" + name);
+    if (!box || box.dataset.loaded) return;
+    box.dataset.loaded = "1";
+    try {
+        const resp = await fetch("/api/governance/flow-curve?village=" + encodeURIComponent(name));
+        if (!resp.ok) return;
+        const c = await resp.json();
+        const max = Math.max(1, c.peak_value);
+        const nowHour = new Date().getHours();
+        const bars = c.series.map(s => {
+            const h = Math.max(2, Math.round(46 * s.value / max));
+            const outline = s.hour === nowHour ? "outline:1px solid #fff;" : "";
+            return '<i style="height:' + h + 'px;' + outline + '" title="' + s.hour + '时 ' + s.value + '人"></i>';
+        }).join("");
+        box.innerHTML = '<div style="margin-top:6px;font-size:10px;color:#9ca3af;">24h 曲线（峰值 ' +
+            c.peak_hour + '时 ' + c.peak_value + '人，白框为当前小时）</div><div class="flow-curve-bars">' + bars + '</div>';
+    } catch (e) { console.warn("曲线加载失败", e); }
+}
+
+function renderFlowPanel(snap, params) {
+    document.getElementById("flowTotal").textContent = snap.total_visitors;
+    document.getElementById("flowAlertNum").textContent = snap.alert_sites.length;
+    const alertBox = document.getElementById("flowAlertBox");
+    if (snap.alert_sites.length) {
+        alertBox.style.display = "block";
+        alertBox.textContent = "⚠ " + snap.alert_sites.join("、") + " 达到预警阈值（承载率≥90%），建议启动客流分流";
+    } else {
+        alertBox.style.display = "none";
+    }
+    // 日期类型 + 天气接入状态
+    document.getElementById("flowDayType").textContent = "📅 " + (snap.day_type_label || "工作日");
+    var wStatus = snap.weather_status || (snap.weather_available ? "ok" : "api_error");
+    document.getElementById("flowWeatherStatus").textContent =
+        wStatus === "ok" ? "🌤 已接入实时天气（客流已按天气/节假日修正）"
+        : wStatus === "no_key" ? "🌡 天气未接入（未配置 QWEATHER_API_KEY，客流为纯仿真）"
+        : "⚠ 天气接口调用失败（请检查 QWEATHER_BASE_URL/API_KEY，客流为纯仿真）";
+    document.getElementById("flowNote").textContent = "* " + (snap.data_note || "仿真演示数据");
+    const label = document.getElementById("flowHourLabel");
+    if (!params) label.textContent = "实时";
+    else if (params.slot) label.textContent = ({morning: "上午均值", afternoon: "下午均值", evening: "傍晚均值"})[params.slot];
+    else label.textContent = params.hour + ":00 回放";
+    const sorted = snap.points.slice().sort((a, b) => b.value - a.value);
+    document.getElementById("flowSiteList").innerHTML = sorted.map(p => {
+        const w = p.weather;
+        const weatherLine = w
+            ? '<div class="flow-site-weather">' + (w.icon_emoji || "🌡️") + ' ' + escapeHtml(w.text || "") +
+              ' <b>' + escapeHtml(String(w.temp != null ? w.temp : "--")) + '°C</b>' +
+              (w.wind_dir ? ' · ' + escapeHtml(w.wind_dir) + (w.wind_scale ? w.wind_scale + '级' : '') : '') +
+              (w.humidity ? ' · 湿度' + escapeHtml(String(w.humidity)) + '%' : '') + '</div>'
+            : '<div class="flow-site-weather">🌡 天气暂不可用</div>';
+        return '<div class="flow-site-row" onclick="map.flyTo([' + p.lat + ',' + p.lng + '],9)">' +
+            '<span style="flex:1;min-width:0;">' +
+            '<span class="flow-site-name"><i class="flow-dot" style="background:' + p.color + '"></i>' + p.name + '</span>' +
+            weatherLine + '</span>' +
+            '<span style="text-align:right;white-space:nowrap;"><b>' + p.value + '</b> <span class="flow-badge" style="background:' + p.color + '22;color:' + p.color + '">' +
+            p.level_label + '</span></span></div>';
+    }).join("");
+}
+
+function toggleFlow(force) {
+    flowActive = (force !== undefined) ? force : !flowActive;
+    document.getElementById("flowPanel").classList.toggle("active", flowActive);
+    document.getElementById("flowToggleBtn").style.borderColor = flowActive ? "#f5c842" : "";
+    if (flowActive) {
+        if (!flowLastSnapshot) loadFlowHeatmap(null);
+    } else if (flowLayer) {
+        flowLayer.clearLayers();
+    }
+}
+
+document.getElementById("flowToggleBtn").addEventListener("click", () => toggleFlow());
+document.getElementById("flowCloseBtn").addEventListener("click", () => toggleFlow(false));
+document.getElementById("flowHourSlider").addEventListener("input", e => loadFlowHeatmap({hour: e.target.value}));
+document.querySelectorAll("[data-flow-slot]").forEach(btn =>
+    btn.addEventListener("click", () => loadFlowHeatmap({slot: btn.dataset.flowSlot})));
+document.querySelector('[data-flow-time="realtime"]').addEventListener("click", () => {
+    document.getElementById("flowHourSlider").value = new Date().getHours();
+    loadFlowHeatmap(null);
+});
 document.getElementById("kgCloseBtn").addEventListener("click", closeKnowledgeGraph);
 document.getElementById("kgOverlay").addEventListener("click", function (e) {
     if (e.target && e.target.id === "kgOverlay") closeKnowledgeGraph();

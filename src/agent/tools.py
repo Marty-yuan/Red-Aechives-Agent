@@ -12,18 +12,40 @@ import math
 from urllib.parse import quote
 from typing import Any, Dict, List, Optional
 
-from . import config
-from .knowledge import ROUTES, TIMELINE, VILLAGE_COORDS, VILLAGE_ENERGY, VILLAGE_EXPERIENCE, VILLAGE_LODGING
+from openai import OpenAI
+
+from . import config, study_course
+from .knowledge import (
+    DEPARTURE_CITIES, ROUTES, TIMELINE, VILLAGE_COORDS,
+    VILLAGE_ENERGY, VILLAGE_EXPERIENCE, VILLAGE_LODGING,
+)
 from .graph_store import KnowledgeGraphStore
 from .retriever_factory import create_retriever
+
+
+# ===================== 城际交通模式模型（公式可复算，非实时票务） =====================
+# speed_kmh：综合时速；overhead_h：候机/候车/两端接驳的固定附加时间；
+# detour：球面直线距离→实际线路里程的绕行系数；min_km：该交通方式合理的最短距离
+TRANSPORT_MODES: Dict[str, Dict[str, Any]] = {
+    "road": {"label": "旅游大巴", "icon": "🚌", "speed_kmh": 50.0, "overhead_h": 0.0, "detour": 1.35, "min_km": 0.0},
+    "rail": {"label": "高铁/动车", "icon": "🚄", "speed_kmh": 200.0, "overhead_h": 0.75, "detour": 1.20, "min_km": 80.0},
+    "air":  {"label": "民航航班", "icon": "✈️", "speed_kmh": 700.0, "overhead_h": 2.5, "detour": 1.05, "min_km": 400.0},
+}
+# 按课程总天数给出可接受的单程交通上限（小时）与教学点之间转场上限
+OUTBOUND_LIMIT_HOURS = {1: 2.5, 2: 5.0, 3: 8.0}
+TRANSFER_LIMIT_HOURS = {1: 2.5, 2: 3.0, 3: 5.5}
 
 
 class ToolRegistry:
     """工具注册与执行器。"""
 
-    def __init__(self, retriever=None):
+    def __init__(self, retriever=None, llm_client=None):
         self.retriever = retriever or create_retriever()
         self.graph_store = KnowledgeGraphStore()
+        # 课程包等"工具内部再调一次 LLM 润色"的场景复用同一客户端
+        self.llm_client = llm_client or OpenAI(
+            api_key=config.DEEPSEEK_API_KEY, base_url=config.BASE_URL
+        )
 
     def tool_specs(self) -> List[Dict[str, Any]]:
         """返回工具定义，供 Planner 生成 function calling 风格计划。"""
@@ -101,7 +123,7 @@ class ToolRegistry:
             },
             {
                                 "name": "generate_study_route",
-                "description": "根据村寨、天数和偏好生成多套红色研学路线，包含推荐方案、备选方案、交通时间、住宿建议、每日体力值和景点/美食参考链接。",
+                "description": "红旅路线（旅游/行程规划，不是课程教案）：根据村寨、天数和偏好生成多套红色旅游路线，包含推荐方案、备选方案、交通时间、住宿建议、每日体力值和景点/美食参考链接。",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -119,6 +141,28 @@ class ToolRegistry:
                         "family": {"type": "boolean", "description": "可选，是否亲子出行"},
                         "group": {"type": "string", "description": "可选，出行人群，例如：亲子、老人、研究者、学生"}
                     }
+                },
+            },
+            {
+                "name": "generate_course_pack",
+                "description": (
+                    "生成红色研学课程包（教学方案，不是旅游路线）：在红旅路线骨架基础上，按学段（小学/初中/高中/党校成人）"
+                    "输出课程目标、每日课程安排（知识点与探究任务）、研学手册任务和费用估算。"
+                    "当用户要求'课程包/研学课程/教案/课时/备课/课程方案/课程表/研学手册'时使用；"
+                    "若只是旅游路线规划，仍用 generate_study_route。"
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "villages": {"type": "array", "items": {"type": "string"}, "description": "覆盖的村寨列表"},
+                        "days": {"type": "integer", "description": "课程天数，默认 2"},
+                        "stage": {"type": "string", "description": "学段：小学/初中/高中/党校成人，默认初中"},
+                        "group_size": {"type": "integer", "description": "班级人数，默认 40"},
+                        "theme": {"type": "string", "description": "课程主题，如'巧渡金沙江'"},
+                        "start": {"type": "string", "description": "出发城市，如昆明/攀枝花/大理/成都/贵阳/昭通，用于计算往返交通车程；用户未说明时不要编造"},
+                        "transport_mode": {"type": "string", "description": "交通方式：road大巴/rail高铁/air飞机，仅在用户明确指定时填写，否则留空由系统按距离自动选择"},
+                    },
+                    "required": [],
                 },
             },
             {
@@ -302,7 +346,7 @@ class ToolRegistry:
         else:
             selected_order, selected_label, selected_strategy = historical_order, "推荐方案", "历史顺序"
 
-        route_prefix = f"{theme or '云南红军长征'}红色研学路线"
+        route_prefix = f"{theme or '云南红军长征'}红旅路线"
         selected_payload = self._build_route_payload(selected_order, route_days, route_prefix, selected_strategy, one_per_day=force_one_per_day)
 
         if style == "nearest":
@@ -339,6 +383,349 @@ class ToolRegistry:
             "why_not_other_routes": self._why_not_other_routes(selected_strategy, alt_strategy, preferences),
             "unknown_villages": unknown,
         }, ensure_ascii=False, indent=2)
+
+    @staticmethod
+    def _parse_tool_json(text: str) -> Optional[dict]:
+        """从 LLM 输出中稳健提取 JSON 对象（兼容 ```json 代码块包裹）。"""
+        if not text:
+            return None
+        cleaned = text.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.split("```", 2)[1]
+            if cleaned.startswith("json"):
+                cleaned = cleaned[4:]
+        start, end = cleaned.find("{"), cleaned.rfind("}")
+        if start != -1 and end > start:
+            try:
+                return json.loads(cleaned[start:end + 1])
+            except json.JSONDecodeError:
+                return None
+        return None
+
+    def _generate_course_pack(
+        self,
+        villages: Optional[List[str]] = None,
+        days: Optional[int] = None,
+        stage: Optional[str] = None,
+        group_size: Optional[int] = None,
+        theme: Optional[str] = None,
+        start: Optional[str] = None,
+        transport_mode: Optional[str] = None,
+    ) -> str:
+        """生成研学课程包：可行性选址 + 交通住宿物流 + LLM 课程化 + 代码费用模型。"""
+        # 0) 课程总天数（用户要几天就是几天，与现场教学点覆盖天数分开）
+        try:
+            requested_days = int(days) if days is not None else None
+        except (TypeError, ValueError):
+            requested_days = None
+        course_days = max(1, min(requested_days or 2, 7))
+
+        # 0.1) 确定候选教学点：用户点名用用户的；没点名用长征路线默认池
+        if isinstance(villages, str):
+            villages = [v.strip() for v in villages.replace("，", ",").split(",") if v.strip()]
+        candidates, unknown = self._validate_villages(villages or self._default_route_villages())
+        candidates = self._dedupe_villages(candidates)
+        if not candidates:
+            return json.dumps({
+                "message": "没有找到可用的村寨，请提供明确村寨名。",
+                "available_villages": sorted(VILLAGE_COORDS.keys()),
+                "unknown": unknown,
+            }, ensure_ascii=False, indent=2)
+
+        # 0.2) 先按"最近可达"锚点确定交通方式，再按天数可行性精简教学点
+        mode = transport_mode if transport_mode in TRANSPORT_MODES else None
+        if start:
+            anchor = self._greedy_from_origin(candidates, start)[0]
+            mode, _, mode_note = self._choose_transport_mode(start, anchor, course_days, mode)
+        else:
+            mode, mode_note = "road", ""
+        trimmed = self._feasible_course_sites(candidates, start, course_days, mode)
+        trimmed_note = ""
+        if len(trimmed) < len(candidates):
+            dropped = [v for v in candidates if v not in trimmed]
+            trimmed_note = (
+                f"{course_days}天行程内为保证教学与休息时间，"
+                f"只安排可达性最好的 {len(trimmed)} 个教学点（{ '、'.join(trimmed) }），"
+                f"舍弃转场过远的：{ '、'.join(dropped) }"
+            )
+
+        # 1) 复用红旅路线工具拿分天 stops；显式传精简后的点，天数=点数防止单点被自动扩展
+        route_kwargs = {"villages": trimmed, "days": len(trimmed), "theme": theme,
+                        "travel_style": "nearest"}
+        if start:
+            route_kwargs["start"] = start
+        route_raw = self._generate_study_route(**route_kwargs)
+        route = json.loads(route_raw)
+        if "stops" not in route:
+            return route_raw
+
+        route_days = int(route.get("days", 1))
+        try:
+            actual_group = max(1, min(int(group_size or 40), 200))
+        except (TypeError, ValueError):
+            actual_group = 40
+
+        # 2) 费用与师生比由代码确定性计算，LLM 不参与；按课程总天数计费
+        pricing = study_course.estimate_price(stage or "初中", course_days, actual_group)
+
+        # 3) 交通与住宿物流层：全部由代码按真实坐标/知识库确定性计算，LLM 不参与
+        stops = route.get("stops", [])
+        logistics = self._build_course_logistics(route, start, course_days, mode)
+        if mode_note:
+            logistics["mode_note"] = mode_note
+        if trimmed_note:
+            logistics["trimmed_note"] = trimmed_note
+
+        # 4) 给 LLM 的路线摘要（带上城市、现场资源、讲解要点，让任务设计有地方特色）
+        route_brief = []
+        for stop in stops:
+            route_brief.append({
+                "day": stop.get("day"),
+                "visit_time": stop.get("visit_time"),
+                "site": stop.get("name"),
+                "city": stop.get("city"),
+                "event": stop.get("event"),
+                "attractions": (stop.get("attractions") or [])[:3],
+                "tips": stop.get("tips"),
+                "timeline": [
+                    (ev.get("label") or ev.get("desc") or "")
+                    for ev in (stop.get("timeline_events") or [])[:3]
+                ],
+            })
+
+        transit_brief = self._transit_brief_text(logistics)
+        curriculum = self._llm_curriculum(route_brief, pricing, theme, route_days, transit_brief)
+        if curriculum is None:
+            curriculum = study_course.build_fallback_curriculum(
+                route, stage or "初中", total_days=course_days
+            )
+            curriculum_source = "template_fallback"
+        else:
+            curriculum["stage"] = pricing["stage"]
+            curriculum_source = "llm"
+
+        # 5) 交通/住宿按天确定性挂到课程表上（LLM 失败也不影响这一层）
+        self._attach_logistics_to_curriculum(curriculum, logistics)
+
+        payload = {
+            "tool": "generate_course_pack",
+            "theme": theme or "云南红军长征",
+            "villages": [s.get("name") for s in stops],
+            "days": course_days,
+            "route_days": route_days,
+            "start": start or "",
+            "transport_mode": logistics.get("mode", "road"),
+            "route_brief": route_brief,
+            "pricing": pricing,
+            "logistics": logistics,
+            "curriculum": curriculum,
+            "curriculum_source": curriculum_source,
+        }
+        return json.dumps(payload, ensure_ascii=False, indent=2)
+
+    def _build_course_logistics(
+        self, route: Dict[str, Any], start: Optional[str], course_days: int,
+        mode: str = "road",
+    ) -> Dict[str, Any]:
+        """按真实坐标计算往返/内部交通，按知识库给出每晚住宿（确定性，不经过 LLM）。
+
+        城际往返使用选定交通方式（大巴/高铁/飞机），教学点之间转场始终走公路。
+        """
+        stops = route.get("stops", [])
+        internal = route.get("travel_segments", [])
+
+        # 去程：出发城市 → 第一个教学点；返程：最后一个教学点 → 出发城市
+        outbound = None
+        return_seg = None
+        if start and stops:
+            first_site = stops[0].get("name")
+            last_site = stops[-1].get("name")
+            outbound = self._travel_segment(start, first_site, mode)
+            return_seg = self._travel_segment(last_site, start, mode)
+
+        # 内部转场归属到"到达日"：segment(i→i+1) 属于后一个 stop 的 day
+        seg_by_day: Dict[int, List[Dict[str, Any]]] = {}
+        for i in range(len(stops) - 1):
+            day = int(stops[i + 1].get("day", 1))
+            seg = internal[i] if i < len(internal) else self._travel_segment(
+                stops[i].get("name"), stops[i + 1].get("name")
+            )
+            seg_by_day.setdefault(day, []).append(seg)
+
+        # 每日住宿：取当天最后一个教学点的知识库住宿建议；补足课程总天数
+        lodging_by_day: Dict[int, str] = {}
+        day_last_site: Dict[int, str] = {}
+        for stop in stops:
+            day_last_site[int(stop.get("day", 1))] = stop.get("name", "")
+        for day in range(1, int(route.get("days", 1)) + 1):
+            site = day_last_site.get(day)
+            if site:
+                lodging_by_day[day] = VILLAGE_LODGING.get(site, "研学基地或县城商务酒店")
+        last_lodging = next(
+            (lodging_by_day[d] for d in sorted(lodging_by_day, reverse=True)),
+            "研学基地或县城商务酒店",
+        )
+        for day in range(int(route.get("days", 1)) + 1, course_days + 1):
+            lodging_by_day[day] = last_lodging  # 专题/结营日延续驻地住宿
+
+        # 把去程挂到第 1 天的转场列表
+        if outbound:
+            seg_by_day.setdefault(1, []).insert(0, outbound)
+
+        daily = []
+        for day in range(1, course_days + 1):
+            is_last = day == course_days
+            daily.append({
+                "day": day,
+                "transit": seg_by_day.get(day, []),
+                # 最后一天返程，不安排住宿
+                "lodging": None if is_last and return_seg else lodging_by_day.get(day),
+                "return": return_seg if is_last else None,
+            })
+
+        total_km = 0.0
+        total_hours = 0.0
+        for seg in [outbound] + internal + [return_seg]:
+            if seg:
+                total_km += float(seg.get("estimated_road_km", 0.0))
+                total_hours += float(seg.get("estimated_travel_hours", 0.0))
+        mode_cfg = TRANSPORT_MODES.get(mode, TRANSPORT_MODES["road"])
+        return {
+            "departure": start or "",
+            "mode": mode,
+            "mode_label": mode_cfg["label"],
+            "outbound": outbound,
+            "return": return_seg,
+            "internal": internal,
+            "daily": daily,
+            "total_road_km": round(total_km, 1),
+            "total_travel_hours": round(total_hours, 2),
+            "note": ("城际交通按真实经纬度球面距离×绕行系数、结合大巴50/高铁200/飞机700km/h"
+                     "综合时速并含接驳候机时间估算；教学点间为公路；住宿来自知识库，实际以预订为准。"),
+        }
+
+    @staticmethod
+    def _attach_logistics_to_curriculum(curriculum: Dict[str, Any], logistics: Dict[str, Any]) -> None:
+        """把代码算好的交通/住宿按天写进课程表，原地修改，保证 LLM 失败也有完整物流。"""
+        daily_map = {item["day"]: item for item in logistics.get("daily", [])}
+        for plan in curriculum.get("daily_plans", []):
+            if not isinstance(plan, dict):
+                continue
+            day = int(plan.get("day", 0))
+            info = daily_map.get(day, {})
+            transit = info.get("transit", [])
+            plan["transit"] = transit
+            plan["lodging"] = info.get("lodging")
+            plan["return"] = info.get("return")
+            # 确定性修正：去程超过 2.5 小时，第 1 天上午在赶路，现场教学只能排下午；
+            # 返程超过 2.5 小时，最后一天下午在赶路，现场教学只能排上午
+            outbound_h = transit[0]["estimated_travel_hours"] if transit else 0.0
+            return_h = (plan.get("return") or {}).get("estimated_travel_hours", 0.0)
+            for act in plan.get("activities", []):
+                if not isinstance(act, dict):
+                    continue
+                if day == 1 and outbound_h > 2.5 and act.get("slot") == "上午":
+                    act["slot"] = "下午（上午乘车抵达）"
+                if plan.get("return") and return_h > 2.5 and act.get("slot") in ("下午", "14:00-17:00"):
+                    act["slot"] = "上午（下午返程）"
+
+    @staticmethod
+    def _transit_brief_text(logistics: Dict[str, Any]) -> str:
+        """把每日交通压成一行给 LLM 排课时避让（如：第1天上午 昆明→皎平渡约3小时52分）。"""
+        parts = []
+        for item in logistics.get("daily", []):
+            legs = [f"{s['from']}→{s['to']}约{s.get('estimated_travel_time', '')}"
+                    for s in item.get("transit", []) if s.get("from")]
+            ret = item.get("return")
+            if ret and ret.get("from"):
+                legs.append(f"下午 {ret['from']}→{ret['to']}约{ret.get('estimated_travel_time', '')}返程")
+            if legs:
+                parts.append(f"第{item['day']}天 " + "，".join(legs))
+        return "；".join(parts)
+
+    def _llm_curriculum(
+        self,
+        route_brief: List[Dict[str, Any]],
+        pricing: Dict[str, Any],
+        theme: Optional[str],
+        route_days: Optional[int] = None,
+        transit_brief: str = "",
+    ) -> Optional[dict]:
+        """让 LLM 把路线骨架改写为结构化课程表；任何异常都返回 None 交给模板兜底。"""
+        stage_cfg = study_course.load_pricing_model().get("stages", {}).get(pricing["stage"], {})
+        focus = stage_cfg.get("focus", "史实准确、循序渐进")
+        total_days = pricing["days"]
+        site_days = route_days or total_days
+        extra_day_hint = ""
+        if total_days > site_days:
+            extra_day_hint = (
+                f"注意：现场教学点只覆盖前 {site_days} 天，另外 {total_days - site_days} 天"
+                "不换场地，请安排专题教学、情景体验、研学手册指导或结营汇报等环节，"
+                "daily_plans 必须完整覆盖全部 {n} 天。".format(n=total_days)
+            )
+        prompt = (
+            "你是资深红色研学课程设计师。请严格依据给定的每日路线骨架，为【{stage}】学段设计研学课程，"
+            "学段特点：{focus}。课程主题：{theme}，共 {days} 天。\n"
+            "{extra_hint}"
+            "只输出一个 JSON 对象，禁止输出 JSON 以外的任何文字，禁止使用示例之外的自创字段名：\n"
+            "{{\"course_goals\": [\"3条以内课程目标\"], "
+            "\"daily_plans\": [{{\"day\": 1, \"theme\": \"当日主题\", "
+            "\"activities\": [{{\"slot\": \"上午\", \"site\": \"必须使用骨架里的教学点名\", "
+            "\"knowledge\": [\"只能来自该教学点的event/timeline/attractions\"], "
+            "\"task\": \"结合该教学点独有史实与现场资源的探究任务\"}}]}}], "
+            "\"handbook_tasks\": [\"研学手册任务\"], \"closing\": \"结营安排\"}}\n"
+            "硬性要求：\n"
+            "1. daily_plans 必须恰好 {days} 天，day 从 1 连续编号；\n"
+            "2. 每个教学点的 task 必须引用该点独有的事件、遗址或资源细节，"
+            "不同教学点的任务严禁雷同、严禁使用'完成研学手册'这类空话；\n"
+            "3. knowledge 只能来自路线骨架，不得虚构史实、日期和数字；\n"
+            "4. 任务深度适配{stage}学段（小学重体验扮演、初中重探究取证、高中重思辨论证、成人重执政启示）；\n"
+            "5. 每日交通时段：{transit}。现场教学活动必须避开乘车时段——"
+            "上午在赶路就只安排下午教学并注明'上午乘车抵达'，下午返程就只安排上午教学；\n"
+            "6. 交通与住宿由系统另行计算，你不需要输出交通字段。\n"
+            "路线骨架：{brief}"
+        ).format(
+            stage=pricing["stage"], focus=focus, theme=theme or "云南红军长征",
+            days=total_days, extra_hint=extra_day_hint,
+            transit=transit_brief or "无跨城交通",
+            brief=json.dumps(route_brief, ensure_ascii=False),
+        )
+        # 推理模型思考过程很长（实测可达 5000-6000 reasoning tokens），
+        # 首次常因思考耗尽额度而正文为空：逐级放大额度重试，给正文留足空间
+        for budget in (8000, 12000):
+            try:
+                resp = self.llm_client.chat.completions.create(
+                    model=config.MODEL_NAME,
+                    messages=[
+                        {"role": "system", "content": "你是严谨的红色研学课程设计师，只输出 JSON。"},
+                        {"role": "user", "content": prompt},
+                    ],
+                    temperature=0.3,
+                    max_tokens=budget,
+                )
+                parsed = self._parse_tool_json(resp.choices[0].message.content)
+                if self._valid_curriculum(parsed, total_days):
+                    return parsed
+            except Exception:
+                continue
+        return None
+
+    @staticmethod
+    def _valid_curriculum(parsed: Any, total_days: int) -> bool:
+        """校验 LLM 课程 JSON 是否合规：天数匹配且每天都有具体活动。"""
+        if not isinstance(parsed, dict) or not isinstance(parsed.get("daily_plans"), list):
+            return False
+        plans = parsed["daily_plans"]
+        if len(plans) != total_days:
+            return False
+        for plan in plans:
+            acts = plan.get("activities") if isinstance(plan, dict) else None
+            if not isinstance(acts, list) or not acts:
+                return False
+            for act in acts:
+                if not (isinstance(act, dict) and act.get("site") and act.get("task")):
+                    return False
+        return True
 
     def _resolve_route_days(self, villages: List[str], requested_days: Optional[int]) -> int:
         count = len(villages)
@@ -661,21 +1048,105 @@ class ToolRegistry:
             return "19:00-20:30"
         return "自由安排"
 
-    def _travel_segment(self, origin: str, destination: str) -> Dict[str, Any]:
-        p1 = VILLAGE_COORDS[origin]
-        p2 = VILLAGE_COORDS[destination]
-        straight_km = self._haversine(p1["lat"], p1["lng"], p2["lat"], p2["lng"])
-        road_km = round(straight_km * 1.35, 1)
-        speed = 50.0
-        hours = road_km / speed
+    @staticmethod
+    def _place_latlng(name: str):
+        """村寨或常见出发城市的经纬度；未知地点返回 None。"""
+        if name in VILLAGE_COORDS:
+            p = VILLAGE_COORDS[name]
+            return p["lat"], p["lng"]
+        if name in DEPARTURE_CITIES:
+            p = DEPARTURE_CITIES[name]
+            return p["lat"], p["lng"]
+        return None
+
+    def _travel_segment(self, origin: str, destination: str, mode: str = "road") -> Dict[str, Any]:
+        coords = [self._place_latlng(origin), self._place_latlng(destination)]
+        if not coords[0] or not coords[1]:
+            return {
+                "from": origin, "to": destination, "mode": mode,
+                "straight_km": 0.0, "estimated_road_km": 0.0,
+                "estimated_travel_hours": 0.0, "estimated_travel_time": "车程待核实",
+            }
+        cfg = TRANSPORT_MODES.get(mode, TRANSPORT_MODES["road"])
+        p1, p2 = coords
+        straight_km = self._haversine(p1[0], p1[1], p2[0], p2[1])
+        line_km = round(straight_km * cfg["detour"], 1)
+        hours = line_km / cfg["speed_kmh"] + cfg["overhead_h"]
+        whole, mins = int(hours), round((hours - int(hours)) * 60)
+        if mins == 60:
+            whole, mins = whole + 1, 0
+        time_text = f"{whole}小时{mins}分钟" if whole else f"{mins}分钟"
         return {
             "from": origin,
             "to": destination,
+            "mode": mode,
+            "mode_label": cfg["label"],
+            "mode_icon": cfg["icon"],
             "straight_km": round(straight_km, 1),
-            "estimated_road_km": road_km,
+            "estimated_road_km": line_km,
             "estimated_travel_hours": round(hours, 2),
-            "estimated_travel_time": f"{int(hours)}小时{round((hours - int(hours)) * 60)}分钟",
+            "estimated_travel_time": f"{cfg['icon']}{cfg['label']}约{time_text}",
         }
+
+    def _choose_transport_mode(self, origin: str, destination: str, course_days: int,
+                               requested: Optional[str] = None):
+        """按距离和天数选择可行交通方式，返回 (mode_key, segment, 说明)。"""
+        limit = OUTBOUND_LIMIT_HOURS.get(min(course_days, 3), 10.0)
+        order = [requested] if requested in TRANSPORT_MODES else ["road", "rail", "air"]
+        tried_notes = []
+        for mode in order:
+            cfg = TRANSPORT_MODES[mode]
+            seg = self._travel_segment(origin, destination, mode)
+            if seg["estimated_road_km"] < cfg["min_km"]:
+                tried_notes.append(f"{cfg['label']}距离过短不适用")
+                continue
+            if seg["estimated_travel_hours"] <= limit or mode == order[-1]:
+                note = ""
+                if mode != "road":
+                    note = (f"出发地到教学点公路车程过长，已改用{cfg['label']}"
+                            f"（综合时速{int(cfg['speed_kmh'])}km/h，含接驳/候机估算）")
+                if seg["estimated_travel_hours"] > limit:
+                    note = (note + "；" if note else "") + \
+                        f"单程仍需约{seg['estimated_travel_time']}，建议适当增加天数"
+                return mode, seg, note
+        # 兜底：公路
+        return "road", self._travel_segment(origin, destination, "road"), ""
+
+    def _feasible_course_sites(self, candidates: List[str], start: Optional[str],
+                               course_days: int, mode: str) -> List[str]:
+        """按出发距离与点间转场时长精简教学点：远距离短天数只保留最可达的一簇。"""
+        if not candidates:
+            return []
+        transfer_limit = TRANSFER_LIMIT_HOURS.get(min(course_days, 3), 7.0)
+        # 有出发地时按"离出发地最近"贪心排序，保证先留最可达的点
+        if start and self._place_latlng(start):
+            ordered = self._order_nearest(candidates, start) if start in candidates \
+                else self._greedy_from_origin(candidates, start)
+        else:
+            ordered = self._order_villages(candidates)
+        kept = [ordered[0]]
+        for name in ordered[1:]:
+            if len(kept) >= course_days:
+                break
+            leg = self._travel_segment(kept[-1], name, "road")
+            if leg["estimated_travel_hours"] > transfer_limit:
+                continue  # 转场太久，舍弃这个更远的点
+            kept.append(name)
+        return kept
+
+    def _greedy_from_origin(self, villages: List[str], origin: str) -> List[str]:
+        """从外部出发城市起，按最近邻贪心排序教学点。"""
+        origin_xy = self._place_latlng(origin)
+        remaining = list(villages)
+        ordered = []
+        current_xy = origin_xy
+        while remaining:
+            nxt = min(remaining, key=lambda v: self._haversine(
+                current_xy[0], current_xy[1], *self._place_latlng(v)))
+            remaining.remove(nxt)
+            ordered.append(nxt)
+            current_xy = self._place_latlng(nxt)
+        return ordered
 
     def _compare_villages(
         self,

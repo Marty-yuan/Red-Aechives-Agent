@@ -64,6 +64,11 @@ DATABASE_URL = os.environ.get("RED_ARCHIVE_DATABASE_URL", "")
 JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", SECRET_KEY)
 JWT_EXPIRE_HOURS = int(os.environ.get("JWT_EXPIRE_HOURS", "168"))
 
+# ===================== 天气服务（和风天气 QWeather，免费个人版） =====================
+# 申请地址 https://dev.qweather.com/，免费订阅 1000 次/天；留空则客流热力不接天气
+QWEATHER_API_KEY = os.environ.get("QWEATHER_API_KEY", "")
+QWEATHER_BASE_URL = os.environ.get("QWEATHER_BASE_URL", "https://devapi.qweather.com")
+
 # ===================== 村寨列表 =====================
 VILLAGES = [
     "皎平渡", "石鼓", "扎西", "寻甸", "柯渡", "楚雄",

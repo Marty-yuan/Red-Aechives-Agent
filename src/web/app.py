@@ -22,7 +22,7 @@ from pydantic import BaseModel
 from agent.database import init_db
 from agent.rag import VillageAgent
 from web.auth import create_access_token, get_current_username
-from agent import config
+from agent import config, visitor_flow
 from agent.graph_store import KnowledgeGraphStore, get_graph_payload
 from web.tts import synthesize_speech
 
@@ -1459,6 +1459,50 @@ def get_routes():
 def get_timeline():
     """返回时间轴事件"""
     return TIMELINE
+
+
+@app.get("/api/governance/heatmap")
+def get_visitor_heatmap(hour: Optional[int] = None, slot: Optional[str] = None):
+    """景区客流热力快照（仿真演示数据）。
+
+    - 不传参数：按服务器当前小时返回"实时"客流；
+    - hour=0-23：回放指定小时；slot=morning/afternoon/evening：时段均值。
+    """
+    if slot and slot not in ("morning", "afternoon", "evening"):
+        return JSONResponse(
+            {"detail": "slot 仅支持 morning/afternoon/evening"}, status_code=400
+        )
+    if hour is not None and not 0 <= hour <= 23:
+        return JSONResponse({"detail": "hour 需在 0-23 之间"}, status_code=400)
+
+    # 实时天气（和风天气免费版）：失败/未配置 key 时静默降级，不影响热力返回
+    weather_map = {}
+    weather_status = "ok"
+    try:
+        from agent.weather_service import get_weather_batch
+        from agent.knowledge import VILLAGE_COORDS
+        from agent import config as _cfg
+        if not _cfg.QWEATHER_API_KEY:
+            weather_status = "no_key"
+        else:
+            sites = [(name, c["lat"], c["lng"]) for name, c in VILLAGE_COORDS.items()]
+            weather_map = get_weather_batch(sites)
+            if not weather_map:
+                weather_status = "api_error"
+    except Exception:
+        weather_map = {}
+        weather_status = "api_error"
+    return visitor_flow.heatmap_snapshot(
+        hour=hour, slot=slot, weather_map=weather_map, weather_status=weather_status
+    )
+
+
+@app.get("/api/governance/flow-curve")
+def get_visitor_flow_curve(village: str):
+    """单个村寨 24 小时客流曲线（仿真演示数据）。"""
+    if village not in VILLAGE_COORDS:
+        return JSONResponse({"detail": f"未找到村寨：{village}"}, status_code=404)
+    return visitor_flow.flow_curve(village)
 
 
 @app.get("/api/knowledge_graph")

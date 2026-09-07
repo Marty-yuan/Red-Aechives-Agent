@@ -14,10 +14,12 @@ from urllib.parse import quote
 from openai import OpenAI
 
 from . import config
+from . import llm_utils
 from .knowledge import VILLAGE_COORDS, VILLAGE_EXPERIENCE, VILLAGE_LODGING
 from .memory_store import UserMemoryStore
+from .memory_v2 import MemoryManager
 from .personas import build_system_prompt
-from .orchestrator import OrchestratorAgent
+from .orchestrator import COURSE_INTENT_HINTS, OrchestratorAgent
 from .retriever_factory import create_retriever
 from .verifier import FactCheckerAgent
 
@@ -64,6 +66,14 @@ class VillageAgent:
         self.conversation_history = {}
         self.memory_store = UserMemoryStore()
 
+        # 长期记忆（memory_v2）：较早的对话由 LLM 压缩成摘要，新问题到来时按
+        # 关键词相关性召回并注入 prompt。MVP 阶段摘要保存在进程内存中（重启清空），
+        # 登录用户的原始对话仍由 UserMemoryStore 持久化，两者互不替代。
+        self.long_memory = MemoryManager(llm_client=self.client, model=config.MODEL_NAME)
+
+        # 研学课程包的多轮槽位填充：缺出发地时先追问，记住用户上一条课程请求
+        self._pending_course = {}
+
         # ??????????????????
         self.orchestrator = None
         self.last_plan = None
@@ -97,8 +107,28 @@ class VillageAgent:
             self.current_persona_mode = persona_mode or "tourist"
             history = self.conversation_history.get(self.current_village, [])
 
-        # 0. 如果问题像复杂任务，先尝试 Planner + 工具调用
-        orchestrator_result = self._run_orchestrator(question, history)
+        # 0.1 从长期记忆中召回与当前问题相关的历史摘要（尚无摘要时返回空串，无副作用）
+        memory_context = self.long_memory.build_context(
+            self.current_village or "未指定", question,
+            user_id=self.current_user, top_k=2,
+        )
+
+        # 0.15 研学课程包槽位填充：往返交通必须知道出发城市，缺失时先追问而不是硬生成
+        question, ask_back = self._course_departure_gate(question, self.current_user)
+        if ask_back:
+            self.last_plan = {
+                "is_complex": True,
+                "task_type": "clarify_departure",
+                "reasoning": "课程包缺少出发城市，先向用户追问以计算往返交通",
+                "steps": [],
+            }
+            self.last_tool_results, self.last_evidence, self.last_verification = [], [], None
+            if remember:
+                self._remember(question, ask_back, history)
+            return ask_back
+
+        # 0.2 如果问题像复杂任务，先尝试 Planner + 工具调用
+        orchestrator_result = self._run_orchestrator(question, history, memory_context)
         if orchestrator_result and orchestrator_result.get("handled"):
             answer = orchestrator_result["answer"]
             answer = self._attach_local_guide(question, self.current_village, answer)
@@ -128,12 +158,14 @@ class VillageAgent:
         # 2. 组装档案资料
         archive_text = self._format_archive(results)
 
-        # 3. 组装 system prompt（村寨人格 + 讲解模式 + 用户画像）
+        # 3. 组装 system prompt（村寨人格 + 讲解模式 + 用户画像 + 长期记忆摘要）
         system_prompt = build_system_prompt(
             self.current_village,
             persona_mode=self.current_persona_mode,
             user_profile=self.current_profile,
         )
+        if memory_context:
+            system_prompt += "\n\n" + memory_context
 
         # 4. 组装 user prompt（问题 + 档案资料）
         user_prompt = self._build_user_prompt(question, archive_text)
@@ -144,15 +176,14 @@ class VillageAgent:
             messages.append({"role": turn["role"], "content": turn["content"]})
         messages.append({"role": "user", "content": user_prompt})
 
-        # 6. 调用 LLM 生成回答
-        response = self.client.chat.completions.create(
+        # 6. 调用 LLM 生成回答（推理模型空正文时自动放大额度重试，不会返回空串）
+        answer = llm_utils.chat_content(
+            self.client,
+            messages,
             model=config.MODEL_NAME,
-            messages=messages,
             temperature=config.TEMPERATURE,
             max_tokens=config.MAX_TOKENS,
         )
-
-        answer = (response.choices[0].message.content or "").strip()
 
         # 7. 来源统一由前端“证据链”卡片展示，回答正文不再追加来源
 
@@ -263,18 +294,60 @@ class VillageAgent:
             self.fact_checker = FactCheckerAgent()
         return self.fact_checker.verify(question, answer, evidence_text)
 
-    def _run_orchestrator(self, question: str, history: list):
-        """??? Planner + ???????????"""
+    def _course_departure_gate(self, question: str, user_id):
+        """课程包出发地槽位填充。
+
+        返回 (处理后的问题, 追问文本或None)：
+        - 上一轮已追问、本轮回答城市 → 拼回原课程请求继续；
+        - 新课程请求但没有出发地 → 记住请求并返回追问；
+        - 其它情况原样放行。
+        """
+        key = user_id or f"guest:{self.current_village}"
+        pending = self._pending_course.pop(key, None)
+
+        if pending:
+            # 用户正在回答出发地追问
+            departure = OrchestratorAgent.detect_departure(question)
+            if departure:
+                return f"{pending['question']}，从{departure}出发", None
+            if any(w in question for w in ("默认", "随便", "都行", "不知道", "你推荐", "你决定")):
+                return f"{pending['question']}，从昆明出发", None
+            # 答非所问：放弃挂起，按新问题正常处理
+
+        is_course = any(h in question for h in COURSE_INTENT_HINTS)
+        if is_course and not OrchestratorAgent.detect_departure(question):
+            self._pending_course[key] = {"question": question}
+            return question, (
+                "要把往返交通的车程、里程和每晚住宿排进研学课程包，我需要先知道你们"
+                "**从哪个城市出发**（车程按出发地到教学点的真实距离测算）。\n\n"
+                "常见出发地：昆明、攀枝花、大理、成都、贵阳、昭通、西昌、丽江等。\n"
+                "直接回复城市名即可，例如：**昆明**；如果不确定，回复「**默认**」，"
+                "我按云南省会集散中心昆明安排。"
+            )
+        return question, None
+
+    def _run_orchestrator(self, question: str, history: list, memory_context: str = ""):
+        """Planner + 工具调用编排，memory_context 为长期记忆召回摘要。"""
         if self.orchestrator is None:
             self.orchestrator = OrchestratorAgent(retriever=self.retriever)
         return self.orchestrator.run(
             question=question,
             village=self.current_village,
             history=history,
+            memory_context=memory_context,
         )
 
     def _remember(self, question: str, answer: str, history: list) -> None:
         """保存本轮对话：登录用户写入持久化记忆，游客写入内存。"""
+        memory_key_village = self.current_village or "未指定"
+        # 同步喂给长期记忆：超过短期窗口后，MemoryManager 会自动把较早轮次压缩成摘要
+        self.long_memory.add_turn(
+            memory_key_village, "user", question, user_id=self.current_user
+        )
+        self.long_memory.add_turn(
+            memory_key_village, "assistant", answer, user_id=self.current_user
+        )
+
         if self.current_user:
             self.memory_store.append_turn(self.current_user, self.current_village, "user", question)
             self.memory_store.append_turn(self.current_user, self.current_village, "assistant", answer)

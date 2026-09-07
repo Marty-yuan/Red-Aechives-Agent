@@ -21,9 +21,28 @@ from typing import List, Dict, Optional
 from collections import defaultdict
 
 
+def _lexical_tokens(text: str) -> set:
+    """把文本切成用于相似度计算的 token 集合。
+
+    中文没有空格，若按整段连续汉字切，整句只会得到一个 token，词面重叠恒为 0。
+    这里与项目字符级检索（char 2-4 gram）保持同一思路：中文按字 bigram 切分，
+    英文/数字按词切分并小写，无需引入 jieba 等额外依赖。
+    """
+    tokens = set()
+    for segment in re.findall(r"[一-鿿]+|[A-Za-z0-9]+", text or ""):
+        if re.match(r"[一-鿿]", segment):
+            if len(segment) == 1:
+                tokens.add(segment)
+            else:
+                tokens.update(segment[i:i + 2] for i in range(len(segment) - 1))
+        else:
+            tokens.add(segment.lower())
+    return tokens
+
+
 def _jaccard(a: str, b: str) -> float:
-    sa = set(re.findall(r"[\u4e00-\u9fffA-Za-z0-9]+", a))
-    sb = set(re.findall(r"[\u4e00-\u9fffA-Za-z0-9]+", b))
+    sa = _lexical_tokens(a)
+    sb = _lexical_tokens(b)
     if not sa or not sb:
         return 0.0
     return len(sa & sb) / len(sa | sb)
@@ -71,7 +90,8 @@ class MemoryManager:
         )
         try:
             r = self.client.chat.completions.create(
-                model=self.model, temperature=0.0, max_tokens=200,
+                # 推理模型会先消耗 reasoning tokens，200 会导致摘要为空，放宽到 700
+                model=self.model, temperature=0.0, max_tokens=700,
                 messages=[{"role": "user", "content": prompt}],
             )
             summary = (r.choices[0].message.content or "").strip()
@@ -90,7 +110,9 @@ class MemoryManager:
             return ""
         scored = sorted(((m, _jaccard(query, m)) for m in mems),
                         key=lambda x: -x[1])
-        top = [m for m, s in scored[:top_k] if s > 0.05]
+        # 字 bigram 下，命中一个两字关键词的相似度约 0.03-0.06，
+        # 阈值过严会漏掉最常见的"单关键词相关"，故取 0.03，并用 top_k 控制噪声。
+        top = [m for m, s in scored[:top_k] if s >= 0.03]
         if not top:
             return ""
         return "【长期记忆摘要】\n" + "\n".join(f"- {m}" for m in top)

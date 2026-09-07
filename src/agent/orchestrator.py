@@ -19,7 +19,9 @@ from typing import Any, Dict, List, Optional
 from openai import OpenAI
 
 from . import config
-from .knowledge import VILLAGE_COORDS
+from . import llm_utils
+from . import study_course
+from .knowledge import DEPARTURE_CITIES, VILLAGE_COORDS
 from .personas import build_system_prompt
 from .planner import PlannerAgent
 from .retriever_factory import create_retriever
@@ -32,6 +34,7 @@ COMPLEX_HINTS = [
     "旅游", "线路",
     "对比", "比较", "不同", "区别", "差异", "哪些", "时间线", "时间轴", "经过", "推荐", "怎么走",
     "从", "到", "每天", "第一站", "第二站",
+    "课程", "教案", "课时", "备课", "课程包", "研学手册",
 ]
 
 # 旅游/研学路线兜底：即使 Planner 没调用，也保证前端有路线卡片
@@ -39,6 +42,9 @@ ROUTE_TOOL_HINTS = ["旅游", "研学", "路线", "行程", "规划", "几天", 
 
 # 村寨对比兜底：只要命中对比类词，并且能识别出两个村寨，就生成对比卡片
 COMPARE_TOOL_HINTS = ["对比", "比较", "不同", "区别", "差异"]
+
+# 课程包意图词：命中即必须走 generate_course_pack（Planner 可能被"研学"误导，用规则兜底纠偏）
+COURSE_INTENT_HINTS = ("课程包", "课程方案", "课程表", "课程设计", "研学课程", "教案", "课时", "备课", "研学手册")
 
 
 class OrchestratorAgent:
@@ -50,7 +56,7 @@ class OrchestratorAgent:
             base_url=config.BASE_URL,
         )
         self.retriever = retriever or create_retriever()
-        self.tools = ToolRegistry(self.retriever)
+        self.tools = ToolRegistry(self.retriever, llm_client=self.client)
         self.planner = PlannerAgent(api_key=api_key)
         self.fact_checker = FactCheckerAgent(api_key=api_key)
 
@@ -65,8 +71,12 @@ class OrchestratorAgent:
         history: Optional[List[Dict[str, str]]] = None,
         persona_mode: str = "tourist",
         user_profile: Optional[Dict[str, Any]] = None,
+        memory_context: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """尝试处理复杂任务；如果不需要规划，返回 handled=False。"""
+        """尝试处理复杂任务；如果不需要规划，返回 handled=False。
+
+        memory_context: memory_v2 召回的长期记忆摘要，透传给最终回答生成。
+        """
         compare_hit = any(hint in question for hint in COMPARE_TOOL_HINTS)
         compare_villages = [name for name in VILLAGE_COORDS if name in question]
         compare_villages.sort(key=lambda name: question.find(name))
@@ -85,7 +95,10 @@ class OrchestratorAgent:
             tool_results = [
                 {"tool": "compare_villages", "purpose": "对比两个村寨", "arguments": args, "result": result}
             ]
-            draft_answer = self._generate_answer(question, village, compare_plan, tool_results, persona_mode, user_profile)
+            draft_answer = self._generate_answer(
+                question, village, compare_plan, tool_results, persona_mode,
+                user_profile, memory_context=memory_context,
+            )
             evidence_text = self._format_tool_results(tool_results)
             verification = self.fact_checker.verify(question, draft_answer, evidence_text)
             answer = verification.get("revised_answer") or draft_answer
@@ -106,6 +119,8 @@ class OrchestratorAgent:
             tool_specs=self.tools.tool_specs(),
             history=history,
         )
+        # 确定性纠偏：课程类意图必须走课程包工具，防止被"研学"字样误导成红旅路线
+        plan = self._enforce_course_pack(question, plan)
 
         route_hit = any(hint in question for hint in ROUTE_TOOL_HINTS)
         if route_hit and (not plan.get("is_complex") or not plan.get("steps")):
@@ -116,24 +131,27 @@ class OrchestratorAgent:
             route_plan = {
                 "is_complex": True,
                 "task_type": "route_plan",
-                "reasoning": "用户请求旅游或研学路线，Planner 未给出可用步骤，自动生成路线。",
+                "reasoning": "用户请求旅游或红旅路线，Planner 未给出可用步骤，自动生成路线。",
                 "steps": [
                     {
                         "tool": "generate_study_route",
                         "arguments": route_args,
-                        "purpose": "自动生成旅游研学路线",
+                        "purpose": "自动生成红旅路线",
                     }
                 ],
             }
             tool_results = [
                 {
                     "tool": "generate_study_route",
-                    "purpose": "自动生成旅游研学路线",
+                    "purpose": "自动生成红旅路线",
                     "arguments": route_args,
                     "result": result,
                 }
             ]
-            draft_answer = self._generate_answer(question, village, route_plan, tool_results, persona_mode, user_profile)
+            draft_answer = self._generate_answer(
+            question, village, route_plan, tool_results, persona_mode,
+            user_profile, memory_context=memory_context,
+        )
             evidence_text = self._format_tool_results(tool_results)
             verification = self.fact_checker.verify(question, draft_answer, evidence_text)
             answer = verification.get("revised_answer") or draft_answer
@@ -159,6 +177,27 @@ class OrchestratorAgent:
             purpose = step.get("purpose", "")
             if tool_name == "generate_study_route":
                 arguments = {**self._infer_route_preferences(question), **arguments}
+            elif tool_name == "generate_course_pack":
+                # Planner 没显式给村寨/天数/出发地时，从问题文本里兜底提取
+                if not arguments.get("villages"):
+                    mentioned = [name for name in VILLAGE_COORDS if name in question]
+                    if mentioned:
+                        arguments = {**arguments, "villages": mentioned}
+                mentioned_days = self._extract_days(question)
+                if mentioned_days and not arguments.get("days"):
+                    arguments = {**arguments, "days": mentioned_days}
+                if not arguments.get("stage"):
+                    stage = study_course.detect_stage(question)
+                    if stage:
+                        arguments = {**arguments, "stage": stage}
+                if not arguments.get("start"):
+                    departure = self.detect_departure(question)
+                    if departure:
+                        arguments = {**arguments, "start": departure}
+                if not arguments.get("transport_mode"):
+                    mode = self.detect_transport_mode(question)
+                    if mode:
+                        arguments = {**arguments, "transport_mode": mode}
             result = self.tools.execute(tool_name, arguments)
             tool_results.append({
                 "tool": tool_name,
@@ -168,7 +207,11 @@ class OrchestratorAgent:
             })
 
         route_hit = any(hint in question for hint in ROUTE_TOOL_HINTS)
-        has_route_tool = any(item.get("tool") == "generate_study_route" for item in tool_results)
+        # 课程包工具内部已生成路线，视为路线需求已满足，避免重复追加路线工具
+        has_route_tool = any(
+            item.get("tool") in ("generate_study_route", "generate_course_pack")
+            for item in tool_results
+        )
         if route_hit and not has_route_tool:
             route_villages = [name for name in VILLAGE_COORDS if name in question]
             route_days = self._extract_days(question)
@@ -176,12 +219,15 @@ class OrchestratorAgent:
             result = self.tools.execute("generate_study_route", route_args)
             tool_results.append({
                 "tool": "generate_study_route",
-                "purpose": "自动补充研学路线",
+                "purpose": "自动补充红旅路线",
                 "arguments": {},
                 "result": result,
             })
 
-        draft_answer = self._generate_answer(question, village, plan, tool_results, persona_mode, user_profile)
+        draft_answer = self._generate_answer(
+            question, village, plan, tool_results, persona_mode,
+            user_profile, memory_context=memory_context,
+        )
 
         # ??????????????????????????
         evidence_text = self._format_tool_results(tool_results)
@@ -200,6 +246,96 @@ class OrchestratorAgent:
     def _extract_days(question: str) -> Optional[int]:
         match = re.search(r"(\d+)\s*天", question or "")
         return int(match.group(1)) if match else None
+
+    @staticmethod
+    def detect_departure(text: str) -> Optional[str]:
+        """从文本中识别出发城市（支持'从昆明出发'等说法）；未识别返回 None。"""
+        if not text:
+            return None
+        for city in DEPARTURE_CITIES:
+            if city in text:
+                return city
+        return None
+
+    @staticmethod
+    def detect_transport_mode(text: str) -> Optional[str]:
+        """识别用户指定的交通方式：飞机 air / 高铁 rail / 大巴 road；未指定返回 None。"""
+        if not text:
+            return None
+        if any(w in text for w in ("飞机", "航班", "坐飞机", "飞过去", "乘机")):
+            return "air"
+        if any(w in text for w in ("高铁", "动车", "火车", "铁路")):
+            return "rail"
+        if any(w in text for w in ("大巴", "包车", "自驾", "坐汽车", "客车")):
+            return "road"
+        return None
+
+    @staticmethod
+    def _course_step_from_question(question: str, args: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """从问题文本/原路线参数构造一个课程包步骤参数。"""
+        args = args or {}
+        villages = args.get("villages") or [name for name in VILLAGE_COORDS if name in question]
+        stage = args.get("stage") or study_course.detect_stage(question)
+        start = args.get("start") or OrchestratorAgent.detect_departure(question)
+        transport_mode = args.get("transport_mode") or OrchestratorAgent.detect_transport_mode(question)
+        arguments: Dict[str, Any] = {"villages": villages}
+        if args.get("days") or OrchestratorAgent._extract_days(question):
+            arguments["days"] = args.get("days") or OrchestratorAgent._extract_days(question)
+        if stage:
+            arguments["stage"] = stage
+        if start:
+            arguments["start"] = start
+        if transport_mode:
+            arguments["transport_mode"] = transport_mode
+        if args.get("group_size"):
+            arguments["group_size"] = args["group_size"]
+        if args.get("theme"):
+            arguments["theme"] = args["theme"]
+        return {
+            "tool": "generate_course_pack",
+            "arguments": arguments,
+            "purpose": "生成研学课程包（课程意图纠偏）",
+        }
+
+    @staticmethod
+    def _enforce_course_pack(question: str, plan: Dict[str, Any]) -> Dict[str, Any]:
+        """课程类意图的确定性纠偏：错选路线工具则替换，漏选则补上，且不允许再叠加路线工具。"""
+        if not any(hint in (question or "") for hint in COURSE_INTENT_HINTS):
+            return plan
+        steps = [s for s in (plan.get("steps") or []) if isinstance(s, dict)]
+        course_steps = [s for s in steps if s.get("tool") == "generate_course_pack"]
+
+        if course_steps:
+            # 已有课程包步骤：移除冗余的红旅路线步骤（课程包内部自带路线），
+            # 并从问题文本补全出发地/交通方式/学段等 Planner 可能漏填的槽位
+            merged = []
+            for step in steps:
+                if step.get("tool") == "generate_course_pack":
+                    merged.append(OrchestratorAgent._course_step_from_question(
+                        question, step.get("arguments") or {}))
+                elif step.get("tool") != "generate_study_route":
+                    merged.append(step)
+            plan["steps"] = merged
+        else:
+            new_steps = []
+            replaced = False
+            for step in steps:
+                if step.get("tool") == "generate_study_route":
+                    # 把错选的路线步骤替换为课程包步骤，尽量沿用已抽取的参数
+                    new_steps.append(
+                        OrchestratorAgent._course_step_from_question(question, step.get("arguments") or {})
+                    )
+                    replaced = True
+                else:
+                    new_steps.append(step)
+            if not replaced:
+                # Planner 完全没选路线也没选课程包：直接补一个课程包步骤
+                new_steps.append(OrchestratorAgent._course_step_from_question(question))
+            plan["steps"] = new_steps
+
+        plan["is_complex"] = True
+        plan["task_type"] = "study_course"
+        return plan
 
     @staticmethod
     def _infer_route_preferences(question: str) -> Dict[str, Any]:
@@ -302,6 +438,30 @@ class OrchestratorAgent:
                 return "推荐方案：\n" + "\n".join(lines) + ("\n\n未选其他路线的原因：\n" + "\n".join(reasons) if reasons else "")
             return str(data)
 
+        if tool == "generate_course_pack":
+            if isinstance(data, dict):
+                pricing = data.get("pricing") or {}
+                curriculum = data.get("curriculum") or {}
+                lines = [
+                    f"学段：{pricing.get('stage', '')}；天数：{data.get('days', '')}；"
+                    f"班额：{pricing.get('group_size', '')}人",
+                    f"人均费用：{pricing.get('per_student_fee', '')}{pricing.get('currency', '元')}，"
+                    f"合计约：{pricing.get('total_fee', '')}{pricing.get('currency', '元')}，"
+                    f"需导师{pricing.get('required_guides', '')}名",
+                ]
+                goals = curriculum.get("course_goals") or []
+                if goals:
+                    lines.append("课程目标：" + "；".join(goals))
+                for plan in curriculum.get("daily_plans", []):
+                    if not isinstance(plan, dict):
+                        continue
+                    sites = "、".join(
+                        a.get("site", "") for a in plan.get("activities", []) if isinstance(a, dict)
+                    )
+                    lines.append(f"第{plan.get('day', '')}天 {plan.get('theme', '')}：{sites}")
+                return "\n".join(lines)
+            return str(data)
+
         if tool == "query_timeline":
             if isinstance(data, list):
                 lines = []
@@ -378,11 +538,14 @@ class OrchestratorAgent:
         tool_results: List[Dict[str, Any]],
         persona_mode: str = "tourist",
         user_profile: Optional[Dict[str, Any]] = None,
+        memory_context: Optional[str] = None,
     ) -> str:
         """把工具执行结果汇总成面向用户的自然语言回答。"""
         results_block = self._format_tool_results(tool_results)
 
         system_prompt = build_system_prompt(village, persona_mode, user_profile) if village else build_system_prompt("扎西", persona_mode, user_profile)
+        if memory_context:
+            system_prompt += "\n\n" + memory_context
 
         user_prompt = (
             f"你是云南红军长征档案智能体的最终回答者。\n\n"
@@ -397,14 +560,14 @@ class OrchestratorAgent:
             "3. 不要在回答末尾罗列档案来源，前端证据链会单独展示来源。"
         )
 
-        response = self.client.chat.completions.create(
-            model=config.MODEL_NAME,
-            messages=[
+        # 推理模型可能把额度耗在 reasoning 上导致正文为空，统一走带重试的封装
+        return llm_utils.chat_content(
+            self.client,
+            [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
+            model=config.MODEL_NAME,
             temperature=config.TEMPERATURE,
             max_tokens=config.MAX_TOKENS,
         )
-
-        return (response.choices[0].message.content or "").strip()

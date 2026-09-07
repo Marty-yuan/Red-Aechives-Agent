@@ -91,7 +91,8 @@ class FactCheckerAgent:
                     {"role": "user", "content": user_prompt},
                 ],
                 temperature=0.0,
-                max_tokens=1200,
+                # 推理模型需为 reasoning tokens 预留空间
+                max_tokens=1600,
             )
             content = response.choices[0].message.content or "{}"
             return self._parse_json(content, draft_answer)

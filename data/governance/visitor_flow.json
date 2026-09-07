@@ -1,0 +1,27 @@
+{
+  "_note": "仿真演示数据，非真实客流；生产环境替换为票务闸机/LBS 合规数据源即可，计算逻辑不变",
+  "hourly_weight": [
+    0.02, 0.01, 0.00, 0.00, 0.00, 0.01,
+    0.05, 0.15, 0.35, 0.55, 0.75, 0.85,
+    0.70, 0.60, 0.65, 0.80, 0.95, 1.00,
+    0.85, 0.60, 0.40, 0.25, 0.12, 0.05
+  ],
+  "slot_names": {
+    "morning": [8, 9, 10, 11],
+    "afternoon": [12, 13, 14, 15, 16],
+    "evening": [17, 18, 19]
+  },
+  "level_thresholds": {"comfortable": 0.4, "moderate": 0.7, "crowded": 0.9},
+  "villages": {
+    "扎西": {"base_daily": 820, "capacity": 1500},
+    "皎平渡": {"base_daily": 680, "capacity": 1200},
+    "石鼓": {"base_daily": 560, "capacity": 1000},
+    "寻甸": {"base_daily": 430, "capacity": 900},
+    "楚雄": {"base_daily": 600, "capacity": 1100},
+    "曲靖": {"base_daily": 720, "capacity": 1400},
+    "丽江": {"base_daily": 1100, "capacity": 2000},
+    "宣威": {"base_daily": 380, "capacity": 800},
+    "禄劝": {"base_daily": 460, "capacity": 900}
+  },
+  "default_village": {"base_daily": 450, "capacity": 1000}
+}

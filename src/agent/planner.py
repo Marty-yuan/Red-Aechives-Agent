@@ -74,16 +74,21 @@ class PlannerAgent:
             "1. 普通寒暄、自我介绍、追问且不需要查档案时，is_complex=false，steps=[]。\n"
             "2. 历史事实问题优先调用 search_archives。\n"
             "3. 涉及时间顺序、年份、历史行军路线，可调用 query_timeline 或 get_route；\n"
-            "   如果是旅游、研学或行程规划，必须调用 generate_study_route。\n"
+            "   如果是旅游、行程、怎么走的路线规划，调用 generate_study_route"
+            "（但明确要课程包/教案/备课/研学手册的按规则11，不走本工具）。\n"
             "4. 涉及某个具体村寨，可先调用 get_village_profile。\n"
             "5. 涉及人物、部队、地点、事件之间的关系，优先调用 query_knowledge_graph；\n"
             "   如果需要了解图谱可查询范围，可调用 list_graph_nodes。\n"
             "6. 复杂问题可以包含多个步骤，步骤顺序要合理。\n"
             "7. arguments 中的 query 要尽量把用户意图写完整。\n"
-            "8. 只要用户要求旅游、研学、路线、行程、几天、怎么走、推荐路线，无论是否给出出发地或村寨，都必须调用 generate_study_route；需要交通耗时可用 estimate_travel。\n"
+            "8. 只要用户要求旅游、路线、行程、几天、怎么走、推荐路线，无论是否给出出发地或村寨，都必须调用 generate_study_route；需要交通耗时可用 estimate_travel。\n"
             "   用户没说出发地时，generate_study_route 会自动按长征路线生成默认行程，不要拒绝，也不要只回答文字。\n"
+            "   注意：出现“研学”二字不代表要路线——若同时出现课程包/课程/教案/课时/备课/研学手册，按规则11走课程包工具。\n"
             "9. 涉及两个村寨或历史事件之间的对比、比较、不同、区别、差异，优先调用 compare_villages。\n"
 "10. 旅游/研学规划要识别用户偏好：亲子/儿童、低体力/轻松、重点美食、最少车程等，并把 travel_style、low_energy、food_focus、family、group 写入 generate_study_route 参数。\n"
+            "11.【最高优先级，优先于规则3/8】当用户要求研学课程包、课程方案、课程表、教案、课时安排、备课、研学手册、课程设计时，"
+            "必须且只能调用 generate_course_pack，不能调用 generate_study_route（课程包内部已含路线）；"
+            "并把学段（小学/初中/高中/党校成人，写入 stage）、天数 days、班额 group_size、主题 theme 写进参数。\n"
         )
 
         user_prompt = (
@@ -101,7 +106,8 @@ class PlannerAgent:
                     {"role": "user", "content": user_prompt},
                 ],
                 temperature=0.1,
-                max_tokens=800,
+                # 推理模型会先消耗 reasoning tokens，需给规划 JSON 留足输出空间
+                max_tokens=1500,
             )
             content = response.choices[0].message.content or "{}"
             return self._parse_json(content)
