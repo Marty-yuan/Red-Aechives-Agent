@@ -2281,6 +2281,32 @@ button, [role="button"], .kg-chip, .layer-row, .qq-buttons button, .flow-time-ro
 .avatar-panel-close, .kg-close, .layer-collapse, .legend-toggle, #flowCloseBtn { min-width: 34px; min-height: 34px; }
 /* 数字人图片尚未加载（src 为空）时不显示浏览器破图占位 */
 img[src=""] { display: none; }
+
+/* ========== 视觉统一层：底图压暗 / 时间轴可读性 / 面板高程 / 数据看板 ========== */
+/* ① 亮色路网底图压暗为深空色调，与暗色 UI 统一（标记/轨迹在独立 pane，不受滤镜影响） */
+#map { background: #0A0E17; }
+.leaflet-tile-pane { filter: invert(0.92) hue-rotate(180deg) saturate(0.78) brightness(0.92) contrast(0.95); }
+
+/* ② 时间轴：加深 scrim，保证金色小字在照片底上可读 */
+.timeline-bar { background: linear-gradient(180deg, rgba(8,11,18,0.88), rgba(8,11,18,0.72)), url("/static/bg_timeline.png"); background-size: cover; background-position: center; }
+.tl-event .tl-date { color: #9FB0C4; }
+.tl-event.active .tl-date { color: var(--gold-primary); }
+.tl-event .tl-label { text-shadow: 0 1px 6px rgba(0,0,0,0.8); }
+
+/* ③ 面板高程秩序：停靠面板统一暗底金边，浮层加重投影，全局 glow 收敛 */
+.map-legend, .layer-panel, .flow-panel { background: rgba(13,18,28,0.92); border: 1px solid rgba(245,200,66,0.26); box-shadow: 0 8px 28px rgba(0,0,0,0.55); }
+.avatar-panel { box-shadow: 6px 0 34px rgba(0,0,0,0.5); }
+.header { box-shadow: 0 2px 16px rgba(0,0,0,0.45); }
+.kg-panel { box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 40px rgba(212,32,44,0.15); }
+
+/* ④ 数据数字等宽对齐 */
+body { font-variant-numeric: tabular-nums; }
+
+/* ⑤ 首屏空态数据看板（17 部档案 / 1,223 文本块 / 530 实体 / hit@1 88.3%） */
+.welcome-stats { display: flex; gap: 10px; justify-content: center; margin-top: 18px; }
+.welcome-stats div { min-width: 76px; padding: 8px 10px; border: 1px solid rgba(245,200,66,0.25); border-radius: 10px; background: rgba(245,200,66,0.05); }
+.welcome-stats b { display: block; font-size: 18px; color: var(--gold-primary); }
+.welcome-stats span { font-size: 10px; color: var(--text-secondary); }
 /* 尊重系统「减弱动态效果」：关闭装饰动画（图谱自转在 JS 中同步禁用） */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -2418,6 +2444,12 @@ img[src=""] { display: none; }
                 <div class="icon" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15"/><path d="M15 6v15"/></svg></div>
                 <h3>红色村寨数字代言人</h3>
                 <p>点击地图上的村寨标记</p>
+                <div class="welcome-stats" aria-label="项目数据规模">
+                    <div><b>17</b><span>部档案</span></div>
+                    <div><b>1,223</b><span>文本块</span></div>
+                    <div><b>530</b><span>图谱实体</span></div>
+                    <div><b>88.3%</b><span>检索hit@1</span></div>
+                </div>
             </div>
         </div>
         <div class="chat-actions">
