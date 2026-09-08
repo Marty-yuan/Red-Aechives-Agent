@@ -5,11 +5,14 @@
 ## 当前功能
 
 - OCR 档案文本清洗与 TF-IDF 检索
-- 村寨数字代言人多轮问答
+- 村寨数字代言人多轮问答（儿童 / 游客 / 研究者三种人格，模式对照展示）
 - DeepSeek 驱动的复杂任务规划与工具调用
-- 事实校验 Agent
-- 档案知识图谱：手工图谱 + OCR 自动抽取 + 实体自动校验
-- FastAPI Web：地图、双路线、时间轴、战士动画、语音朗读、知识图谱可视化
+- 事实校验 Agent + 用户记忆（memory v2）
+- 研学课程包：多日行程、费用测算与交通物流自动生成
+- 档案知识图谱：手工图谱 + OCR 自动抽取 + 实体自动校验（530 实体 / 349 关系）
+- FastAPI Web：地图、双路线、时间轴、战士动画、语音朗读、景区客流热力与时段回放
+- 知识图谱可视化：vis-network 2D 与 3d-force-graph 3D 一键切换（中文标签、自动旋转、类型筛选）
+- 前端第三方依赖已本地化（`src/web/static/vendor/`），无外网亦可完整演示；页面自带 CDN 兜底
 
 ## 目录
 
@@ -45,15 +48,15 @@ cd Red-Aechives-Agent
 以下数据默认不会上传到 GitHub，需要从团队共享位置复制到本地：
 
 ```text
-data/ocr_output/    OCR 档案文本（18 部）
+data/ocr_output/    OCR 档案文本（17 部）
 data/index/         TF-IDF 索引
 ```
 
 以下数据已入库（克隆后自带），无需额外准备：
 
 ```text
-data/knowledge_graph/knowledge_graph.json   知识图谱（473 实体 / 282 关系，LLM 抽取 + 校验）
-data/knowledge_graph/book_toc.json          档案篇目目录（18 部书、1,225 条篇目-页码，用于"某书某页"溯源）
+data/knowledge_graph/knowledge_graph.json   知识图谱（530 实体 / 349 关系，LLM 抽取 + 校验）
+data/knowledge_graph/book_toc.json          档案篇目目录（17 部书、1,223 条篇目-页码，用于"某书某页"溯源）
 ```
 
 如果本地没有索引，需要先重建（需要 `data/ocr_output/` 就位）：
