@@ -4,9 +4,31 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>红色村寨数字代言人</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+<!-- 第三方库：本地 vendor 优先（断网也能演示），缺失时自动回退 CDN -->
+<link rel="stylesheet" href="/static/vendor/leaflet.css" />
+<script src="/static/vendor/leaflet.js"></script>
+<script src="/static/vendor/vis-network.min.js"></script>
+<!-- 三维图谱：Three.js + three-spritetext（中文标签精灵）+ 3d-force-graph -->
+<script src="/static/vendor/three.min.js"></script>
+<script src="/static/vendor/three-spritetext.min.js"></script>
+<script src="/static/vendor/3d-force-graph.min.js"></script>
+<script>
+// 本地 vendor 未同步时的兜底（按顺序同步写入，保证依赖先后）
+(function () {
+    var FB = [
+        ['L',                 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'],
+        ['vis',               'https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js'],
+        ['THREE',             'https://unpkg.com/three@0.160.1/build/three.min.js'],
+        ['SpriteText',        'https://unpkg.com/three-spritetext@1.9.6/dist/three-spritetext.min.js'],
+        ['ForceGraph3D',      'https://unpkg.com/3d-force-graph@1.77.0/dist/3d-force-graph.min.js']
+    ];
+    for (var i = 0; i < FB.length; i++) {
+        if (typeof window[FB[i][0]] === 'undefined') {
+            document.write('<script src="' + FB[i][1] + '"><\/script>');
+        }
+    }
+})();
+</script>
 <style>
 /* ========== 红色村寨数字代言人 · 商业化UI设计系统 ========== */
 /* 设计语言：红色文化 × 现代毛玻璃科技感 */
@@ -1825,7 +1847,7 @@ body::after {
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 2px;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  text-shadow: 0 0 14px rgba(127,231,255,0.45), 0 0 3px rgba(127,231,255,0.8), 0 1px 4px rgba(0,0,0,0.5);
 }
 .kg-subtitle {
   padding: 10px 20px;
@@ -1859,7 +1881,19 @@ body::after {
   flex: 1;
   width: 100%;
   height: 100%;
-  background: radial-gradient(ellipse at center, #0F1623 0%, #080C14 100%);
+  background:
+    radial-gradient(1.5px 1.5px at 12% 22%, rgba(255,255,255,0.95) 50%, transparent 51%),
+    radial-gradient(1px 1px at 34% 68%, rgba(255,255,255,0.6) 50%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 55% 15%, rgba(160,220,255,0.85) 50%, transparent 51%),
+    radial-gradient(1px 1px at 71% 82%, rgba(255,255,255,0.55) 50%, transparent 51%),
+    radial-gradient(1.7px 1.7px at 84% 38%, rgba(245,200,66,0.75) 50%, transparent 51%),
+    radial-gradient(1px 1px at 25% 85%, rgba(255,255,255,0.5) 50%, transparent 51%),
+    radial-gradient(1.3px 1.3px at 62% 55%, rgba(160,220,255,0.65) 50%, transparent 51%),
+    radial-gradient(1px 1px at 92% 70%, rgba(255,255,255,0.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 8% 55%, rgba(160,220,255,0.5) 50%, transparent 51%),
+    radial-gradient(1.4px 1.4px at 44% 32%, rgba(255,255,255,0.7) 50%, transparent 51%),
+    radial-gradient(ellipse at 50% 42%, rgba(30,58,110,0.42) 0%, transparent 64%),
+    radial-gradient(ellipse at center, #0B1220 0%, #05080F 100%);
 }
 .kg-loading {
   color: var(--text-muted);
@@ -1870,6 +1904,45 @@ body::after {
   font-size: 14px;
   letter-spacing: 1px;
 }
+/* ===== 知识图谱工具条 ===== */
+.kg-toolbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 14px; border-bottom: 1px solid rgba(245,200,66,0.18);
+  background: rgba(13,17,23,0.6); flex-wrap: wrap;
+}
+.kg-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.kg-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 20px; cursor: pointer;
+  font-size: 11px; color: #cbd5e1;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+  transition: all .15s ease;
+}
+.kg-chip i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.kg-chip b { color: #9ca3af; font-weight: normal; }
+.kg-chip:hover { border-color: rgba(245,200,66,0.5); }
+.kg-chip.active {
+  background: rgba(127,231,255,0.14); border-color: #7fe7ff; color: #7fe7ff;
+  box-shadow: 0 0 10px rgba(127,231,255,0.25), inset 0 0 6px rgba(127,231,255,0.12);
+}
+.kg-chip.active b { color: #7fe7ff; }
+.kg-toolbar-right { display: flex; align-items: center; gap: 12px; }
+.kg-switch {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; color: #9ca3af; cursor: pointer; user-select: none;
+}
+.kg-mode-switch { display: inline-flex; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; overflow: hidden; }
+.kg-mode-switch button {
+  background: transparent; border: none; color: #94a3b8; cursor: pointer;
+  font-size: 11px; padding: 3px 12px; letter-spacing: .5px; transition: all .15s ease;
+}
+.kg-mode-switch button:hover { color: #cbd5e1; background: rgba(255,255,255,0.05); }
+.kg-mode-switch button.active {
+  background: linear-gradient(180deg, rgba(127,231,255,0.22), rgba(127,231,255,0.08));
+  color: #7fe7ff; text-shadow: 0 0 8px rgba(127,231,255,0.6);
+}
+.kg-switch input { accent-color: #7fe7ff; cursor: pointer; }
+.kg-stat { font-size: 11px; color: #64748b; white-space: nowrap; font-family: Consolas, monospace; letter-spacing: .5px; }
 
 /* ========== 数字代言人左侧弹出面板 ========== */
 .avatar-panel {
@@ -2059,6 +2132,59 @@ body::after {
     background: linear-gradient(135deg, var(--red-light), var(--red-primary));
 }
 /* ========== 客流热力（治理层 L2） ========== */
+/* ===== 左侧图层控制面板 ===== */
+.layer-panel {
+  position: absolute; top: 16px; left: 16px; z-index: 1000;
+  width: 236px; max-height: calc(100% - 32px);
+  background: rgba(17, 24, 39, 0.9);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-red);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary); font-size: 12px;
+  box-shadow: 0 10px 34px rgba(0,0,0,0.55);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.layer-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; border-bottom: 1px solid var(--border-red);
+  background: linear-gradient(180deg, rgba(196,30,58,0.24), rgba(196,30,58,0));
+}
+.layer-title { font-size: 12px; letter-spacing: 1px; color: var(--accent-gold, #f5c842); font-weight: 600; }
+.layer-collapse {
+  background: none; border: none; color: #9ca3af; cursor: pointer;
+  font-size: 15px; line-height: 1; padding: 2px 5px; border-radius: 6px;
+}
+.layer-collapse:hover { color: var(--accent-gold, #f5c842); background: rgba(245,200,66,0.1); }
+.layer-body { padding: 10px 12px 12px; overflow-y: auto; }
+.layer-panel.collapsed .layer-body { display: none; }
+.layer-body::-webkit-scrollbar { width: 5px; }
+.layer-body::-webkit-scrollbar-thumb { background: var(--border-red); border-radius: 3px; }
+.layer-group-title {
+  font-size: 11px; color: #9ca3af; letter-spacing: .5px;
+  margin: 0 0 6px; padding-bottom: 4px;
+  border-bottom: 1px dashed rgba(245,200,66,0.2);
+  display: flex; align-items: baseline; gap: 6px;
+}
+.layer-hint { font-size: 10px; color: #6b7280; font-weight: normal; margin-left: auto; }
+.layer-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px; margin: 3px 0; border-radius: 8px;
+  cursor: pointer; transition: background .15s ease;
+}
+.layer-row:hover { background: rgba(245,200,66,0.1); }
+.layer-row.off { opacity: .4; }
+.layer-row .swatch { width: 14px; height: 3px; border-radius: 2px; flex: none; }
+.layer-row .layer-label { flex: 1; min-width: 0; }
+.layer-row .layer-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.layer-row .layer-sub { display: block; font-size: 10px; color: #6b7280; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.layer-row .eye { flex: none; font-size: 12px; }
+.layer-row .mini-play {
+  flex: none; background: rgba(245,200,66,0.14); border: 1px solid rgba(245,200,66,0.32);
+  color: var(--accent-gold, #f5c842); border-radius: 6px; font-size: 10px;
+  padding: 1px 7px; cursor: pointer; line-height: 1.5;
+}
+.layer-row .mini-play:hover { background: rgba(245,200,66,0.3); }
+
 .flow-panel {
     position: absolute; top: 16px; right: 16px; z-index: 800;
     width: 286px; max-height: calc(100% - 32px); overflow-y: auto;
@@ -2139,17 +2265,39 @@ body::after {
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
 .course-source { display: inline-block; margin-left: 6px; font-size: 10px; padding: 1px 8px;
     border-radius: 10px; background: rgba(125,211,252,0.1); border: 1px solid rgba(125,211,252,0.3); color: #7DD3FC; }
+
+/* ========== UX 收尾层：焦点 / 对比度 / 动效 / 触控 ========== */
+/* 次要文字 #64748B 在深底上仅 ~3.9:1，提到 #8B99AD（约 6.5:1，AA+） */
+:root { --text-muted: #8B99AD; }
+/* 统一的内联 SVG 图标（替代表情符号作 UI 图标） */
+.ic { width: 1em; height: 1em; display: inline-block; vertical-align: -0.14em; flex: none;
+      fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* 所有可点元素给出手型反馈 */
+button, [role="button"], .kg-chip, .layer-row, .qq-buttons button, .flow-time-row button, .mode-btn, .voice-btn { cursor: pointer; }
+/* 键盘可达：金色焦点环 */
+:where(button, a, input, select, textarea, [tabindex], .layer-row):focus-visible {
+  outline: 2px solid var(--gold-primary); outline-offset: 2px; }
+/* 小尺寸关闭/切换按钮保证最小触控面积 */
+.avatar-panel-close, .kg-close, .layer-collapse, .legend-toggle, #flowCloseBtn { min-width: 34px; min-height: 34px; }
+/* 数字人图片尚未加载（src 为空）时不显示浏览器破图占位 */
+img[src=""] { display: none; }
+/* 尊重系统「减弱动态效果」：关闭装饰动画（图谱自转在 JS 中同步禁用） */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
 </style>
 </head>
 <body>
 
 <div class="header">
-    <span class="logo">🏘️</span>
+    <span class="logo" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="M3 22h18"/><path d="M6 18v-7"/><path d="M10 18v-7"/><path d="M14 18v-7"/><path d="M18 18v-7"/><path d="M12 2 3 7v2h18V7L12 2z"/></svg></span>
     <h1>红色村寨数字代言人</h1>
     <span class="subtitle">云南省红军长征档案 · DeepSeek RAG</span>
-    <button class="kg-open-btn" id="flowToggleBtn">🔥 客流热力</button>
-    <button class="kg-open-btn" id="kgOpenBtn">📊 知识图谱</button>
-    <button class="auth-open-btn" id="authBtn">👤 登录 / 注册</button>
+    <button class="kg-open-btn" id="flowToggleBtn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> 客流热力</button>
+    <button class="kg-open-btn" id="kgOpenBtn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="M8 17v-4"/><path d="M13 17V7"/><path d="M18 17V9"/></svg> 知识图谱</button>
+    <button class="auth-open-btn" id="authBtn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> 登录 / 注册</button>
     <span class="user-chip" id="userChip"></span>
 </div>
 
@@ -2158,7 +2306,7 @@ body::after {
         <div id="map"></div>
         <!-- 数字代言人左侧弹出面板 -->
         <div class="avatar-panel" id="avatarPanel">
-            <button class="avatar-panel-close" id="avatarPanelClose" onclick="closeAvatarPanel()">✕</button>
+            <button class="avatar-panel-close" id="avatarPanelClose" onclick="closeAvatarPanel()" aria-label="关闭代言人面板">✕</button>
             <div class="avatar-panel-image-wrap">
                 <img class="avatar-panel-image" id="avatarPanelImage" src="" alt="数字代言人">
                 <div class="avatar-panel-image-overlay"></div>
@@ -2169,31 +2317,42 @@ body::after {
                     <span class="avatar-panel-badge" id="avatarPanelBadge">数字代言人</span>
                 </div>
                 <div class="avatar-panel-meta">
-                    <div class="meta-item"><span class="meta-label">📍 所在地</span><span class="meta-value" id="avatarPanelCity"></span></div>
-                    <div class="meta-item"><span class="meta-label">📅 历史事件</span><span class="meta-value" id="avatarPanelEvent"></span></div>
-                    <div class="meta-item"><span class="meta-label">⚔️ 所属部队</span><span class="meta-value" id="avatarPanelArmy"></span></div>
+                    <div class="meta-item"><span class="meta-label"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg> 所在地</span><span class="meta-value" id="avatarPanelCity"></span></div>
+                    <div class="meta-item"><span class="meta-label"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg> 历史事件</span><span class="meta-value" id="avatarPanelEvent"></span></div>
+                    <div class="meta-item"><span class="meta-label"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C16.51 3.81 19 5 21 5a1 1 0 0 1 1 1z"/></svg> 所属部队</span><span class="meta-value" id="avatarPanelArmy"></span></div>
                 </div>
                 <div class="avatar-panel-divider"></div>
                 <div class="avatar-panel-intro">
-                    <h4>📜 村寨简介</h4>
+                    <h4><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2h4"/></svg> 村寨简介</h4>
                     <p id="avatarPanelIntro"></p>
                 </div>
-                <button class="avatar-panel-chat-btn" onclick="focusChatInput()">💬 与代言人对话</button>
+                <button class="avatar-panel-chat-btn" onclick="focusChatInput()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></svg> 与代言人对话</button>
+            </div>
+        </div>
+        <!-- 左侧图层控制面板：长征路线与其它要素的显示/隐藏 -->
+        <div class="layer-panel" id="layerPanel">
+            <div class="layer-head">
+                <span class="layer-title"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4h-7"/><path d="M10 4H3"/><path d="M21 12h-9"/><path d="M8 12H3"/><path d="M21 20h-5"/><path d="M12 20H3"/><path d="M14 2v4"/><path d="M12 10v4"/><path d="M16 18v4"/></svg> 图层控制</span>
+                <button class="layer-collapse" id="layerCollapseBtn" title="收起面板" aria-label="收起或展开图层面板">－</button>
+            </div>
+            <div class="layer-body" id="layerBody">
+                <div class="layer-group-title"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15"/><path d="M15 6v15"/></svg> 长征路线 <span class="layer-hint">点击线条区域即可隐藏/显示</span></div>
+                <div id="layerRouteList"></div>
+                <div class="layer-group-title" style="margin-top:10px;"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16h14v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg> 其它图层</div>
+                <div id="layerExtraList"></div>
             </div>
         </div>
         <div class="map-legend" id="mapLegend">
             <div class="map-legend-scroll">
-                <h4>🗺️ 长征路线</h4>
-                <div id="routeLegend"></div>
-                <h4 style="margin-top:8px">🏘️ 村寨代言人</h4>
+                <h4><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 22h18"/><path d="M6 18v-7"/><path d="M10 18v-7"/><path d="M14 18v-7"/><path d="M18 18v-7"/><path d="M12 2 3 7v2h18V7L12 2z"/></svg> 村寨代言人</h4>
                 <div id="legendList"></div>
             </div>
         </div>
-        <button class="legend-toggle" id="legendToggle" onclick="toggleLegend()" title="收起面板">▶</button>
+        <button class="legend-toggle" id="legendToggle" onclick="toggleLegend()" title="收起面板" aria-label="收起或展开图例面板">▶</button>
         <div class="flow-panel" id="flowPanel">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3 style="margin:0;font-size:13px;color:#f5c842;letter-spacing:1px;">🔥 景区实时客流热力</h3>
-        <button id="flowCloseBtn" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;">✕</button>
+        <h3 style="margin:0;font-size:13px;color:#f5c842;letter-spacing:1px;"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> 景区实时客流热力</h3>
+        <button id="flowCloseBtn" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px;" aria-label="关闭客流面板">✕</button>
     </div>
     <div class="flow-summary">
         <div class="flow-stat"><div class="num" id="flowTotal">--</div><div class="lbl">当前在园(人次)</div></div>
@@ -2244,34 +2403,34 @@ body::after {
                 <h3 id="chatName">选择村寨</h3>
                 <p id="chatMeta">点击地图标记，战士会走过去</p>
             </div>
-            <div class="voice-switch" id="voiceSwitch">
+            <div class="voice-switch" id="voiceSwitch" role="group" aria-label="语音播报开关">
                 <button type="button" class="voice-btn active" data-voice="mandarin" onclick="setVoice('mandarin')">普通话</button>
-                <button type="button" class="voice-btn voice-off" data-voice="off" onclick="setVoice('off')">🔇 关闭</button>
+                <button type="button" class="voice-btn voice-off" data-voice="off" onclick="setVoice('off')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg> 关闭</button>
             </div>
         </div>
-        <div class="mode-bar" id="modeBar">
-            <button class="mode-btn active" data-mode="student" onclick="setMode('student')">🧒 儿童</button>
-            <button class="mode-btn" data-mode="tourist" onclick="setMode('tourist')">🧭 游客</button>
-            <button class="mode-btn" data-mode="researcher" onclick="setMode('researcher')">📚 研究者</button>
+        <div class="mode-bar" id="modeBar" role="group" aria-label="讲解人格切换">
+            <button class="mode-btn active" data-mode="student" onclick="setMode('student')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01"/><path d="M15 9h.01"/></svg> 儿童</button>
+            <button class="mode-btn" data-mode="tourist" onclick="setMode('tourist')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88"/></svg> 游客</button>
+            <button class="mode-btn" data-mode="researcher" onclick="setMode('researcher')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg> 研究者</button>
         </div>
-        <div class="chat-messages" id="chatMessages">
+        <div class="chat-messages" id="chatMessages" aria-live="polite">
             <div class="welcome">
-                <div class="icon">🗺️</div>
+                <div class="icon" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15"/><path d="M15 6v15"/></svg></div>
                 <h3>红色村寨数字代言人</h3>
                 <p>点击地图上的村寨标记</p>
             </div>
         </div>
         <div class="chat-actions">
-            <button type="button" class="delete-conversation-btn" id="deleteConversationBtn" style="display:none" onclick="deleteCurrentConversation()">🗑️ 删除当前对话</button>
-            <button type="button" class="compare-btn" onclick="runCompare()">🆚 模式对照</button>
+            <button type="button" class="delete-conversation-btn" id="deleteConversationBtn" style="display:none" onclick="deleteCurrentConversation()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></svg> 删除当前对话</button>
+            <button type="button" class="compare-btn" onclick="runCompare()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18"/></svg> 模式对照</button>
         </div>
         <!-- 快捷问题栏 -->
         <div class="quick-questions" id="quickQuestions">
-            <div class="qq-title">💡 快捷提问</div>
+            <div class="qq-title"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.28 4.28 0 0 1 8.91 14"/><path d="M9 18h6"/><path d="M10 22h4"/></svg> 快捷提问</div>
             <div class="qq-buttons" id="qqButtons"></div>
         </div>
         <div class="chat-input">
-            <input type="text" id="queryInput" placeholder="问问这个村寨的故事..." onkeypress="if(event.key==='Enter')sendMessage()">
+            <input type="text" id="queryInput" placeholder="问问这个村寨的故事..." aria-label="输入你的问题" onkeypress="if(event.key==='Enter')sendMessage()">
             <button onclick="sendMessage()">发送</button>
         </div>
     </div>
@@ -2281,18 +2440,31 @@ body::after {
     <div class="tl-track" id="tlTrack"></div>
 </div>
 
-<div class="kg-overlay" id="kgOverlay">
+<div class="kg-overlay" id="kgOverlay" role="dialog" aria-modal="true" aria-label="档案知识图谱">
     <div class="kg-panel">
         <div class="kg-header">
-            <h2>📊 档案知识图谱</h2>
-            <button class="kg-close" id="kgCloseBtn">✕</button>
+            <h2><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="M8 17v-4"/><path d="M13 17V7"/><path d="M18 17V9"/></svg> 档案知识图谱</h2>
+            <button class="kg-close" id="kgCloseBtn" aria-label="关闭知识图谱">✕</button>
         </div>
         <div class="kg-subtitle">人物 / 地点 / 事件 / 部队关系网络</div>
+        <div class="kg-toolbar">
+            <div class="kg-chips" id="kgTypeChips"></div>
+            <div class="kg-toolbar-right">
+                <div class="kg-mode-switch" id="kgModeSwitch">
+                    <button type="button" data-kg-mode="2d" class="active">2D</button>
+                    <button type="button" data-kg-mode="3d">3D</button>
+                </div>
+                <label class="kg-switch" title="无任何关系的实体，默认隐藏以保持画面清爽">
+                    <input type="checkbox" id="kgIsoToggle"><span>孤立节点</span>
+                </label>
+                <span class="kg-stat" id="kgStat"></span>
+            </div>
+        </div>
         <div id="kgNetwork"><div class="kg-loading">正在加载知识图谱...</div></div>
     </div>
 </div>
 
-<div id="pdfOverlay" class="pdf-overlay">
+<div id="pdfOverlay" class="pdf-overlay" role="dialog" aria-modal="true" aria-label="原始 PDF 页面预览">
     <div class="pdf-box">
         <div class="pdf-toolbar">
             <span id="pdfPageInfo">原始 PDF</span>
@@ -2302,16 +2474,16 @@ body::after {
     </div>
 </div>
 
-<div id="authOverlay" class="auth-overlay">
+<div id="authOverlay" class="auth-overlay" role="dialog" aria-modal="true" aria-label="用户登录与注册">
     <div class="auth-box">
         <h3>用户登录 / 注册</h3>
-        <input id="authUsername" placeholder="用户名" />
-        <input id="authPassword" type="password" placeholder="密码" />
+        <input id="authUsername" type="text" autocomplete="username" placeholder="用户名" aria-label="用户名" />
+        <input id="authPassword" type="password" autocomplete="current-password" placeholder="密码" aria-label="密码" />
         <div class="auth-actions">
             <button class="auth-login" onclick="loginUser()">登录</button>
             <button class="auth-register" onclick="registerUser()">注册</button>
         </div>
-        <div class="auth-status" id="authStatus" style="display:none"></div>
+        <div class="auth-status" id="authStatus" role="status" aria-live="polite" style="display:none"></div>
         <button class="auth-logout" id="logoutBtn" style="display:none" onclick="logoutUser()">退出登录</button>
     </div>
 </div>
@@ -2378,6 +2550,16 @@ function authHeaders() {
 // ========== 初始化地图 ==========
 map = L.map("map", { center: [25.5, 101.5], zoom: 7, attributionControl: false });
 L.tileLayer("https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}", { subdomains: ["1","2","3","4"], maxZoom: 14 }).addTo(map);
+
+// 客流热力专用图层容器：zIndex 350（低于路线/标记的 overlayPane 400），
+// 热力光晕永远垫在长征路线与村寨标记下面，不再互相遮挡。
+map.createPane("flowPane");
+map.getPane("flowPane").style.zIndex = 350;
+
+// ---- 图层容器：统一收纳散落的要素，供左侧「图层控制」面板开关 ----
+// routeLayers 已在上方声明（每条长征路线一个；途径点归 waypointLayer，村寨归 villageLayer）
+let waypointLayer = L.layerGroup().addTo(map);   // 长征途径站点（吸附到道路的小圆点）
+let villageLayer = L.layerGroup().addTo(map);    // 村寨代言人标记
 
 // ========== 战士标记 ==========
 function createSoldierMarker(latlng) {
@@ -2490,7 +2672,7 @@ function createRouteWaypoints(route, ri) {
     final.forEach(w => {
         const m = L.circleMarker(w.latlng, {
             radius: 5, color: "#fff", weight: 2, fillColor: route.color, fillOpacity: 0.9, interactive: true
-        }).addTo(map);
+        }).addTo(waypointLayer);
         m.bindTooltip(w.name, { permanent: false, direction: "top", className: "waypoint-tip", offset: L.point(0, -8) });
         m.on("click", () => revealWaypoint(w));
         w.marker = m;
@@ -2505,29 +2687,117 @@ function revealAllWaypoints(routeIdx) {
     (routeWaypoints[routeIdx] || []).forEach(w => revealWaypoint(w));
 }
 
+// ========== 左侧图层控制面板（长征路线可隐藏 / 可播放） ==========
+const layerState = { route: {}, waypoint: true, village: true, flow: false };
+const _eye = on => (on ? "👁" : "🚫");
+
+function buildLayerPanel() {
+    const list = document.getElementById("layerRouteList");
+    if (!list) return;
+    list.innerHTML = "";
+    routes.forEach((route, ri) => {
+        if (layerState.route[ri] === undefined) layerState.route[ri] = true;
+        const row = document.createElement("div");
+        row.className = "layer-row";
+        row.dataset.routeRow = ri;
+        row.title = "点击隐藏/显示该路线；点 ▶ 播放行军时序";
+        row.innerHTML =
+            '<i class="swatch" style="background:' + route.color + '"></i>' +
+            '<span class="layer-label">' +
+              '<span class="layer-name">' + route.name + '</span>' +
+              '<span class="layer-sub">方向：' + (route.direction || '-') + '</span>' +
+            '</span>' +
+            '<span class="play-badge">▶</span>' +
+            '<span class="eye">' + _eye(layerState.route[ri]) + '</span>';
+        row.querySelector(".play-badge").addEventListener("click", e => {
+            e.stopPropagation();
+            playRoute(ri);
+        });
+        row.addEventListener("click", () => toggleRouteLayer(ri));
+        list.appendChild(row);
+        routeLegendBtns[ri] = row;   // 复用原有的播放高亮逻辑
+    });
+
+    const extra = [
+        { key: "waypoint", name: "长征途径站点", sub: "路线上的行军要点" },
+        { key: "village",  name: "村寨代言人标记", sub: "12 个红色村寨" },
+        { key: "flow",     name: "景区客流热力", sub: "天气/节假日修正" }
+    ];
+    const box = document.getElementById("layerExtraList");
+    if (!box) return;
+    box.innerHTML = "";
+    extra.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "layer-row" + (layerState[item.key] ? "" : " off");
+        row.dataset.layer = item.key;
+        row.innerHTML =
+            '<i class="swatch" style="background:#FFD700"></i>' +
+            '<span class="layer-label"><span class="layer-name">' + item.name + '</span>' +
+            '<span class="layer-sub">' + item.sub + '</span></span>' +
+            '<span class="eye">' + _eye(layerState[item.key]) + '</span>';
+        row.addEventListener("click", () => toggleExtraLayer(item.key, row));
+        box.appendChild(row);
+    });
+}
+
+function _paintRouteRow(ri) {
+    const row = document.querySelector('[data-route-row="' + ri + '"]');
+    if (!row) return;
+    row.classList.toggle("off", !layerState.route[ri]);
+    const eye = row.querySelector(".eye");
+    if (eye) eye.textContent = _eye(layerState.route[ri]);
+}
+
+function toggleRouteLayer(ri) {
+    const on = !layerState.route[ri];
+    layerState.route[ri] = on;
+    const layer = routeLayers[ri];
+    if (layer) { on ? layer.addTo(map) : map.removeLayer(layer); }
+    // 该路线的途径点随之显隐（仍受「长征途径站点」总开关约束）
+    (routeWaypoints[ri] || []).forEach(w => {
+        if (!w.marker) return;
+        if (on && layerState.waypoint) waypointLayer.addLayer(w.marker);
+        else waypointLayer.removeLayer(w.marker);
+    });
+    _paintRouteRow(ri);
+}
+
+function toggleExtraLayer(key, row) {
+    const on = !layerState[key];
+    layerState[key] = on;
+    if (key === "village") {
+        on ? villageLayer.addTo(map) : map.removeLayer(villageLayer);
+    } else if (key === "waypoint") {
+        Object.keys(routeWaypoints).forEach(ri => {
+            if (!layerState.route[ri]) return;   // 路线本身已隐藏的保持隐藏
+            (routeWaypoints[ri] || []).forEach(w => {
+                if (!w.marker) return;
+                on ? waypointLayer.addLayer(w.marker) : waypointLayer.removeLayer(w.marker);
+            });
+        });
+    } else if (key === "flow") {
+        toggleFlow(on);   // 复用原有热力面板开关
+    }
+    row.classList.toggle("off", !on);
+    const eye = row.querySelector(".eye");
+    if (eye) eye.textContent = _eye(on);
+}
+
 fetch("/api/routes").then(r => r.json()).then(data => {
     routes = data.routes;
-    const legend = document.getElementById("routeLegend");
     const allPoints = [];
 
     routes.forEach((route, ri) => {
         allPoints.push(...route.points);
-
-        // 图例：做成可点击的播放按钮
-        let item = document.createElement("button");
-        item.className = "legend-route";
-        item.type = "button";
-        item.title = "点击播放 " + route.name + " 的行军时序";
-        item.innerHTML = `<span class="color-line" style="background:${route.color}"></span><span class="route-main"><span class="route-name">${route.name}</span><div class="route-dir">方向：${route.direction}</div></span><span class="play-badge">▶</span>`;
-        item.onclick = () => playRoute(ri);
-        legend.appendChild(item);
-        routeLegendBtns[ri] = item;
 
         // 绘制详细路网（真实公路走向，不再只是直线）
         drawRouteGeometry(route, ri);
         // 标注详细途径点（吸附到道路上）
         createRouteWaypoints(route, ri);
     });
+
+    // 左侧图层面板（长征路线在此列出，可隐藏 / 可播放）
+    buildLayerPanel();
 
     // 地图视野
     map.fitBounds(L.polyline(allPoints).getBounds().pad(0.15));
@@ -2567,7 +2837,7 @@ fetch("/api/villages").then(r => r.json()).then(villages => {
 
         let marker = L.circleMarker([v.lat, v.lng], {
             radius: 10, fillColor: "#C41E3A", color: "#FFD700", weight: 2, fillOpacity: 0.85
-        }).addTo(map);
+        }).addTo(villageLayer);
         // 弹窗放在下方，避免挡住战士
         marker.bindPopup(`<b>${v.name}</b><br>${v.event} · ${v.year}<br>${v.army}`, { className: "village-popup", offset: L.point(0, -70), autoPan: false, autoClose: false, closeButton: false });
         marker.on("click", () => selectVillage(v.name));
@@ -2930,10 +3200,14 @@ function stopAudio() {
     }
 }
 
+const ICON_VOL = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
+const ICON_STOP = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>';
+const ICON_USER = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+
 function resetSpeakBtn(btn) {
     if (!btn) return;
     btn.classList.remove("playing");
-    btn.textContent = "🔊 朗读";
+    btn.innerHTML = ICON_VOL + " 朗读";
     if (activeSpeakBtn === btn) activeSpeakBtn = null;
     setSpeaking(false);
 }
@@ -2951,7 +3225,7 @@ async function speakAnswer(text, btn) {
     if (activeSpeakBtn) resetSpeakBtn(activeSpeakBtn);
 
     btn.classList.add("playing");
-    btn.textContent = "⏹ 停止";
+    btn.innerHTML = ICON_STOP + " 停止";
     activeSpeakBtn = btn;
     setSpeaking(true);
 
@@ -3117,7 +3391,7 @@ function updateAuthUI() {
     if (!btn) return;
 
     if (currentUser) {
-        btn.textContent = "👤 账户";
+        btn.innerHTML = ICON_USER + " 账户";
         chip.textContent = currentUser;
         chip.title = currentUser;
         if (status) {
@@ -3126,7 +3400,7 @@ function updateAuthUI() {
         }
         if (logoutBtn) logoutBtn.style.display = "block";
     } else {
-        btn.textContent = "👤 登录 / 注册";
+        btn.innerHTML = ICON_USER + " 登录 / 注册";
         chip.textContent = "";
         chip.title = "";
         if (status) status.style.display = "none";
@@ -4283,7 +4557,7 @@ function sendMessage() {
             const speakBtn = document.createElement("button");
             speakBtn.className = "speak-btn";
             speakBtn.title = "朗读此回答";
-            speakBtn.textContent = "🔊 朗读";
+            speakBtn.innerHTML = ICON_VOL + " 朗读";
             speakBtn.addEventListener("click", () => speakAnswer(answer, speakBtn));
             bubble.appendChild(speakBtn);
             msgs.scrollTop = msgs.scrollHeight;
@@ -4359,13 +4633,326 @@ let kgNetwork = null;
 
 function openKnowledgeGraph() {
     document.getElementById("kgOverlay").style.display = "flex";
-    if (!kgNetwork) {
-        loadKnowledgeGraph();
+    if (!kgRaw) {
+        loadKnowledgeGraph();          // 首次打开：拉数据并按当前模式渲染
+    } else if (kgMode === "3d") {
+        if (!kgGraph3D) kgRefresh(); else adapt3DSize();   // 二次打开：3D 画布跟随尺寸
     }
 }
 
 function closeKnowledgeGraph() {
     document.getElementById("kgOverlay").style.display = "none";
+}
+
+// ===== 知识图谱：类型元数据（配色/形状/中文） =====
+const KG_TYPE_META = {
+    person:       { label: "人物", color: "#C41E3A", shape: "dot" },
+    location:     { label: "地点", color: "#3b82f6", shape: "dot" },
+    event:        { label: "事件", color: "#E67E22", shape: "star" },
+    army:         { label: "部队", color: "#27ae60", shape: "diamond" },
+    organization: { label: "组织", color: "#9b59b6", shape: "box" },
+    document:     { label: "文献", color: "#f5c842", shape: "box" },
+    other:        { label: "其他", color: "#6b7280", shape: "dot" }
+};
+let kgRaw = null, kgDegrees = {}, kgFilterType = "all", kgShowIso = false, kgMode = "2d";
+let kgNodesDS = null, kgEdgesDS = null;
+
+// #hex → rgba（发光用）
+function kgGlow(hex, a) {
+    const m = hex.replace("#", "");
+    return "rgba(" + parseInt(m.substr(0, 2), 16) + "," + parseInt(m.substr(2, 2), 16) + "," + parseInt(m.substr(4, 2), 16) + "," + a + ")";
+}
+// vis-network 9.x 的字符串 title 会被按纯文本渲染，必须传 DOM 元素才能出富文本
+function kgNodeTitle(n, deg, typeLabel) {
+    const div = document.createElement("div");
+    div.style.maxWidth = "280px";
+    div.innerHTML = '<b style="color:#f5c842;font-size:13px;">' + escapeHtml(n.name || "") + '</b>' +
+        '<div style="color:#7fe7ff;font-size:11px;margin:3px 0;">◈ ' + typeLabel + ' · ' + deg + ' 条关系</div>' +
+        '<div style="color:#cbd5e1;font-size:11px;line-height:1.5;">' + escapeHtml(n.description || "") + '</div>';
+    return div;
+}
+function kgEdgeTitle(label) {
+    const div = document.createElement("div");
+    div.innerHTML = '<span style="color:#7fe7ff;">⇢ ' + escapeHtml(label || "关联") + '</span>';
+    return div;
+}
+
+function kgRenderChips() {
+    const box = document.getElementById("kgTypeChips");
+    if (!box || !kgRaw) return;
+    const counts = {};
+    (kgRaw.nodes || []).forEach(n => {
+        const t = n.type || "other";
+        counts[t] = (counts[t] || 0) + 1;
+    });
+    const mk = (key, label, color, count) =>
+        '<button class="kg-chip' + (kgFilterType === key ? " active" : "") + '" data-type="' + key + '">' +
+        '<i style="background:' + color + '"></i>' + label + ' <b>' + count + '</b></button>';
+    let html = mk("all", "全部", "#f5c842", (kgRaw.nodes || []).length);
+    Object.entries(KG_TYPE_META).forEach(([k, m]) => {
+        if (counts[k]) html += mk(k, m.label, m.color, counts[k]);
+    });
+    box.innerHTML = html;
+    box.querySelectorAll(".kg-chip").forEach(ch =>
+        ch.addEventListener("click", () => { kgFilterType = ch.dataset.type; kgRenderChips(); kgRefresh(); }));
+}
+
+// 统一的筛选结果（类型过滤 + 孤立节点开关），2D 与 3D 共用
+function kgFilteredData() {
+    if (!kgRaw) return { nodes: [], edges: [], ids: new Set() };
+    const nodes = (kgRaw.nodes || []).filter(n => {
+        const t = n.type || "other";
+        if (kgFilterType !== "all" && t !== kgFilterType) return false;
+        if ((kgDegrees[n.id] || 0) === 0 && !kgShowIso) return false;
+        return true;
+    });
+    const ids = new Set(nodes.map(n => n.id));
+    const edges = (kgRaw.edges || []).filter(e => ids.has(e.source) && ids.has(e.target));
+    return { nodes: nodes, edges: edges, ids: ids };
+}
+
+// ===== 三维模式（3d-force-graph） =====
+let kgGraph3D = null;
+const KG_REDUCED_MOTION = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function kgBuild3D() {
+    const container = document.getElementById("kgNetwork");
+    if (typeof ForceGraph3D === "undefined") {
+        container.innerHTML = '<div class="kg-loading">3D 库未加载成功（需联网 + WebGL 支持），请切回 2D</div>';
+        return;
+    }
+    const { nodes: list, edges: es } = kgFilteredData();
+    const data = {
+        nodes: list.map(n => {
+            const deg = kgDegrees[n.id] || 0;
+            const meta = KG_TYPE_META[n.type || "other"] || KG_TYPE_META.other;
+            return {
+                id: n.id, name: n.name, typeLabel: meta.label, deg: deg,
+                color: meta.color, desc: n.description || "",
+                val: 0.6 + Math.min(deg, 26) * 0.16      // 度数决定球体大小
+            };
+        }),
+        links: es.map(e => ({ source: e.source, target: e.target, name: e.label || e.relation || "关联" }))
+    };
+
+    if (kgGraph3D) { try { if (kgGraph3D._destructor) kgGraph3D._destructor(); } catch (e) {} kgGraph3D = null; }
+    container.innerHTML = "";
+    {
+        kgGraph3D = ForceGraph3D()(container)
+            .backgroundColor("#05080F")
+            .showNavInfo(false)
+            .nodeRelSize(3.4)
+            .nodeVal("val")
+            .nodeColor("color")
+            .nodeOpacity(0.92)
+            .nodeResolution(12)
+            .linkColor(() => "rgba(110,180,255,0.28)")
+            .linkWidth(0.5)
+            .linkOpacity(0.35)
+            .linkDirectionalArrowLength(2.6)
+            .linkDirectionalArrowRelPos(1)
+            .nodeLabel(n =>
+                '<div style="background:rgba(8,12,20,0.94);padding:6px 9px;border-radius:6px;border:1px solid rgba(127,231,255,0.35);">' +
+                '<b style="color:#f5c842">' + escapeHtml(n.name) + '</b>' +
+                '<div style="color:#7fe7ff;font-size:11px;margin:2px 0;">◈ ' + n.typeLabel + ' · ' + n.deg + ' 条关系</div>' +
+                '<div style="color:#cbd5e1;font-size:11px;max-width:240px">' + escapeHtml(n.desc) + '</div></div>')
+            .linkLabel(l => '<div style="background:rgba(8,12,20,0.94);padding:3px 7px;border-radius:5px;color:#7fe7ff;font-size:11px;">⇢ ' + escapeHtml(l.name) + '</div>');
+
+        // 中文标签（SpriteText）；度数越高字越大，低度节点小字不喧宾夺主
+        if (typeof SpriteText !== "undefined") {
+            const showAll = kgFilterType !== "all" || list.length <= 80;
+            kgGraph3D
+                .nodeThreeObjectExtend(true)
+                .nodeThreeObject(n => {
+                    if (!showAll && n.deg < 3) return false;
+                    const h = 2.8 + Math.min(n.deg, 20) * 0.2;
+                    const sprite = new SpriteText(n.name);
+                    sprite.color = n.deg >= 10 ? "#7fe7ff" : "#cfe3ff";
+                    sprite.textHeight = h;
+                    sprite.material.depthWrite = false;
+                    // 标签抬到球体上方，避免与节点球体互相遮挡
+                    const r = 3.4 * Math.pow(n.val, 1 / 3);
+                    sprite.position.set(0, r + h * 0.75, 0);
+                    return sprite;
+                });
+        }
+        // 缓慢自转，演示时更有科技感（1.73+ 的 controls 已换成 TrackballControls，
+        // 不再有 autoRotate 属性，改为在引擎 tick 中让相机每帧绕目标点 Y 轴微转）
+        try {
+            let kgSpinLast = 0;
+            kgGraph3D.onEngineTick(() => {
+                if (KG_REDUCED_MOTION) return;
+                const cam = kgGraph3D.camera(), ctl = kgGraph3D.controls();
+                if (!cam || !ctl) return;
+                const now = performance.now();
+                const dt = kgSpinLast ? Math.min((now - kgSpinLast) / 1000, 0.1) : 0;
+                kgSpinLast = now;
+                const t = ctl.target;
+                const dx = cam.position.x - t.x, dz = cam.position.z - t.z;
+                const ang = 0.18 * dt; // 约 35 秒一圈
+                const cs = Math.cos(ang), sn = Math.sin(ang);
+                cam.position.set(t.x + dx * cs - dz * sn, cam.position.y, t.z + dx * sn + dz * cs);
+            });
+        } catch (e) {}
+    }
+    // 弱向心引力：把断连小岛拉向主体，避免取景被外围孤点撑远
+    try {
+        kgGraph3D.d3Force("pull", alpha => {
+            for (const n of kgGraph3D.graphData().nodes) {
+                const g = 0.03 * alpha;
+                n.vx -= (n.x || 0) * g; n.vy -= (n.y || 0) * g; n.vz -= (n.z || 0) * g;
+            }
+        });
+    } catch (e) {}
+    kgGraph3D.graphData(data);
+    // 收缩斥力作用半径，让互不相连的小岛不至于被斥力推得四散，整体取景更紧凑
+    try { kgGraph3D.d3Force("charge").strength(-16).distanceMax(420); } catch (e) {}
+    adapt3DSize();
+    setTimeout(() => { if (kgMode === "3d" && kgGraph3D) { try { kgGraph3D.zoomToFit(900, 60); } catch (e) {} } }, 700);
+    setTimeout(() => { if (kgMode === "3d" && kgGraph3D) { try { kgGraph3D.zoomToFit(1200, 60); } catch (e) {} } }, 4500);
+
+    const stat = document.getElementById("kgStat");
+    if (stat) stat.textContent = "3D · " + data.nodes.length + " 节点 / " + data.links.length + " 关系";
+}
+
+// 2D / 3D 切换（销毁旧实例，避免容器冲突）
+function kgSwitchMode(mode) {
+    const container = document.getElementById("kgNetwork");
+    if (kgNetwork) { try { kgNetwork.destroy(); } catch (e) {} kgNetwork = null; kgNodesDS = null; kgEdgesDS = null; }
+    if (kgGraph3D) { try { if (kgGraph3D._destructor) kgGraph3D._destructor(); } catch (e) {} kgGraph3D = null; }
+    container.innerHTML = "";
+    kgMode = mode;
+    document.querySelectorAll("[data-kg-mode]").forEach(b =>
+        b.classList.toggle("active", b.dataset.kgMode === mode));
+    if (mode === "3d") kgBuild3D(); else kgBuild();
+}
+
+// 按当前模式重建（筛选项变化时调用）
+function kgRefresh() {
+    if (kgMode === "3d") kgBuild3D(); else kgBuild();
+}
+
+// 3D 画布跟随容器尺寸（弹窗打开时容器才有真实宽高）
+function adapt3DSize() {
+    if (!kgGraph3D) return;
+    const c = document.getElementById("kgNetwork");
+    if (!c) return;
+    try { kgGraph3D.width(c.clientWidth || 900).height(c.clientHeight || 560); } catch (e) {}
+}
+window.addEventListener("resize", adapt3DSize);
+
+function kgBuild() {
+    const container = document.getElementById("kgNetwork");
+    if (!kgRaw || typeof vis === "undefined") return;
+    if (!kgDegrees._done) {
+        (kgRaw.edges || []).forEach(e => {
+            kgDegrees[e.source] = (kgDegrees[e.source] || 0) + 1;
+            kgDegrees[e.target] = (kgDegrees[e.target] || 0) + 1;
+        });
+        kgDegrees._done = true;
+    }
+    // 过滤：类型 + 孤立节点（2D / 3D 共用同一份筛选结果）
+    const { nodes: keptNodes, edges: keptEdges, ids: keep } = kgFilteredData();
+    const nodesData = keptNodes.map(n => {
+        const t = n.type || "other";
+        const meta = KG_TYPE_META[t] || KG_TYPE_META.other;
+        const deg = kgDegrees[n.id] || 0;
+        const baseSize = 7 + Math.min(deg, 26) * 1.15;
+        const isHub = deg >= 10;
+        // 「全部」视图节点多，只给枢纽常显标签；筛选单类型时节点少，名称全部显示
+        const showAllLabels = kgFilterType !== "all" || keep.size <= 80;
+        return {
+            id: n.id,
+            label: (showAllLabels || deg >= 3) ? n.name : "",
+            group: t,
+            size: baseSize,
+            shape: meta.shape,
+            color: {
+                background: meta.color,
+                border: isHub ? "#7fe7ff" : kgGlow(meta.color, 0.9),
+                highlight: { background: meta.color, border: "#7fe7ff" },
+                hover: { background: meta.color, border: "#7fe7ff" }
+            },
+            // 同色光晕 = 科技感发光体
+            shadow: {
+                enabled: true,
+                color: kgGlow(meta.color, isHub ? 0.85 : 0.5),
+                size: 12 + Math.min(deg, 20) * 0.9,
+                x: 0, y: 0
+            },
+            // hover / 选中时"充能"：放大 + 青色光环 + 光晕爆闪
+            chosen: {
+                node: function (values) {
+                    values.size = baseSize * 1.35;
+                    values.borderWidth = 2.2;
+                    values.borderColor = "#7fe7ff";
+                    values.shadow = { enabled: true, color: "rgba(127,231,255,0.95)", size: 30, x: 0, y: 0 };
+                }
+            },
+            font: { size: 12, color: "#cfe3ff", face: "Microsoft YaHei", strokeWidth: 3, strokeColor: "rgba(5,10,20,0.9)" },
+            borderWidth: 1.4,
+            title: kgNodeTitle(n, deg, meta.label)
+        };
+    });
+    const edgesData = keptEdges.map(e => ({
+        from: e.source,
+        to: e.target,
+        arrows: { to: { enabled: true, scaleFactor: 0.4 } },
+        color: { color: "rgba(110,180,255,0.20)", highlight: "#7fe7ff", hover: "rgba(127,231,255,0.8)" },
+        hoverWidth: 1.6,
+        selectionWidth: 1.8,
+        width: 1,
+        title: kgEdgeTitle(e.label || e.relation || "关联")   // 关系名悬停显示，画面不被文字糊满
+    }));
+
+    const options = {
+        autoResize: true,
+        nodes: {
+            shape: "dot",
+            borderWidth: 1.4,
+            shadow: { enabled: true, color: "rgba(0,0,0,0.5)", size: 8, x: 0, y: 2 }
+        },
+        edges: { smooth: { enabled: false } },   // 直线边 + 低透明度，比 dynamic 曲线干净得多
+        groups: {},
+        physics: {
+            solver: "barnesHut",
+            barnesHut: {
+                gravitationalConstant: -2800,
+                centralGravity: 0.14,
+                springLength: 120,
+                springConstant: 0.06,
+                damping: 0.42,
+                avoidOverlap: 0.25
+            },
+            stabilization: { iterations: 300, fit: true }
+        },
+        interaction: {
+            hover: true,
+            tooltipDelay: 140,
+            hoverConnectedEdges: true,
+            selectConnectedEdges: true,
+            keyboard: false
+        }
+    };
+
+    if (!kgNetwork) {
+        kgNodesDS = new vis.DataSet(nodesData);
+        kgEdgesDS = new vis.DataSet(edgesData);
+        kgNetwork = new vis.Network(container, { nodes: kgNodesDS, edges: kgEdgesDS }, options);
+        kgNetwork.once("stabilizationIterationsDone", () => {
+            kgNetwork.setOptions({ physics: { enabled: false } });
+        });
+    } else {
+        kgNodesDS.clear(); kgNodesDS.add(nodesData);
+        kgEdgesDS.clear(); kgEdgesDS.add(edgesData);
+        kgNetwork.setOptions({ physics: { enabled: true } });
+        kgNetwork.once("stabilizationIterationsDone", () => {
+            kgNetwork.setOptions({ physics: { enabled: false } });
+        });
+        kgNetwork.fit();
+    }
+    const stat = document.getElementById("kgStat");
+    if (stat) stat.textContent = "已显示 " + nodesData.length + " 节点 / " + edgesData.length + " 关系";
 }
 
 function loadKnowledgeGraph() {
@@ -4376,59 +4963,26 @@ function loadKnowledgeGraph() {
     }
 
     fetch("/api/knowledge_graph").then(r => r.json()).then(data => {
-        const nodes = new vis.DataSet((data.nodes || []).map(n => ({
-            id: n.id,
-            label: n.name,
-            group: n.type || "location",
-            title: `<b>${n.name}</b><br>${n.description || ""}`
-        })));
-
-        const edges = new vis.DataSet((data.edges || []).map(e => ({
-            from: e.source,
-            to: e.target,
-            label: e.label || e.relation || "",
-            arrows: { to: { enabled: true, scaleFactor: 0.45 } },
-            color: { color: "#b7a77a", highlight: "#FFD700" },
-            font: { size: 10, color: "#e8dcc0", strokeWidth: 0 }
-        })));
-
-        const options = {
-            nodes: {
-                shape: "dot",
-                size: 18,
-                font: { size: 14, color: "#ffffff", face: "Microsoft YaHei" },
-                borderWidth: 1.5,
-                shadow: true
-            },
-            edges: {
-                smooth: { type: "dynamic" },
-                width: 1.2,
-                selectionWidth: 2
-            },
-            groups: {
-                person: { color: { background: "#C41E3A", border: "#FFD700" }, shape: "dot", size: 22 },
-                location: { color: { background: "#2f80ed", border: "#ffffff" }, shape: "box" },
-                event: { color: { background: "#E67E22", border: "#ffffff" }, shape: "star" },
-                army: { color: { background: "#27ae60", border: "#ffffff" }, shape: "diamond" }
-            },
-            physics: {
-                stabilization: true,
-                solver: "forceAtlas2Based",
-                forceAtlas2Based: { gravitationalConstant: -90, springLength: 140, springConstant: 0.18, damping: 0.35 }
-            },
-            interaction: { hover: true, tooltipDelay: 120 }
-        };
-
-        kgNetwork = new vis.Network(container, { nodes: nodes, edges: edges }, options);
-        kgNetwork.once("stabilizationIterationsDone", () => {
-            kgNetwork.setOptions({ physics: { enabled: false } });
-        });
+        kgRaw = data;
+        kgRenderChips();
+        kgRefresh();
     }).catch(() => {
         container.innerHTML = '<div class="kg-loading">图谱加载失败，请检查后端服务</div>';
     });
 }
 
 document.getElementById("kgOpenBtn").addEventListener("click", openKnowledgeGraph);
+document.getElementById("kgIsoToggle").addEventListener("change", e => {
+    kgShowIso = e.target.checked;
+    kgRefresh();
+});
+// 2D / 3D 模式切换
+document.querySelectorAll("#kgModeSwitch [data-kg-mode]").forEach(b => {
+    b.addEventListener("click", () => {
+        if (b.dataset.kgMode === kgMode) return;
+        kgSwitchMode(b.dataset.kgMode);
+    });
+});
 // ========== 客流热力（治理层 L2） ==========
 let flowLayer = null;
 let flowActive = false;
@@ -4453,10 +5007,23 @@ function renderFlowHeatmap(snap) {
     flowLayer.clearLayers();
     const maxVal = Math.max(1, ...snap.points.map(p => p.value));
     snap.points.forEach(p => {
-        const radius = 12 + 28 * (p.value / maxVal);
+        const coreR = 10 + 22 * (p.value / maxVal);
+        // 三层热力光晕，全部绘制在 flowPane（路线层之下）：
+        //   外圈：大而淡的扩散晕  →  中圈：主体色块  →  核心点：小而清晰的交互标记
+        // 外/中圈 interactive:false，点击会穿透到下面的路线与村寨标记。
+        L.circleMarker([p.lat, p.lng], {
+            radius: coreR + 16, pane: "flowPane",
+            stroke: false, fillColor: p.color, fillOpacity: 0.15,
+            interactive: false
+        }).addTo(flowLayer);
+        L.circleMarker([p.lat, p.lng], {
+            radius: coreR, pane: "flowPane",
+            stroke: false, fillColor: p.color, fillOpacity: 0.28,
+            interactive: false
+        }).addTo(flowLayer);
         const marker = L.circleMarker([p.lat, p.lng], {
-            radius: radius, color: "#ffffff", weight: 1, opacity: 0.7,
-            fillColor: p.color, fillOpacity: 0.55
+            radius: 5.5, color: "#ffffff", weight: 1.2, opacity: 0.9,
+            fillColor: p.color, fillOpacity: 0.95
         });
         marker.bindPopup(buildFlowPopup(p));
         marker.bindTooltip(p.name + " · " + p.level_label + " " + p.value + "人", { direction: "top" });
@@ -4544,8 +5111,15 @@ function renderFlowPanel(snap, params) {
 
 function toggleFlow(force) {
     flowActive = (force !== undefined) ? force : !flowActive;
+    layerState.flow = flowActive;   // 与左侧图层面板保持同步
     document.getElementById("flowPanel").classList.toggle("active", flowActive);
     document.getElementById("flowToggleBtn").style.borderColor = flowActive ? "#f5c842" : "";
+    const row = document.querySelector('[data-layer="flow"]');
+    if (row) {
+        row.classList.toggle("off", !flowActive);
+        const eye = row.querySelector(".eye");
+        if (eye) eye.textContent = _eye(flowActive);
+    }
     if (flowActive) {
         if (!flowLastSnapshot) loadFlowHeatmap(null);
     } else if (flowLayer) {
@@ -4553,6 +5127,12 @@ function toggleFlow(force) {
     }
 }
 
+document.getElementById("layerCollapseBtn").addEventListener("click", function () {
+    const panel = document.getElementById("layerPanel");
+    const collapsed = panel.classList.toggle("collapsed");
+    this.textContent = collapsed ? "＋" : "－";
+    this.title = collapsed ? "展开面板" : "收起面板";
+});
 document.getElementById("flowToggleBtn").addEventListener("click", () => toggleFlow());
 document.getElementById("flowCloseBtn").addEventListener("click", () => toggleFlow(false));
 document.getElementById("flowHourSlider").addEventListener("input", e => loadFlowHeatmap({hour: e.target.value}));
