@@ -2307,6 +2307,227 @@ body { font-variant-numeric: tabular-nums; }
 .welcome-stats div { min-width: 76px; padding: 8px 10px; border: 1px solid rgba(245,200,66,0.25); border-radius: 10px; background: rgba(245,200,66,0.05); }
 .welcome-stats b { display: block; font-size: 18px; color: var(--gold-primary); }
 .welcome-stats span { font-size: 10px; color: var(--text-secondary); }
+/* ========== 欢迎落地页（从提交材料副本移植；landing- 前缀避免与 .welcome 冲突） ========== */
+.landing-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -8%, rgba(196,30,58,0.28) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 40% at 12% 108%, rgba(245,200,66,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 40% at 88% 108%, rgba(139,0,0,0.22) 0%, transparent 60%),
+    linear-gradient(180deg, #070A10 0%, #0B1019 50%, #070A10 100%);
+  opacity: 1;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+.landing-screen.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.landing-grain {
+  position: fixed; inset: 0; pointer-events: none; opacity: 0.06; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.landing-orbs { position: fixed; inset: 0; overflow: hidden; pointer-events: none; }
+.landing-orb { position: absolute; border-radius: 50%; filter: blur(70px); animation: landingFloat 10s ease-in-out infinite alternate; }
+.landing-orb.red { width: 460px; height: 460px; top: -160px; left: -120px; background: rgba(196,30,58,0.20); }
+.landing-orb.gold { width: 380px; height: 380px; bottom: -140px; right: -100px; background: rgba(245,200,66,0.10); animation-delay: -5s; }
+@keyframes landingFloat {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(34px, -28px) scale(1.08); }
+}
+.landing-watermark {
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  font-size: 720px; line-height: 1; color: rgba(196, 30, 58, 0.05);
+  pointer-events: none; user-select: none;
+}
+.landing-crop { position: fixed; width: 22px; height: 22px; pointer-events: none; z-index: 1; }
+.landing-crop::before, .landing-crop::after { content: ''; position: absolute; background: var(--gold-primary); opacity: 0.4; }
+.landing-crop::before { width: 22px; height: 1px; }
+.landing-crop::after { width: 1px; height: 22px; }
+.landing-crop.tl { top: 24px; left: 24px; } .landing-crop.tl::before { top: 0; left: 0; } .landing-crop.tl::after { top: 0; left: 0; }
+.landing-crop.tr { top: 24px; right: 24px; } .landing-crop.tr::before { top: 0; right: 0; } .landing-crop.tr::after { top: 0; right: 0; }
+.landing-crop.bl { bottom: 24px; left: 24px; } .landing-crop.bl::before { bottom: 0; left: 0; } .landing-crop.bl::after { bottom: 0; left: 0; }
+.landing-crop.br { bottom: 24px; right: 24px; } .landing-crop.br::before { bottom: 0; right: 0; } .landing-crop.br::after { bottom: 0; right: 0; }
+
+.landing-inner {
+  margin: auto; display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 48px 24px; position: relative; z-index: 2;
+}
+.landing-eyebrow { font-size: 12px; letter-spacing: 7px; color: var(--text-secondary); }
+.landing-seal {
+  width: 86px; height: 86px; margin-top: 18px;
+  background: linear-gradient(155deg, #E8384F 0%, #C41E3A 50%, #8B0000 100%);
+  border: 2px solid var(--gold-primary); border-radius: 8px;
+  color: var(--gold-primary);
+  font-family: "Noto Serif SC", "STSong", "SimSun", serif;
+  font-size: 17px; font-weight: 700; letter-spacing: 4px; line-height: 1.1;
+  writing-mode: vertical-rl;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 28px rgba(212,32,44,0.5), inset 0 0 0 2px rgba(245,200,66,0.35);
+  animation: landingSeal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.12s both;
+}
+@keyframes landingSeal {
+  0% { transform: rotate(-2deg) scale(2.4); opacity: 0; }
+  60% { transform: rotate(-2deg) scale(0.96); opacity: 1; }
+  100% { transform: rotate(-2deg) scale(1); opacity: 1; }
+}
+.landing-title {
+  margin-top: 26px;
+  font-family: "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", serif;
+  font-size: 54px; font-weight: 900; letter-spacing: 8px; color: #F4F2EC;
+  text-shadow: 0 2px 22px rgba(0,0,0,0.55), 0 0 40px rgba(196,30,58,0.25);
+}
+.landing-title .accent { color: var(--gold-primary); text-shadow: 0 0 20px rgba(245,200,66,0.4); }
+.landing-subtitle { margin-top: 14px; font-size: 14px; letter-spacing: 4px; color: var(--text-secondary); }
+.landing-route { width: min(720px, 88vw); height: auto; margin-top: 30px; overflow: visible; }
+.landing-route .route-shadow { stroke: rgba(0,0,0,0.45); stroke-width: 7; fill: none; }
+.landing-route .route-line {
+  stroke: #D4202C; stroke-width: 2.5; fill: none; stroke-linecap: round;
+  stroke-dasharray: 1400; stroke-dashoffset: 1400;
+  animation: landingRouteDraw 3s 0.5s ease-out forwards;
+}
+.landing-route .node { fill: #F5C842; stroke: #070A10; stroke-width: 2; }
+.landing-route .node.dim { fill: #C41E3A; }
+.landing-route .march-dot { fill: #F5C842; filter: drop-shadow(0 0 6px rgba(245,200,66,0.9)); }
+@keyframes landingRouteDraw { to { stroke-dashoffset: 0; } }
+
+.landing-cards { display: flex; gap: 16px; margin-top: 34px; flex-wrap: wrap; justify-content: center; }
+.landing-card {
+  width: 184px; padding: 16px 16px 14px; text-align: left;
+  background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015));
+  border: 1px solid rgba(255,255,255,0.09); border-top: 2px solid var(--red-primary);
+  border-radius: 4px; position: relative; transition: transform 0.25s, border-color 0.25s;
+}
+.landing-card:hover { transform: translateY(-4px); border-color: var(--gold-primary); }
+.landing-card .idx { position: absolute; top: 12px; right: 12px; font-family: "Noto Serif SC", serif; font-size: 11px; letter-spacing: 1px; color: var(--text-muted); }
+.landing-card .t { font-size: 16px; font-weight: 700; letter-spacing: 3px; color: var(--gold-primary); }
+.landing-card p { margin-top: 8px; font-size: 12px; line-height: 1.6; color: var(--text-secondary); }
+
+.landing-entries { display: flex; gap: 18px; margin-top: 32px; flex-wrap: wrap; justify-content: center; }
+.landing-enter {
+  display: flex; align-items: center; gap: 14px; padding: 15px 30px;
+  border-radius: 4px; font-size: 15px; font-weight: 700; letter-spacing: 2px;
+  cursor: pointer; font-family: inherit; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.landing-enter .icon { font-size: 20px; }
+.landing-enter .lbl { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.25; }
+.landing-enter .lbl small { font-size: 11px; font-weight: 400; letter-spacing: 1px; color: rgba(255,255,255,0.72); }
+.landing-enter.primary {
+  background: linear-gradient(135deg, #E8384F, #C41E3A); color: #fff;
+  border: 1px solid #FF6B7A; box-shadow: 0 8px 30px rgba(212,32,44,0.45);
+}
+.landing-enter.primary:hover { transform: translateY(-3px); box-shadow: 0 14px 42px rgba(212,32,44,0.6); }
+.landing-enter.ghost { background: transparent; color: var(--gold-primary); border: 1px solid var(--gold-primary); }
+.landing-enter.ghost:hover { transform: translateY(-3px); background: rgba(245,200,66,0.1); box-shadow: 0 10px 28px rgba(245,200,66,0.15); }
+.landing-enter.ghost .lbl small { color: var(--text-secondary); }
+
+.landing-stats { display: flex; gap: 46px; margin-top: 36px; flex-wrap: wrap; justify-content: center; }
+.landing-stat { text-align: center; }
+.landing-stat b { display: block; font-family: "Noto Serif SC", "STSong", "SimSun", serif; font-size: 26px; font-weight: 700; color: var(--text-primary); }
+.landing-stat span { font-size: 11px; letter-spacing: 2px; color: var(--text-muted); }
+
+.landing-in .landing-item {
+  opacity: 0;
+  animation: landingUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(var(--i, 0) * 0.12s);
+}
+@keyframes landingUp {
+  from { opacity: 0; transform: translateY(26px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========== 双工作台布局（从提交材料副本移植） ========== */
+.header .logo { cursor: pointer; }
+body.workspace-map .map-panel { flex: 1 1 auto; }
+body.workspace-map .chat-panel { width: 420px; flex: 0 0 auto; }
+body.workspace-chat .map-panel { flex: 0 0 300px; min-width: 240px; }
+body.workspace-chat .chat-panel { width: auto; flex: 1 1 auto; border-left: 1px solid var(--border-red); }
+.map-panel, .chat-panel {
+  transition: flex-basis 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              width 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              min-width 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ========== 时间轴自动收起 + 路线分组 ========== */
+.timeline-bar { transition: height 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+.timeline-bar.tl-collapsed { height: 36px; }
+.timeline-bar.tl-collapsed:hover,
+.timeline-bar.tl-collapsed.tl-play,
+.timeline-bar.tl-collapsed.tl-pinned { height: 104px; }
+.timeline-bar.tl-collapsed:not(:hover):not(.tl-play):not(.tl-pinned) .tl-event { display: none; }
+.timeline-bar.tl-collapsed:not(:hover):not(.tl-play):not(.tl-pinned) .tl-track::before { opacity: 0; }
+.tl-hint {
+  flex: 0 0 auto; display: none; align-items: center; gap: 6px;
+  padding: 4px 12px; border: 1px dashed rgba(245,200,66,0.4); border-radius: 14px;
+  color: var(--text-secondary); font-size: 11px; letter-spacing: 1px;
+  cursor: pointer; white-space: nowrap;
+}
+.tl-hint:hover { color: var(--gold-primary); border-color: var(--gold-primary); }
+.timeline-bar.tl-collapsed:not(:hover):not(.tl-play):not(.tl-pinned) .tl-hint { display: flex; }
+.timeline-bar.tl-collapsed.tl-pinned .tl-hint { display: flex; }
+
+.tl-group-label {
+  flex: 0 0 auto; align-self: center;
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px; margin: 0 8px; border-radius: 16px; border: 1px solid;
+  font-size: 11px; font-weight: 600; letter-spacing: 1px; white-space: nowrap;
+  cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.tl-group-label:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.55); }
+.tl-group-label .play-badge {
+  display: flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; color: #0D1117; font-size: 10px; font-weight: 700;
+  flex-shrink: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.5); transition: all 0.2s;
+}
+.tl-group-label.active .play-badge { background: var(--gold-primary); color: var(--bg-deep); box-shadow: 0 0 10px rgba(245,200,66,0.6); }
+
+.tl-event[data-route="1"] .tl-dot { background: linear-gradient(135deg, #E67E22, #B85E0A); border-color: #FFD08A; }
+.tl-event[data-route="1"] .tl-army { color: #FFD08A; }
+.timeline-bar[data-playing="0"] .tl-event[data-route="1"],
+.timeline-bar[data-playing="1"] .tl-event[data-route="0"] { opacity: 0.22; filter: grayscale(0.7); pointer-events: none; }
+.timeline-bar[data-playing] .tl-group-label { opacity: 0.5; }
+.timeline-bar[data-playing="0"] .tl-group-label[data-route="1"],
+.timeline-bar[data-playing="1"] .tl-group-label[data-route="0"] { opacity: 0.2; }
+.tl-event.passed .tl-dot { background: var(--gold-primary); border-color: var(--gold-soft); box-shadow: 0 0 0 4px rgba(15,22,35,0.9), 0 0 10px rgba(245,200,66,0.45); }
+.tl-event.passed .tl-label { color: var(--gold-soft); }
+.tl-event.active .tl-dot { transform: scale(1.35); background: white; border-color: var(--gold-primary); box-shadow: 0 0 0 4px rgba(15,22,35,0.9), 0 0 22px rgba(245,200,66,0.9); }
+.tl-event.active .tl-label { color: white; }
+
+/* ========== 轻提示 Toast ========== */
+.toast-container {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  z-index: 4000; display: flex; flex-direction: column; gap: 10px;
+  align-items: center; pointer-events: none;
+}
+.toast {
+  padding: 10px 20px; border-radius: 8px; font-size: 13px; letter-spacing: 1px;
+  background: rgba(17,24,39,0.96); border: 1px solid var(--border-gold);
+  color: var(--text-primary); box-shadow: var(--shadow-card);
+  animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+}
+.toast.error { border-color: rgba(212,32,44,0.7); color: #FFD0D5; box-shadow: var(--shadow-card), var(--shadow-glow-red); }
+@keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes toastOut { to { opacity: 0; transform: translateY(8px); } }
+
+/* ========== 移动端响应式 ========== */
+@media (max-width: 768px) {
+  .header .subtitle { display: none; }
+  .header h1 { font-size: 15px; letter-spacing: 2px; }
+  body.workspace-map .chat-panel { display: none; }
+  body.workspace-chat .map-panel { display: none; }
+  .map-legend { max-width: 170px; }
+  .timeline-bar { padding: 0 10px; }
+  .landing-title { font-size: 32px; letter-spacing: 5px; }
+  .landing-card { width: 100%; max-width: 300px; }
+  .landing-stats { gap: 24px; }
+  .landing-route { width: 96vw; }
+}
+
 /* 尊重系统「减弱动态效果」：关闭装饰动画（图谱自转在 JS 中同步禁用） */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -2317,12 +2538,64 @@ body { font-variant-numeric: tabular-nums; }
 </head>
 <body>
 
+<!-- ========== 欢迎落地页 ========== -->
+<div class="landing-screen landing-in" id="landingScreen">
+    <div class="landing-grain"></div>
+    <div class="landing-orbs"><div class="landing-orb red"></div><div class="landing-orb gold"></div></div>
+    <div class="landing-watermark">★</div>
+    <span class="landing-crop tl"></span><span class="landing-crop tr"></span><span class="landing-crop bl"></span><span class="landing-crop br"></span>
+
+    <div class="landing-inner">
+        <div class="landing-eyebrow landing-item" style="--i:0">云 南 省 红 军 长 征 档 案</div>
+        <div class="landing-seal">红色档案</div>
+        <h1 class="landing-title landing-item" style="--i:1">红色村寨<span class="accent">数字代言人</span></h1>
+        <p class="landing-subtitle landing-item" style="--i:2">AI 数字博物馆 · 让 980 万字的档案「活」起来</p>
+
+        <svg class="landing-route landing-item" style="--i:3" viewBox="0 0 800 160" fill="none" aria-hidden="true">
+            <path class="route-shadow" d="M 40 120 C 180 40 260 150 400 90 S 620 20 760 70" />
+            <path class="route-line" d="M 40 120 C 180 40 260 150 400 90 S 620 20 760 70" />
+            <circle class="node" cx="40" cy="120" r="4.5" />
+            <circle class="node dim" cx="400" cy="90" r="4" />
+            <circle class="node" cx="760" cy="70" r="4.5" />
+            <circle class="march-dot" r="5">
+                <animateMotion dur="5.5s" begin="3.6s" repeatCount="indefinite"
+                    path="M 40 120 C 180 40 260 150 400 90 S 620 20 760 70" />
+            </circle>
+        </svg>
+
+        <div class="landing-cards landing-item" style="--i:4">
+            <div class="landing-card"><span class="idx">01</span><div class="t">可信</div><p>每句话可溯源 · 落到书与页</p></div>
+            <div class="landing-card"><span class="idx">02</span><div class="t">可走</div><p>双路线地图 · 12 村寨研学</p></div>
+            <div class="landing-card"><span class="idx">03</span><div class="t">可听</div><p>12 位代言人 · 多音色讲解</p></div>
+        </div>
+
+        <div class="landing-entries landing-item" style="--i:5">
+            <button class="landing-enter primary" onclick="enterFromLanding('map')">
+                <span class="icon">🗺️</span>
+                <span class="lbl">进入红军地图<small>双路线 · 战士动画重走长征路</small></span>
+            </button>
+            <button class="landing-enter ghost" onclick="enterFromLanding('chat')">
+                <span class="icon">💬</span>
+                <span class="lbl">开始 AI 对话<small>12 村寨代言人 · 三种讲解模式</small></span>
+            </button>
+        </div>
+
+        <div class="landing-stats landing-item" style="--i:6">
+            <div class="landing-stat"><b>980 万</b><span>档案字符</span></div>
+            <div class="landing-stat"><b>12</b><span>红色村寨</span></div>
+            <div class="landing-stat"><b>88.3%</b><span>首位命中</span></div>
+            <div class="landing-stat"><b>1935–36</b><span>长征纪年</span></div>
+        </div>
+    </div>
+</div>
+
 <div class="header">
-    <span class="logo" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="M3 22h18"/><path d="M6 18v-7"/><path d="M10 18v-7"/><path d="M14 18v-7"/><path d="M18 18v-7"/><path d="M12 2 3 7v2h18V7L12 2z"/></svg></span>
+    <span class="logo" role="button" tabindex="0" title="返回首页" onclick="showWelcome()"><svg class="ic" viewBox="0 0 24 24"><path d="M3 22h18"/><path d="M6 18v-7"/><path d="M10 18v-7"/><path d="M14 18v-7"/><path d="M18 18v-7"/><path d="M12 2 3 7v2h18V7L12 2z"/></svg></span>
     <h1>红色村寨数字代言人</h1>
     <span class="subtitle">云南省红军长征档案 · DeepSeek RAG</span>
     <button class="kg-open-btn" id="flowToggleBtn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> 客流热力</button>
     <button class="kg-open-btn" id="kgOpenBtn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="M8 17v-4"/><path d="M13 17V7"/><path d="M18 17V9"/></svg> 知识图谱</button>
+    <button class="kg-open-btn" id="workspaceToggle" onclick="toggleWorkspace()" title="切换地图 / 对话工作台"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/><path d="M8 11h8"/><path d="M8 15h5"/></svg> <span id="workspaceToggleLabel">对话</span></button>
     <button class="auth-open-btn" id="authBtn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> 登录 / 注册</button>
     <span class="user-chip" id="userChip"></span>
 </div>
@@ -2468,7 +2741,8 @@ body { font-variant-numeric: tabular-nums; }
     </div>
 </div>
 
-<div class="timeline-bar" id="timelineBar">
+<div class="timeline-bar tl-collapsed" id="timelineBar">
+    <div class="tl-hint" id="tlHint" onclick="toggleTimelinePin()">⏱ 时间轴</div>
     <div class="tl-track" id="tlTrack"></div>
 </div>
 
@@ -2537,6 +2811,10 @@ let routePlayActive = false;       // 当前正在播放的路线索引，-1 表
 let routeLegendBtns = [];          // 路线图例按钮引用
 let routeLayers = [];              // 每条路线的图层容器（折线+箭头）
 let routeWaypoints = [];          // 每条路线的途径点 [{name, latlng, idx, marker, passed}]
+let timelineEvents = [];          // 时间轴事件（原始数据）
+let timelineItems = [];           // { el, route, village, fraction } 用于路线播放同步
+let timelineGroupEls = [];        // 时间轴上的路线分组标签（播放高亮）
+let villageCoords = {};           // 村寨 -> { lat, lng }
 
 let voiceEnabled = true;   // 是否开启数字人语音
 let currentVoiceAccent = "mandarin";   // mandarin / sichuan
@@ -2836,7 +3114,7 @@ fetch("/api/routes").then(r => r.json()).then(data => {
     // 战士初始位置
     createSoldierMarker(routes[0].points[0]);
     soldierPos = { route: 0, idx: 0 };
-});
+}).catch(() => showToast("路线数据加载失败，请检查后端服务", "error"));
 
 // ========== 加载村寨 ==========
 // 按长征时间线排序的村寨顺序
@@ -2866,6 +3144,7 @@ fetch("/api/villages").then(r => r.json()).then(villages => {
         villageArmy[v.name] = armyIdx;
         villageAvatars[v.name] = v.avatar || "/static/soldier.png";
         villageVoiceGenders[v.name] = v.voice_gender || "female";
+        villageCoords[v.name] = { lat: v.lat, lng: v.lng };
 
         let marker = L.circleMarker([v.lat, v.lng], {
             radius: 10, fillColor: "#C41E3A", color: "#FFD700", weight: 2, fillOpacity: 0.85
@@ -2895,30 +3174,72 @@ fetch("/api/villages").then(r => r.json()).then(villages => {
         item.onclick = () => selectVillage(v.name);
         legend.appendChild(item);
     });
-});
+}).catch(() => showToast("村寨数据加载失败，请检查后端服务", "error"));
 
-// ========== 加载时间轴 ==========
+// ========== 加载时间轴（按路线分组，播放时联动） ==========
+const TIMELINE_ROUTE_META = [
+    { name: "中央红军", year: "1935", color: "#C41E3A" },
+    { name: "红二、六军团", year: "1936", color: "#E67E22" },
+];
+
+// 依据部队归属把时间轴事件映射到路线（0=中央红军，1=红二、六军团）
+function timelineRouteForArmy(army) {
+    if (/红二|六军团/.test(army || "") && !/中央红军/.test(army || "")) return 1;
+    return 0;
+}
+
+function renderTimelineEvent(ev) {
+    const el = document.createElement("div");
+    el.className = "tl-event";
+    el.setAttribute("data-date", ev.date);
+    el.setAttribute("data-label", ev.label);
+    el.setAttribute("data-army", ev.army);
+    el.setAttribute("data-village", ev.village || "");
+    el.setAttribute("data-route", String(timelineRouteForArmy(ev.army)));
+    el.setAttribute("data-desc", ev.desc || "点击查看详情");
+    el.innerHTML = `
+        <div class="tl-dot"></div>
+        <div class="tl-date">${ev.date}</div>
+        <div class="tl-label">${ev.label}</div>
+        <div class="tl-army">${ev.army}</div>`;
+    el.title = ev.desc;
+    el.onclick = () => selectVillage(ev.village);
+    el.addEventListener("mouseenter", showTlTooltip);
+    el.addEventListener("mouseleave", hideTlTooltip);
+    return el;
+}
+
 fetch("/api/timeline").then(r => r.json()).then(events => {
+    timelineEvents = events || [];
     const track = document.getElementById("tlTrack");
-    events.forEach(ev => {
-        let el = document.createElement("div");
-        el.className = "tl-event";
-        el.setAttribute("data-date", ev.date);
-        el.setAttribute("data-label", ev.label);
-        el.setAttribute("data-army", ev.army);
-        el.setAttribute("data-desc", ev.desc || "点击查看详情");
-        el.innerHTML = `
-            <div class="tl-dot"></div>
-            <div class="tl-date">${ev.date}</div>
-            <div class="tl-label">${ev.label}</div>
-            <div class="tl-army">${ev.army}</div>`;
-        el.title = ev.desc;
-        el.onclick = () => selectVillage(ev.village);
-        el.addEventListener("mouseenter", showTlTooltip);
-        el.addEventListener("mouseleave", hideTlTooltip);
-        track.appendChild(el);
+    track.innerHTML = "";
+    timelineItems = [];
+    timelineGroupEls = [];
+
+    // 按路线分组，两条路线在时间轴上物理分开
+    TIMELINE_ROUTE_META.forEach((meta, ri) => {
+        const group = timelineEvents.filter(ev => timelineRouteForArmy(ev.army) === ri);
+        if (group.length === 0) return;
+
+        const label = document.createElement("div");
+        label.className = "tl-group-label";
+        label.setAttribute("data-route", String(ri));
+        label.style.color = meta.color;
+        label.style.borderColor = meta.color;
+        label.style.background = "linear-gradient(135deg, " + meta.color + "4d 0%, " + meta.color + "26 100%)";
+        label.innerHTML = `<span class="play-badge">▶</span><span>${meta.name} · ${meta.year}</span>`;
+        label.title = "点击播放 " + meta.name + " 的行军时序";
+        label.onclick = () => playRoute(ri);
+        track.appendChild(label);
+        timelineGroupEls[ri] = label;
+
+        group.forEach(ev => {
+            const el = renderTimelineEvent(ev);
+            track.appendChild(el);
+            timelineItems.push({ el, route: ri, village: ev.village || "", fraction: 1 });
+        });
     });
-});
+}).catch(() => showToast("时间轴数据加载失败", "error"));
 
 // ========== 平滑行走动画 ==========
 function toLatLngArray(p) {
@@ -3069,6 +3390,7 @@ function stopRoutePlayback() {
     }
     routePlayActive = false;
     syncRouteButtons(-1);
+    resetTimeline();
 }
 
 function syncRouteButtons(activeIdx) {
@@ -3076,9 +3398,72 @@ function syncRouteButtons(activeIdx) {
         if (!btn) return;
         const active = i === activeIdx;
         btn.classList.toggle("active", active);
-        btn.querySelector(".play-badge").textContent = active ? "⏹" : "▶";
+        const badge = btn.querySelector(".play-badge");
+        if (badge) badge.textContent = active ? "⏹" : "▶";
         btn.title = active ? "点击停止播放" : "点击播放该路线行军时序";
     });
+    (timelineGroupEls || []).forEach((el, i) => {
+        if (!el) return;
+        const active = i === activeIdx;
+        el.classList.toggle("active", active);
+        const badge = el.querySelector(".play-badge");
+        if (badge) badge.textContent = active ? "⏹" : "▶";
+    });
+}
+
+// ========== 时间轴与路线同步 ==========
+function computeTimelineFractions(routeIdx) {
+    const route = routes[routeIdx];
+    if (!route || !Array.isArray(route.points) || route.points.length < 2) return;
+    const pts = route.points;
+    timelineItems.forEach(item => {
+        if (item.route !== routeIdx) return;
+        const c = villageCoords[item.village];
+        if (!c) { item.fraction = 1; return; }
+        const idx = nearestPointIndexOnRoute([c.lat, c.lng], pts);
+        item.fraction = Math.max(0, Math.min(1, idx / (pts.length - 1)));
+    });
+}
+
+function syncTimeline(routeIdx, t) {
+    const bar = document.getElementById("timelineBar");
+    let activeEl = null;
+    let maxFrac = -1;
+    timelineItems.forEach(item => {
+        if (item.route !== routeIdx) return;
+        const passed = t >= item.fraction;
+        item.el.classList.toggle("passed", passed);
+        if (passed && item.fraction > maxFrac) {
+            maxFrac = item.fraction;
+            activeEl = item.el;
+        }
+    });
+    timelineItems.forEach(item => {
+        if (item.route === routeIdx) item.el.classList.toggle("active", item.el === activeEl);
+    });
+    if (activeEl && bar) {
+        const target = activeEl.offsetLeft - bar.clientWidth / 2 + activeEl.offsetWidth / 2;
+        bar.scrollTo({ left: target, behavior: "smooth" });
+    }
+}
+
+function resetTimeline() {
+    const bar = document.getElementById("timelineBar");
+    if (bar) {
+        bar.removeAttribute("data-playing");
+        bar.classList.remove("tl-play");
+    }
+    timelineItems.forEach(item => {
+        item.el.classList.remove("active", "passed");
+    });
+}
+
+function toggleTimelinePin() {
+    const bar = document.getElementById("timelineBar");
+    const hint = document.getElementById("tlHint");
+    if (!bar) return;
+    const pinned = bar.classList.toggle("tl-pinned");
+    if (hint) hint.textContent = pinned ? "📌 时间轴" : "⏱ 时间轴";
 }
 
 function playRoute(routeIdx) {
@@ -3126,6 +3511,15 @@ function playRoute(routeIdx) {
     routePlayActive = routeIdx;
     syncRouteButtons(routeIdx);
 
+    // 时间轴：只高亮当前路线，两条路线分开
+    resetTimeline();
+    const timelineBarEl = document.getElementById("timelineBar");
+    if (timelineBarEl) {
+        timelineBarEl.setAttribute("data-playing", String(routeIdx));
+        timelineBarEl.classList.add("tl-play");
+    }
+    computeTimelineFractions(routeIdx);
+
     function frame(now) {
         const t = Math.min((now - startTime) / duration, 1);
         const targetDist = t * totalDist;
@@ -3157,6 +3551,7 @@ function playRoute(routeIdx) {
         soldierMarker.setLatLng(headPoint);
         soldierLatLng = [headPoint.lat, headPoint.lng];
         revealNearbyWaypoints(routeIdx, soldierLatLng);
+        syncTimeline(routeIdx, t);
 
         if (t < 1) {
             routePlayAnimationId = requestAnimationFrame(frame);
@@ -3169,6 +3564,9 @@ function playRoute(routeIdx) {
             routePlayActive = false;
             syncRouteButtons(-1);
             revealAllWaypoints(routeIdx);
+            syncTimeline(routeIdx, 1);
+            const tb = document.getElementById("timelineBar");
+            if (tb) tb.classList.remove("tl-play");
         }
     }
 
@@ -5183,6 +5581,83 @@ document.getElementById("authBtn").addEventListener("click", openAuth);
 document.getElementById("authOverlay").addEventListener("click", function (e) {
     if (e.target && e.target.id === "authOverlay") closeAuth();
 });
+// ========== 欢迎落地页 ==========
+const landingScreen = document.getElementById("landingScreen");
+let landingVisible = true;
+const LANDING_HIDE_MS = 650;
+
+function enterFromLanding(mode) {
+    if (!landingScreen || !landingVisible) return;
+    landingVisible = false;
+    landingScreen.classList.add("hide");
+    setTimeout(() => {
+        landingScreen.style.display = "none";
+        setWorkspace(mode === "chat" ? "chat" : "map");
+        if (map) map.invalidateSize();
+        if (mode === "map") {
+            if (routes && routes.length) {
+                playRoute(0);
+            } else if (map) {
+                map.flyTo([25.5, 101.5], 7, { duration: 0.8 });
+            }
+        } else if (mode === "chat") {
+            if (!currentVillage) selectVillage("皎平渡");
+            focusChatInput();
+        }
+    }, LANDING_HIDE_MS);
+}
+
+function showWelcome() {
+    if (!landingScreen || landingVisible) return;
+    landingVisible = true;
+    stopRoutePlayback();
+    landingScreen.style.display = "flex";
+    landingScreen.classList.remove("hide", "landing-in");
+    void landingScreen.offsetWidth;
+    landingScreen.classList.add("landing-in");
+}
+
+// ========== 双工作台 ==========
+let currentWorkspace = "map";
+
+function applyWorkspace() {
+    document.body.classList.remove("workspace-map", "workspace-chat");
+    document.body.classList.add("workspace-" + currentWorkspace);
+    const label = document.getElementById("workspaceToggleLabel");
+    if (label) label.textContent = currentWorkspace === "map" ? "对话" : "地图";
+    if (map) setTimeout(() => map.invalidateSize(), 380);
+}
+
+function setWorkspace(ws) {
+    if (ws !== "map" && ws !== "chat") ws = "map";
+    if (ws === currentWorkspace) return;
+    currentWorkspace = ws;
+    applyWorkspace();
+}
+
+function toggleWorkspace() {
+    setWorkspace(currentWorkspace === "map" ? "chat" : "map");
+}
+
+// ========== 轻提示 ==========
+function showToast(msg, type) {
+    type = type || "info";
+    let c = document.getElementById("toastContainer");
+    if (!c) {
+        c = document.createElement("div");
+        c.className = "toast-container";
+        c.id = "toastContainer";
+        document.body.appendChild(c);
+    }
+    const t = document.createElement("div");
+    t.className = "toast " + type;
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 3000);
+}
+
+applyWorkspace();
+
 refreshUser();
 setupAvatar();
 setupVoiceButton();
