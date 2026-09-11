@@ -1,3 +1,3 @@
 @echo off
-cd /d "C:\Users\damn\Desktop\Red-Aechives-Agent"
+cd /d "%~dp0"
 "venv\Scripts\python.exe" src\web\app.py >> app.log 2>&1

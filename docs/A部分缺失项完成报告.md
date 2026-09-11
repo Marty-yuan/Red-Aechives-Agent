@@ -53,7 +53,7 @@
 ## 一键复现
 
 ```powershell
-cd C:\Users\damn\Desktop\Red-Aechives-Agent
+cd C:\Users\damn\Desktop\华为杯\Red-Aechives-Agent
 python src/knowledge/rebuild_index.py
 python src/knowledge/build_semantic_index.py
 python scripts/run_eval.py --mode both
