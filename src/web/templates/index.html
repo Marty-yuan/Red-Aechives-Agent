@@ -12,6 +12,9 @@
 <script src="/static/vendor/three.min.js"></script>
 <script src="/static/vendor/three-spritetext.min.js"></script>
 <script src="/static/vendor/3d-force-graph.min.js"></script>
+<!-- 3D 地形地图：MapLibre GL JS -->
+<link rel="stylesheet" href="/static/vendor/maplibre-gl.css" />
+<script src="/static/vendor/maplibre-gl.js"></script>
 <script>
 // 本地 vendor 未同步时的兜底（按顺序同步写入，保证依赖先后）
 (function () {
@@ -20,7 +23,8 @@
         ['vis',               'https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js'],
         ['THREE',             'https://unpkg.com/three@0.160.1/build/three.min.js'],
         ['SpriteText',        'https://unpkg.com/three-spritetext@1.9.6/dist/three-spritetext.min.js'],
-        ['ForceGraph3D',      'https://unpkg.com/3d-force-graph@1.77.0/dist/3d-force-graph.min.js']
+        ['ForceGraph3D',      'https://unpkg.com/3d-force-graph@1.77.0/dist/3d-force-graph.min.js'],
+        ['maplibregl',        'https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js']
     ];
     for (var i = 0; i < FB.length; i++) {
         if (typeof window[FB[i][0]] === 'undefined') {
@@ -477,16 +481,24 @@ body::after {
   to { transform: translateX(-50%) scaleY(1); }
 }
 
-/* ========== 聊天面板 ========== */
+/* ========== 聊天面板（右侧抽屉，默认隐藏） ========== */
 .chat-panel {
   width: 420px;
+  max-width: 90vw;
   background: linear-gradient(180deg, #0F1623 0%, #111827 100%);
   display: flex;
   flex-direction: column;
   border-left: 1px solid var(--border-red);
-  position: relative;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1200;
   box-shadow: -4px 0 24px rgba(0,0,0,0.3);
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+.chat-panel.chat-open { transform: translateX(0); }
 
 /* 聊天面板头部 */
 .chat-header {
@@ -1964,6 +1976,30 @@ body::after {
     overflow: hidden;
 }
 .avatar-panel.open { transform: translateX(0); }
+/* 左侧面板折叠箭头按钮 */
+.avatar-panel-arrow {
+    position: absolute;
+    top: 50%;
+    left: 280px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 60px;
+    background: linear-gradient(135deg, rgba(139,0,0,0.85), rgba(160,16,28,0.85));
+    border: 1px solid rgba(245,200,66,0.35);
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    color: #f5c842;
+    cursor: pointer;
+    z-index: 950;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: left 0.4s cubic-bezier(0.16,1,0.3,1), background 0.2s;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.4);
+}
+.avatar-panel-arrow:hover { background: linear-gradient(135deg, rgba(160,16,28,0.95), rgba(196,30,58,0.95)); }
+.avatar-panel-arrow.collapsed { left: 0; }
 .avatar-panel-close {
     position: absolute;
     top: 14px;
@@ -2438,17 +2474,8 @@ body { font-variant-numeric: tabular-nums; }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ========== 双工作台布局（从提交材料副本移植） ========== */
+/* ========== 顶栏 / 面板（双工作台已由「对话抽屉」取代） ========== */
 .header .logo { cursor: pointer; }
-body.workspace-map .map-panel { flex: 1 1 auto; }
-body.workspace-map .chat-panel { width: 420px; flex: 0 0 auto; }
-body.workspace-chat .map-panel { flex: 0 0 300px; min-width: 240px; }
-body.workspace-chat .chat-panel { width: auto; flex: 1 1 auto; border-left: 1px solid var(--border-red); }
-.map-panel, .chat-panel {
-  transition: flex-basis 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-              width 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-              min-width 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
 
 /* ========== 时间轴自动收起 + 路线分组 ========== */
 .timeline-bar { transition: height 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
@@ -2518,32 +2545,12 @@ body.workspace-chat .chat-panel { width: auto; flex: 1 1 auto; border-left: 1px 
 @media (max-width: 768px) {
   .header .subtitle { display: none; }
   .header h1 { font-size: 15px; letter-spacing: 2px; }
-  body.workspace-map .chat-panel { display: none; }
-  body.workspace-chat .map-panel { display: none; }
   .map-legend { max-width: 170px; }
   .timeline-bar { padding: 0 10px; }
   .landing-title { font-size: 32px; letter-spacing: 5px; }
   .landing-card { width: 100%; max-width: 300px; }
   .landing-stats { gap: 24px; }
   .landing-route { width: 96vw; }
-}
-
-/* ========== 对话工作台：地图仅作参考栏，隐藏地图语境面板，内容限宽居中 ========== */
-body.workspace-chat .avatar-panel,
-body.workspace-chat .map-legend,
-body.workspace-chat .legend-toggle,
-body.workspace-chat .layer-panel,
-body.workspace-chat .character-stage {
-  display: none;
-}
-body.workspace-chat .chat-header,
-body.workspace-chat .mode-bar,
-body.workspace-chat .chat-messages,
-body.workspace-chat .chat-actions,
-body.workspace-chat .quick-questions,
-body.workspace-chat .chat-input {
-  padding-left: max(16px, calc((100% - 880px) / 2));
-  padding-right: max(16px, calc((100% - 880px) / 2));
 }
 
 /* ========== 面板避让：避免左下图层 / 右上图例 与其它面板重叠 ========== */
@@ -2624,7 +2631,9 @@ body.workspace-chat .chat-input {
     <span class="subtitle">云南省红军长征档案 · DeepSeek RAG</span>
     <button class="kg-open-btn" id="flowToggleBtn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> 客流热力</button>
     <button class="kg-open-btn" id="kgOpenBtn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="M8 17v-4"/><path d="M13 17V7"/><path d="M18 17V9"/></svg> 知识图谱</button>
-    <button class="kg-open-btn" id="workspaceToggle" onclick="toggleWorkspace()" title="切换地图 / 对话工作台"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/><path d="M8 11h8"/><path d="M8 15h5"/></svg> <span id="workspaceToggleLabel">对话</span></button>
+    <button class="kg-open-btn" id="toggle3DBtn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> 3D地图</button>
+    <button class="kg-open-btn" id="openFrameworkBtn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> 项目框架</button>
+    <button class="kg-open-btn" id="openChatBtn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 对话</button>
     <button class="auth-open-btn" id="authBtn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> 登录 / 注册</button>
     <span class="user-chip" id="userChip"></span>
 </div>
@@ -2632,6 +2641,9 @@ body.workspace-chat .chat-input {
 <div class="main">
     <div class="map-panel">
         <div id="map"></div>
+        <div id="map3d" style="display:none;position:absolute;inset:0;z-index:400;"></div>
+        <!-- 左侧代言人面板折叠箭头 -->
+        <button class="avatar-panel-arrow" id="avatarPanelArrow" aria-label="收起或展开代言人面板">◀</button>
         <!-- 数字代言人左侧弹出面板 -->
         <div class="avatar-panel" id="avatarPanel">
             <button class="avatar-panel-close" id="avatarPanelClose" onclick="closeAvatarPanel()" aria-label="关闭代言人面板">✕</button>
@@ -2735,6 +2747,7 @@ body.workspace-chat .chat-input {
                 <button type="button" class="voice-btn active" data-voice="mandarin" onclick="setVoice('mandarin')">普通话</button>
                 <button type="button" class="voice-btn voice-off" data-voice="off" onclick="setVoice('off')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg> 关闭</button>
             </div>
+            <button class="chat-close-btn" id="chatCloseBtn" aria-label="关闭对话" style="margin-left:auto;background:none;border:none;color:#9ca3af;cursor:pointer;font-size:18px;padding:4px 8px;">✕</button>
         </div>
         <div class="mode-bar" id="modeBar" role="group" aria-label="讲解人格切换">
             <button class="mode-btn active" data-mode="student" onclick="setMode('student')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01"/><path d="M15 9h.01"/></svg> 儿童</button>
@@ -2806,6 +2819,16 @@ body.workspace-chat .chat-input {
             <button class="pdf-close" id="pdfCloseBtn">关闭</button>
         </div>
         <img id="pdfPageImg" alt="PDF 页面" />
+    </div>
+</div>
+
+<div id="frameworkOverlay" class="auth-overlay" role="dialog" aria-modal="true" aria-label="项目框架" style="background:rgba(0,0,0,0.85);z-index:5000;">
+    <div style="width:95vw;height:92vh;background:#0d1117;border-radius:12px;overflow:hidden;position:relative;box-shadow:0 24px 80px rgba(0,0,0,0.7);">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 20px;background:linear-gradient(135deg,#6B0000,#A0101C);">
+            <h2 style="margin:0;color:#fff;font-size:16px;letter-spacing:2px;">项目技术框架</h2>
+            <button id="frameworkCloseBtn" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:4px 10px;">✕</button>
+        </div>
+        <iframe src="/static/qa-flow.html" style="width:100%;height:calc(100% - 50px);border:none;background:#020617;"></iframe>
     </div>
 </div>
 
@@ -3149,6 +3172,7 @@ fetch("/api/routes").then(r => r.json()).then(data => {
 // 按长征时间线排序的村寨顺序
 const VILLAGE_ORDER = ["扎西", "宣威", "曲靖", "寻甸柯渡", "寻甸", "柯渡", "楚雄", "禄劝", "皎平渡", "丽江", "石鼓", "威信"];
 fetch("/api/villages").then(r => r.json()).then(villages => {
+    window.__villagesData = villages;  // 缓存供 3D 地图使用
     const legend = document.getElementById("legendList");
     // 按长征时间线排序
     villages.sort((a, b) => {
@@ -3413,6 +3437,7 @@ function stopRoutePlayback() {
         cancelAnimationFrame(routePlayAnimationId);
         routePlayAnimationId = null;
     }
+    if (map3dPlayTimer) { cancelAnimationFrame(map3dPlayTimer); map3dPlayTimer = null; }
     if (routePlayLayer) {
         map.removeLayer(routePlayLayer);
         routePlayLayer = null;
@@ -3498,6 +3523,14 @@ function toggleTimelinePin() {
 function playRoute(routeIdx) {
     const route = routes[routeIdx];
     if (!route || !map || !soldierMarker) return;
+
+    // 3D 模式下走 3D 飞行播放
+    if (is3DMode && typeof playRoute3D === "function") {
+        if (routePlayActive === routeIdx) { stopRoutePlayback(); if (map3dPlayTimer) cancelAnimationFrame(map3dPlayTimer); return; }
+        routePlayActive = routeIdx;
+        playRoute3D(routeIdx);
+        return;
+    }
 
     // 再次点击正在播放的路线 -> 停止
     if (routePlayActive === routeIdx) {
@@ -4022,6 +4055,10 @@ function selectVillage(name) {
         const latlng = villageMarkers[name].getLatLng();
         // 放大到更近的缩放级别
         map.flyTo(latlng, 8, { duration: 1.1 });  // 10：保留周边路线和地名信息，不放得过大
+        // 3D 模式下同步摄像机
+        if (is3DMode && map3dReady && map3d) {
+            map3d.flyTo({ center: [latlng.lng, latlng.lat], zoom: 9, pitch: 60, duration: 1500 });
+        }
         const routeIdx = villageArmy[name] !== undefined ? villageArmy[name] : 0;
         walkSoldierTo([latlng.lat, latlng.lng], routeIdx);
 
@@ -4412,8 +4449,9 @@ function closeAvatarPanel() {
 
 // 聚焦聊天输入框
 function focusChatInput() {
+    toggleChat(true);
     const input = document.getElementById("queryInput");
-    if (input) input.focus();
+    if (input) setTimeout(()=>input.focus(), 350);
 }
 
 function renderStudyRouteFromResult(raw) {
@@ -5621,6 +5659,17 @@ document.getElementById("kgOverlay").addEventListener("click", function (e) {
 });
 
 document.getElementById("authBtn").addEventListener("click", openAuth);
+
+// ========== 项目框架全屏展示 ==========
+document.getElementById("openFrameworkBtn").addEventListener("click", function() {
+    document.getElementById("frameworkOverlay").classList.add("open");
+});
+document.getElementById("frameworkCloseBtn").addEventListener("click", function() {
+    document.getElementById("frameworkOverlay").classList.remove("open");
+});
+document.getElementById("frameworkOverlay").addEventListener("click", function(e) {
+    if (e.target && e.target.id === "frameworkOverlay") this.classList.remove("open");
+});
 document.getElementById("authOverlay").addEventListener("click", function (e) {
     if (e.target && e.target.id === "authOverlay") closeAuth();
 });
@@ -5635,7 +5684,6 @@ function enterFromLanding(mode) {
     landingScreen.classList.add("hide");
     setTimeout(() => {
         landingScreen.style.display = "none";
-        setWorkspace(mode === "chat" ? "chat" : "map");
         if (map) map.invalidateSize();
         if (mode === "map") {
             if (routes && routes.length) {
@@ -5660,28 +5708,6 @@ function showWelcome() {
     landingScreen.classList.add("landing-in");
 }
 
-// ========== 双工作台 ==========
-let currentWorkspace = "map";
-
-function applyWorkspace() {
-    document.body.classList.remove("workspace-map", "workspace-chat");
-    document.body.classList.add("workspace-" + currentWorkspace);
-    const label = document.getElementById("workspaceToggleLabel");
-    if (label) label.textContent = currentWorkspace === "map" ? "对话" : "地图";
-    if (map) setTimeout(() => map.invalidateSize(), 380);
-}
-
-function setWorkspace(ws) {
-    if (ws !== "map" && ws !== "chat") ws = "map";
-    if (ws === currentWorkspace) return;
-    currentWorkspace = ws;
-    applyWorkspace();
-}
-
-function toggleWorkspace() {
-    setWorkspace(currentWorkspace === "map" ? "chat" : "map");
-}
-
 // ========== 轻提示 ==========
 function showToast(msg, type) {
     type = type || "info";
@@ -5699,13 +5725,184 @@ function showToast(msg, type) {
     setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 3000);
 }
 
-applyWorkspace();
-
 refreshUser();
 setupAvatar();
 setupVoiceButton();
 setupPdfOverlay();
 initCharacterInteractions();
+
+// ============================================================
+// ========== 3D 地形地图（MapLibre GL JS） ====================
+// ============================================================
+const MAPTILER_KEY = "uwoxViCeY0IJyq46b6DA";
+let map3d = null;          // MapLibre 实例
+let is3DMode = false;
+let map3dReady = false;
+let map3dPlayTimer = null;
+
+function init3DMap() {
+    if (map3d || typeof maplibregl === "undefined") return;
+    const el = document.getElementById("map3d");
+    map3d = new maplibregl.Map({
+        container: "map3d",
+        style: "https://api.maptiler.com/maps/topo/style.json?key=" + MAPTILER_KEY,
+        center: [101.5, 25.5],
+        zoom: 7,
+        pitch: 55,
+        bearing: 0,
+        attributionControl: false,
+        maxPitch: 75
+    });
+
+    map3d.on("load", () => {
+        // 导航控件（缩放/旋转/俯仰）
+        map3d.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+
+        // 加载 3D 地形起伏
+        map3d.addSource("terrainSource", {
+            type: "raster-dem",
+            url: "https://api.maptiler.com/tiles/terrain-rgb/tiles.json?key=" + MAPTILER_KEY,
+            tileSize: 256,
+            maxzoom: 14
+        });
+        map3d.setTerrain({ source: "terrainSource", exaggeration: 1.4 });
+
+        // 加两条长征路线
+        if (Array.isArray(routes)) {
+            routes.forEach((route, ri) => {
+                const coords = (route.points || []).map(p => [p[1], p[0]]);
+                if (coords.length < 2) return;
+                map3d.addSource("r3d-" + ri, {
+                    type: "geojson",
+                    data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } }
+                });
+                map3d.addLayer({
+                    id: "r3d-line-" + ri,
+                    type: "line",
+                    source: "r3d-" + ri,
+                    paint: { "line-color": route.color || "#C41E3A", "line-width": 4, "line-opacity": 0.92 }
+                });
+            });
+        }
+
+        // 加村寨标记（billboard 风格的 HTML 标记）
+        if (Array.isArray(window.__villagesData)) {
+            window.__villagesData.forEach(v => {
+                if (!v.lat || !v.lng) return;
+                const el = document.createElement("div");
+                el.style.cssText = "width:16px;height:16px;border-radius:50%;background:#C41E3A;border:2px solid #FFD700;cursor:pointer;box-shadow:0 0 8px rgba(255,215,0,0.6);";
+                el.title = v.name;
+                el.addEventListener("click", () => { if (typeof selectVillage === "function") selectVillage(v.name); });
+                new maplibregl.Marker({ element: el })
+                    .setLngLat([v.lng, v.lat])
+                    .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML("<b>" + v.name + "</b><br>" + (v.event||"") + " · " + (v.year||"")))
+                    .addTo(map3d);
+            });
+        }
+
+        // 红军战士 billboard 精灵
+        const soldierEl = document.createElement("div");
+        soldierEl.style.cssText = "width:50px;height:50px;background:url('/static/soldier.png') center/contain no-repeat;pointer-events:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,0.5));";
+        window.__soldier3d = new maplibregl.Marker({ element: soldierEl, anchor: "bottom" })
+            .setLngLat([101.5, 25.5])
+            .addTo(map3d);
+
+        map3dReady = true;
+    });
+}
+
+// 切换 2D / 3D
+function toggle3D() {
+    is3DMode = !is3DMode;
+    const leafletDiv = document.getElementById("map");
+    const map3dDiv = document.getElementById("map3d");
+    const btn = document.getElementById("toggle3DBtn");
+
+    if (is3DMode) {
+        leafletDiv.style.display = "none";
+        map3dDiv.style.display = "block";
+        btn.style.borderColor = "#f5c842";
+        btn.style.color = "#f5c842";
+        if (!map3d) init3DMap();
+        else map3d.resize();
+        // 把 2D 当前视野同步到 3D
+        if (map && map3d) {
+            const c = map.getCenter();
+            const z = map.getZoom();
+            map3d.jumpTo({ center: [c.lng, c.lat], zoom: z, pitch: 55 });
+        }
+    } else {
+        map3dDiv.style.display = "none";
+        leafletDiv.style.display = "block";
+        btn.style.borderColor = "";
+        btn.style.color = "";
+        if (map) map.invalidateSize();
+        if (map3dPlayTimer) { cancelAnimationFrame(map3dPlayTimer); map3dPlayTimer = null; }
+    }
+}
+
+// 3D 路线播放：摄像机沿路线飞行
+function playRoute3D(routeIdx) {
+    if (!map3dReady || !map3d || !routes[routeIdx]) return;
+    const pts = routes[routeIdx].points;
+    if (!pts || pts.length < 2) return;
+
+    if (map3dPlayTimer) cancelAnimationFrame(map3dPlayTimer);
+    let step = 0;
+    const total = pts.length;
+    const duration = Math.min(total * 120, 12000); // 最多12秒
+    const startTime = performance.now();
+
+    function frame(now) {
+        const t = Math.min(1, (now - startTime) / duration);
+        const idx = Math.floor(t * (total - 1));
+        const latlng = pts[idx];
+        if (window.__soldier3d) window.__soldier3d.setLngLat([latlng[1], latlng[0]]);
+        map3d.easeTo({
+            center: [latlng[1], latlng[0]],
+            zoom: 8.5,
+            pitch: 60,
+            bearing: (idx > 0 ? Math.atan2(pts[idx][0] - pts[idx-1][0], pts[idx][1] - pts[idx-1][1]) * 180 / Math.PI : 0),
+            duration: 200
+        });
+        if (t < 1) map3dPlayTimer = requestAnimationFrame(frame);
+        else map3dPlayTimer = null;
+    }
+    map3dPlayTimer = requestAnimationFrame(frame);
+}
+
+document.getElementById("toggle3DBtn").addEventListener("click", toggle3D);
+
+// ========== 对话抽屉开关 ==========
+function toggleChat(open) {
+    const panel = document.querySelector(".chat-panel");
+    if (!panel) return;
+    const willOpen = (open !== undefined) ? open : !panel.classList.contains("chat-open");
+    panel.classList.toggle("chat-open", willOpen);
+    const btn = document.getElementById("openChatBtn");
+    if (btn) {
+        btn.style.borderColor = willOpen ? "#f5c842" : "";
+        btn.style.color = willOpen ? "#f5c842" : "";
+    }
+    if (willOpen) { const inp = document.getElementById("queryInput"); if (inp) setTimeout(()=>inp.focus(), 300); }
+}
+document.getElementById("openChatBtn").addEventListener("click", () => toggleChat());
+document.getElementById("chatCloseBtn").addEventListener("click", () => toggleChat(false));
+
+// ========== 左侧代言人面板折叠箭头 ==========
+document.getElementById("avatarPanelArrow").addEventListener("click", function () {
+    const panel = document.getElementById("avatarPanel");
+    const collapsed = !panel.classList.contains("open");
+    if (collapsed) {
+        panel.classList.add("open");
+        this.classList.remove("collapsed");
+        this.textContent = "◀";
+    } else {
+        panel.classList.remove("open");
+        this.classList.add("collapsed");
+        this.textContent = "▶";
+    }
+});
 </script>
 
 <!-- 全局时间轴Tooltip（固定定位，脱离父容器overflow限制） -->
