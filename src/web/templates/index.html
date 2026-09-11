@@ -3509,8 +3509,8 @@ function playRoute(routeIdx) {
     const points = route.points.map(toLatLngArray);
     if (points.length < 2) return;
 
-    // 聚焦到该路线范围
-    map.flyToBounds(L.polyline(points).getBounds().pad(0.2), { duration: 1.0 });
+    // 聚焦到该路线范围：收紧留白，让路线尽量铺满视野（仍保证全貌可见）
+    map.flyToBounds(L.polyline(points).getBounds().pad(0.06), { duration: 1.2 });
 
     // 播放图层：随时间逐步延展的路线 + 起点/终点标记
     routePlayLayer = L.layerGroup().addTo(map);
@@ -3534,8 +3534,8 @@ function playRoute(routeIdx) {
         totalDist += d;
     }
 
-    const SPEED = 200;  // 全程播放速度（像素/秒，zoom=10 投影）；随距离自动调节时长
-    const duration = Math.min(14000, Math.max(7000, totalDist / SPEED));
+    const SPEED = 100;  // 全程播放速度（像素/秒，zoom=10 投影）；放慢便于跟看行军过程
+    const duration = Math.min(28000, Math.max(14000, totalDist / SPEED));
     const startTime = performance.now();
     routePlayActive = routeIdx;
     syncRouteButtons(routeIdx);
