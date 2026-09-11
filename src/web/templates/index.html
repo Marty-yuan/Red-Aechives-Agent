@@ -2528,6 +2528,24 @@ body.workspace-chat .chat-panel { width: auto; flex: 1 1 auto; border-left: 1px 
   .landing-route { width: 96vw; }
 }
 
+/* ========== 对话工作台：地图仅作参考栏，隐藏地图语境面板，内容限宽居中 ========== */
+body.workspace-chat .avatar-panel,
+body.workspace-chat .map-legend,
+body.workspace-chat .legend-toggle,
+body.workspace-chat .layer-panel,
+body.workspace-chat .character-stage {
+  display: none;
+}
+body.workspace-chat .chat-header,
+body.workspace-chat .mode-bar,
+body.workspace-chat .chat-messages,
+body.workspace-chat .chat-actions,
+body.workspace-chat .quick-questions,
+body.workspace-chat .chat-input {
+  padding-left: max(16px, calc((100% - 880px) / 2));
+  padding-right: max(16px, calc((100% - 880px) / 2));
+}
+
 /* ========== 面板避让：避免左下图层 / 右上图例 与其它面板重叠 ========== */
 /* 代言人面板打开时，左侧图层面板淡出让位（二者同在左上角） */
 .layer-panel {
@@ -4025,6 +4043,8 @@ function selectVillage(name) {
     renderQuickQuestions(name);
     // 显示2D数字人角色
     showCharacter(name);
+    // 选完村寨后收起图例，避免遮挡地图与代言人面板
+    collapseLegend();
 }
 
 // 村寨对话框背景图映射
