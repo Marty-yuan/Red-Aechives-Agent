@@ -2528,6 +2528,17 @@ body.workspace-chat .chat-panel { width: auto; flex: 1 1 auto; border-left: 1px 
   .landing-route { width: 96vw; }
 }
 
+/* ========== 面板避让：避免左下图层 / 右上图例 与其它面板重叠 ========== */
+/* 代言人面板打开时，左侧图层面板淡出让位（二者同在左上角） */
+.layer-panel {
+  transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.avatar-panel.open ~ .layer-panel {
+  opacity: 0;
+  transform: translateX(-14px);
+  pointer-events: none;
+}
+
 /* 尊重系统「减弱动态效果」：关闭装饰动画（图谱自转在 JS 中同步禁用） */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -4240,7 +4251,18 @@ function toggleLegend() {
     } else {
         btn.textContent = "▶";
         btn.title = "收起面板";
+        // 右上角互斥：展开图例时关闭客流热力面板，避免重叠
+        if (typeof flowActive !== "undefined" && flowActive) toggleFlow(false);
     }
+}
+
+// 收起图例（供客流面板打开时调用，避免右上角重叠）
+function collapseLegend() {
+    const legend = document.getElementById("mapLegend");
+    const btn = document.getElementById("legendToggle");
+    if (!legend || legend.classList.contains("collapsed")) return;
+    legend.classList.add("collapsed");
+    if (btn) { btn.textContent = "◀"; btn.title = "展开面板"; }
 }
 
 // 设置对话框背景图
@@ -5551,6 +5573,7 @@ function toggleFlow(force) {
         if (eye) eye.textContent = _eye(flowActive);
     }
     if (flowActive) {
+        collapseLegend();   // 右上角互斥：客流面板打开时收起图例，避免重叠
         if (!flowLastSnapshot) loadFlowHeatmap(null);
     } else if (flowLayer) {
         flowLayer.clearLayers();
