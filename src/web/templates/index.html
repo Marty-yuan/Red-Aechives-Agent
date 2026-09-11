@@ -5841,32 +5841,107 @@ function toggle3D() {
     }
 }
 
-// 3D 路线播放：摄像机沿路线飞行
+// 3D 路线播放：摄像机沿路线平滑飞行（防抖动 / 防眩晕）
 function playRoute3D(routeIdx) {
     if (!map3dReady || !map3d || !routes[routeIdx]) return;
-    const pts = routes[routeIdx].points;
+    const pts = routes[routeIdx].points;   // [[lat, lng], ...]
     if (!pts || pts.length < 2) return;
 
-    if (map3dPlayTimer) cancelAnimationFrame(map3dPlayTimer);
-    let step = 0;
-    const total = pts.length;
-    const duration = Math.min(total * 120, 12000); // 最多12秒
-    const startTime = performance.now();
+    if (map3dPlayTimer) { cancelAnimationFrame(map3dPlayTimer); map3dPlayTimer = null; }
 
+    const total = pts.length;
+    const duration = Math.min(Math.max(total * 180, 16000), 32000);  // 16–32 秒，放慢
+    const startTime = performance.now();
+    routePlayActive = routeIdx;
+    syncRouteButtons(routeIdx);
+
+    // ① 按「累计弧长」参数化：路线点疏密不均（城市段极密、野外段稀疏），
+    //    若按点序号线性推进，镜头会忽快忽慢产生顿挫。改为弧长匀速。
+    const cum = new Array(total).fill(0);
+    let totalLen = 0;
+    for (let i = 1; i < total; i++) {
+        const dLat = pts[i][0] - pts[i - 1][0];
+        const dLng = (pts[i][1] - pts[i - 1][1]) * Math.cos(pts[i][0] * Math.PI / 180);
+        totalLen += Math.hypot(dLat, dLng);
+        cum[i] = totalLen;
+    }
+    function idxAt(dist) {
+        let lo = 0, hi = total - 1;
+        while (lo < hi) { const mid = (lo + hi) >> 1; if (cum[mid] < dist) lo = mid + 1; else hi = mid; }
+        return lo;
+    }
+
+    // ② 预计算平滑朝向：固定「向前看 LA_DIST 弧长」（与点密度无关），
+    //    再解缠 + 滑动平均，消除逐点噪声与 ±180° 翻转导致的镜头猛甩。
+    //    罗盘角轴向：bearing = atan2(Δlng, Δlat)，东=90°。
+    const LA_DIST = Math.max(totalLen * 0.010, 0.02);
+    const raw = new Array(total).fill(0);
+    for (let i = 0; i < total; i++) {
+        const j = idxAt(Math.min(totalLen, cum[i] + LA_DIST));
+        const dLat = pts[j][0] - pts[i][0];
+        const dLng = pts[j][1] - pts[i][1];
+        raw[i] = (Math.abs(dLat) + Math.abs(dLng) < 1e-9)
+            ? raw[Math.max(0, i - 1)]
+            : Math.atan2(dLng, dLat) * 180 / Math.PI;
+    }
+    for (let i = 1; i < total; i++) {
+        while (raw[i] - raw[i - 1] > 180) raw[i] -= 360;
+        while (raw[i] - raw[i - 1] < -180) raw[i] += 360;
+    }
+    const WIN = 28;
+    const bearing = new Array(total);
+    for (let i = 0; i < total; i++) {
+        let sum = 0, n = 0;
+        for (let k = Math.max(0, i - WIN); k <= Math.min(total - 1, i + WIN); k++) { sum += raw[k]; n++; }
+        bearing[i] = sum / n;
+    }
+
+    // ③ 逐帧 jumpTo 直接设相机（不用 easeTo：逐帧 easeTo 会不断中断重启动画 = 高频抖动）。
+    //    位置按弧长定位并在相邻点间插值，保证匀速、无步进。
+    let startBearing = null;
+    let prevBrg = null;
     function frame(now) {
+        if (startBearing === null) startBearing = map3d.getBearing();
         const t = Math.min(1, (now - startTime) / duration);
-        const idx = Math.floor(t * (total - 1));
-        const latlng = pts[idx];
-        if (window.__soldier3d) window.__soldier3d.setLngLat([latlng[1], latlng[0]]);
-        map3d.easeTo({
-            center: [latlng[1], latlng[0]],
-            zoom: 8.5,
-            pitch: 60,
-            bearing: (idx > 0 ? Math.atan2(pts[idx][0] - pts[idx-1][0], pts[idx][1] - pts[idx-1][1]) * 180 / Math.PI : 0),
-            duration: 200
-        });
-        if (t < 1) map3dPlayTimer = requestAnimationFrame(frame);
-        else map3dPlayTimer = null;
+        const dist = t * totalLen;
+        const i1 = idxAt(dist);
+        const i0 = Math.max(0, i1 - 1);
+        const seg = (cum[i1] - cum[i0]) || 1;
+        const f = Math.max(0, Math.min(1, (dist - cum[i0]) / seg));
+        const lat = pts[i0][0] + (pts[i1][0] - pts[i0][0]) * f;
+        const lng = pts[i0][1] + (pts[i1][1] - pts[i0][1]) * f;
+        let brg = bearing[i0] + (bearing[i1] - bearing[i0]) * f;
+
+        // ④ 起步 1.2 秒内把镜头从当前朝向平滑转到航线朝向，避免开局甩头
+        const blend = Math.min(1, (now - startTime) / 1200);
+        if (blend < 1) {
+            let diff = brg - startBearing;
+            while (diff > 180) diff -= 360;
+            while (diff < -180) diff += 360;
+            brg = startBearing + diff * blend;
+        }
+
+        // ⑤ 转向限速：每帧最多转 ROT_MAX 度，杜绝急弯处镜头猛甩（防眩晕）
+        const ROT_MAX = 0.3;
+        if (prevBrg !== null) {
+            let d = brg - prevBrg;
+            while (d > 180) d -= 360;
+            while (d < -180) d += 360;
+            if (Math.abs(d) > ROT_MAX) brg = prevBrg + Math.sign(d) * ROT_MAX;
+        }
+        prevBrg = brg;
+
+        if (window.__soldier3d) window.__soldier3d.setLngLat([lng, lat]);
+        // 抬高机位、放缓俯仰，显著降低 3D 飞行的眩晕感
+        map3d.jumpTo({ center: [lng, lat], bearing: brg, pitch: 50, zoom: 8.0 });
+
+        if (t < 1) {
+            map3dPlayTimer = requestAnimationFrame(frame);
+        } else {
+            map3dPlayTimer = null;
+            routePlayActive = false;
+            syncRouteButtons(-1);
+        }
     }
     map3dPlayTimer = requestAnimationFrame(frame);
 }
