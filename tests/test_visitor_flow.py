@@ -39,7 +39,8 @@ def test_peak_hour_snapshot_structure():
 def test_slot_averages_hours():
     """时段快照取该时段各小时均值，query_hours 正确。"""
     cfg = _cfg()
-    snap = vf.heatmap_snapshot(slot="morning", cfg=cfg)
+    # 固定 workday，避免周末/节假日 day_factor 让均值随运行日期漂移
+    snap = vf.heatmap_snapshot(slot="morning", cfg=cfg, day_type_value="workday")
     assert snap["query_hours"] == [8, 9, 10, 11]
     # 手工复算一个村寨验证均值
     name = snap["points"][0]["name"]

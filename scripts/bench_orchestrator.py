@@ -50,10 +50,11 @@ def main():
         is_complex = looks_complex(question)
         ts = time.time()
         try:
-            ans = agent.ask(question, village=village, remember=False)
+            result = agent.ask(question, village=village, remember=False)
+            ans = result.answer
             latency = time.time() - ts
-            # decide path by inspecting last_plan
-            plan = agent.last_plan
+            # decide path by inspecting plan on the result
+            plan = result.plan
             path = "orchestrator" if (plan and plan.get("is_complex")) else "direct_rag"
             rec = {
                 "qid": q.get("id"), "question": question, "village": village,

@@ -54,14 +54,27 @@ WEB_PORT = int(os.environ.get("WEB_PORT", "5000"))
 WEB_DEBUG = os.environ.get("WEB_DEBUG", "0") == "1"
 
 # ===================== 用户记忆与登录 =====================
-SECRET_KEY = os.environ.get("RED_ARCHIVE_SECRET_KEY", "red-archives-agent-local-secret")
+# 安全说明：不再提供硬编码默认密钥。未配置环境变量时，启动时生成一次性随机密钥——
+# 本地开发可正常登录使用，但服务重启后所有已签发 token 失效（需重新登录）。
+# 生产/演示部署请务必通过 RED_ARCHIVE_SECRET_KEY（或 JWT_SECRET_KEY）配置固定密钥。
+def _load_secret(env_name: str) -> str:
+    value = os.environ.get(env_name, "").strip()
+    if value:
+        return value
+    import secrets
+    generated = secrets.token_urlsafe(32)
+    print(f"[config] 警告：未设置 {env_name}，已生成一次性随机密钥；重启后所有登录态将失效。"
+          f"生产环境请配置 {env_name} 环境变量。")
+    return generated
+
+SECRET_KEY = _load_secret("RED_ARCHIVE_SECRET_KEY")
 USER_MEMORY_DIR = os.path.join(PROJECT_DIR, "data", "user_memory")
 
 # PostgreSQL 数据库：未配置时保持本地 JSON fallback
 DATABASE_URL = os.environ.get("RED_ARCHIVE_DATABASE_URL", "")
 
 # JWT 网站登录
-JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", SECRET_KEY)
+JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "").strip() or SECRET_KEY
 JWT_EXPIRE_HOURS = int(os.environ.get("JWT_EXPIRE_HOURS", "168"))
 
 # ===================== 天气服务（和风天气 QWeather，免费个人版） =====================

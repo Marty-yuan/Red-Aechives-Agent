@@ -8,7 +8,7 @@ Web 服务 - 红色村寨数字代言人  (FastAPI 版)
 然后浏览器打开 http://localhost:5000
 """
 import difflib
-import os, re, sys
+import os, re, sys, traceback
 from pathlib import Path
 from typing import Optional
 from opencc import OpenCC
@@ -23,7 +23,7 @@ from agent.database import init_db
 from agent.rag import VillageAgent
 from web.auth import create_access_token, get_current_username
 from agent import config, visitor_flow
-from agent.graph_store import KnowledgeGraphStore, get_graph_payload
+from agent.graph_store import KnowledgeGraphStore, get_graph_payload, get_default_store
 from web.tts import synthesize_speech
 
 app = FastAPI(title="红色村寨数字代言人")
@@ -1379,20 +1379,21 @@ def chat(req: ChatRequest, authorization: str = Header(default="")):
 
     try:
         user_id = get_current_username(authorization)
-        answer = agent.ask(question, village=req.village, user_id=user_id, persona_mode=req.mode)
+        result = agent.ask(question, village=req.village, user_id=user_id, persona_mode=req.mode)
         profile = agent.memory_store.get_profile(user_id) if user_id else None
         return {
             "village": req.village,
-            "answer": answer,
-            "mode": agent.current_persona_mode,
+            "answer": result.answer,
+            "mode": result.persona_mode,
             "profile": profile,
-            "plan": agent.last_plan,
-            "tool_results": agent.last_tool_results,
-            "evidence": agent.last_evidence,
-            "verification": agent.last_verification,
+            "plan": result.plan,
+            "tool_results": result.tool_results,
+            "evidence": result.evidence,
+            "verification": result.verification,
         }
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
+    except Exception:
+        traceback.print_exc()
+        return JSONResponse({"error": "回答生成失败，请稍后重试"}, status_code=500)
 
 
 class ChatCompareRequest(BaseModel):
@@ -1411,10 +1412,11 @@ def api_chat_compare(req: ChatCompareRequest, authorization: str = Header(defaul
     answers = {}
     for mode in ("student", "tourist", "researcher"):
         try:
-            answers[mode] = agent.ask(
+            result = agent.ask(
                 question, village=req.village or "皎平渡",
                 user_id=user_id, persona_mode=mode, remember=False,
             )
+            answers[mode] = result.answer
         except Exception as e:
             answers[mode] = "（%s 模式生成失败：%s）" % (mode, e)
     return {"village": req.village, "question": question, "answers": answers}
@@ -1514,7 +1516,7 @@ def get_knowledge_graph():
 @app.post("/api/kg/query")
 def api_kg_query(req: KgQueryRequest):
     """按实体/主题查询知识图谱邻居。"""
-    store = KnowledgeGraphStore()
+    store = get_default_store()
     result = store.query(
         topic=req.topic,
         entity=req.entity,
@@ -1536,6 +1538,11 @@ def api_tts(req: TtsRequest):
 
     if not text:
         return JSONResponse({"error": "文本不能为空"}, status_code=400)
+
+    # 防止超长文本刷 TTS 接口消耗额度：单条回答正常不超过千余字，2000 字足够宽松
+    TTS_MAX_CHARS = 2000
+    if len(text) > TTS_MAX_CHARS:
+        return JSONResponse({"error": f"文本过长（{len(text)} 字），语音合成最多支持 {TTS_MAX_CHARS} 字"}, status_code=400)
 
     result = synthesize_speech(text, gender=gender, accent=accent)
     if not result:

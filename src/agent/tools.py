@@ -19,7 +19,7 @@ from .knowledge import (
     DEPARTURE_CITIES, ROUTES, TIMELINE, VILLAGE_COORDS,
     VILLAGE_ENERGY, VILLAGE_EXPERIENCE, VILLAGE_LODGING,
 )
-from .graph_store import KnowledgeGraphStore
+from .graph_store import KnowledgeGraphStore, get_default_store
 from .retriever_factory import create_retriever
 
 
@@ -41,7 +41,7 @@ class ToolRegistry:
 
     def __init__(self, retriever=None, llm_client=None):
         self.retriever = retriever or create_retriever()
-        self.graph_store = KnowledgeGraphStore()
+        self.graph_store = get_default_store()
         # 课程包等"工具内部再调一次 LLM 润色"的场景复用同一客户端
         self.llm_client = llm_client or OpenAI(
             api_key=config.DEEPSEEK_API_KEY, base_url=config.BASE_URL

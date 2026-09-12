@@ -104,11 +104,12 @@ def main():
         print(f"  [{i}/{len(qs)}] {question[:30]}… ", end="", flush=True)
         # RAG to get a real answer + evidence
         try:
-            ans = agent.ask(question, village=village, remember=False)
+            result = agent.ask(question, village=village, remember=False)
+            ans = result.answer
             evidence_text = ""
-            if agent.last_evidence:
+            if result.evidence:
                 evidence_text = "\n".join((e.get("text", "") if isinstance(e, dict) else str(e))[:600]
-                                          for e in agent.last_evidence[:5])
+                                          for e in result.evidence[:5])
         except Exception as e:
             print(f"RAG fail: {e}")
             continue

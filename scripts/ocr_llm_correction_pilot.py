@@ -55,23 +55,32 @@ def load_known_fixes() -> dict[str, str]:
     return out
 
 
-def call_llm(client, model: str, text: str, max_tokens: int = 1500) -> dict | None:
-    try:
-        r = client.chat.completions.create(
-            model=model,
-            messages=[{"role": "user", "content": PROMPT.replace("{text}", text[:1500])}],
-            temperature=0.0,
-            max_tokens=max_tokens,
-        )
-        content = (r.choices[0].message.content or "").strip()
-        # parse JSON robustly
-        content = re.sub(r"^```(?:json)?\s*", "", content)
-        content = re.sub(r"\s*```$", "", content)
-        s, e = content.find("{"), content.rfind("}")
-        if s != -1 and e != -1:
-            return json.loads(content[s:e + 1])
-    except Exception as exc:
-        print(f"  [warn] llm call failed: {type(exc).__name__}: {str(exc)[:80]}")
+def call_llm(client, model: str, text: str, max_tokens: int = 8000) -> dict | None:
+    # 注意：deepseek-v4-flash 是推理模型，会先烧 reasoning tokens 再写正文。
+    # 2026-09-12 实测 max_tokens=1500 全被推理耗尽（content 空、finish_reason=length）；
+    # 8000 仍有长 chunk 失败，故按 8000 → 16000 两档递增重试（同 llm_utils.chat_content 思路）。
+    for budget in (max_tokens, max_tokens * 2):
+        try:
+            r = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": PROMPT.replace("{text}", text[:1500])}],
+                temperature=0.0,
+                max_tokens=budget,
+            )
+            choice = r.choices[0]
+            content = (choice.message.content or "").strip()
+            if not content and getattr(choice, "finish_reason", "") == "length":
+                continue  # 推理耗尽额度，放大重试
+            # parse JSON robustly
+            content = re.sub(r"^```(?:json)?\s*", "", content)
+            content = re.sub(r"\s*```$", "", content)
+            s, e = content.find("{"), content.rfind("}")
+            if s != -1 and e != -1:
+                return json.loads(content[s:e + 1])
+            return None
+        except Exception as exc:
+            print(f"  [warn] llm call failed: {type(exc).__name__}: {str(exc)[:80]}")
+            return None
     return None
 
 

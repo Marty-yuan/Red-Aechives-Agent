@@ -237,7 +237,7 @@ def query_knowledge_graph(
 
     该函数独立于 ToolRegistry，方便在 Web API 或命令行中单独复用。
     """
-    store = KnowledgeGraphStore()
+    store = get_default_store()
     result = store.query(
         topic=topic,
         entity=entity,
@@ -249,9 +249,33 @@ def query_knowledge_graph(
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
+# ===================== 进程级单例 =====================
+# 图谱 JSON 约 234KB，之前每次请求都重新读盘解析（/api/kg/query、/api/knowledge_graph、
+# Agent 工具调用）。改为进程级单例 + 文件 mtime 检查：文件被重新构建后自动热加载，
+# 正常请求零 IO。
+_STORE_CACHE: Dict[str, Any] = {"path": None, "mtime": None, "store": None}
+
+
+def get_default_store() -> KnowledgeGraphStore:
+    """返回进程级共享的 KnowledgeGraphStore，图谱文件变更时自动重载。"""
+    path = KnowledgeGraphStore._default_graph_path()
+    try:
+        mtime = os.path.getmtime(path) if os.path.exists(path) else None
+    except OSError:
+        mtime = None
+
+    cache = _STORE_CACHE
+    if cache["store"] is not None and cache["path"] == path and cache["mtime"] == mtime:
+        return cache["store"]
+
+    store = KnowledgeGraphStore(graph_path=path)
+    cache.update({"path": path, "mtime": mtime, "store": store})
+    return store
+
+
 def get_graph_payload() -> Dict[str, Any]:
     """工具入口：返回完整图数据，供前端可视化。"""
-    return KnowledgeGraphStore().get_graph()
+    return get_default_store().get_graph()
 
 
 if __name__ == "__main__":

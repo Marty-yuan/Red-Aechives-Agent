@@ -7,6 +7,13 @@
     3. 让 LLM 以村寨代言人的身份，结合对话历史生成自然回答
 
 这样既保留了 LLM 的语言能力，又用真实档案锚定了历史事实，避免幻觉。
+
+并发说明（2026-09-12 修复）：
+    VillageAgent 在 Web 层是全局单例、由 FastAPI 线程池并发调用。
+    每次 ask() 的村寨/用户/模式/证据等请求级状态全部放在 AskResult 上下文中，
+    不再依赖实例属性在请求间传递，避免两个并发用户互相污染人格与证据链。
+    实例上的 current_village / last_plan 等仅作为"最近一次调用"的快照保留，
+    供脚本（bench/eval）与调试读取；Web 响应一律以 ask() 返回的 AskResult 为准。
 """
 import json
 from urllib.parse import quote
@@ -37,6 +44,31 @@ LOCAL_GUIDE_FOOD_HINTS = ("美食", "好吃", "小吃", "特产", "餐厅", "吃
 LOCAL_GUIDE_LODGING_HINTS = ("住宿", "酒店", "民宿", "住哪", "住哪里", "过夜")
 
 
+class AskResult:
+    """单次 ask() 的请求级上下文 + 返回结果。
+
+    并发安全的关键：一次问答涉及的村寨、用户、讲解模式、证据链全部挂在
+    这个对象上，在 ask() 内部各方法间显式传递，不写回实例属性。
+    """
+
+    def __init__(self):
+        self.village = None
+        self.user_id = None
+        self.persona_mode = "tourist"
+        self.profile = None
+        self.history = []
+        # ---- 以下为返回给调用方的结果字段 ----
+        self.answer = ""
+        self.plan = None
+        self.tool_results = None
+        self.evidence = None
+        self.verification = None
+
+    def __str__(self):
+        # 兼容把 ask() 返回值当字符串用的旧代码（如 CLI print）
+        return self.answer
+
+
 class VillageAgent:
     """村寨数字代言人 Agent：检索 + 多轮记忆 + 生成"""
 
@@ -56,13 +88,13 @@ class VillageAgent:
         # 初始化检索器
         self.retriever = create_retriever()
 
-        # 当前对话的村寨（用于切换人格）
+        # 最近一次调用的快照（仅供脚本/调试读取；Web 层请使用 ask() 返回的 AskResult）
         self.current_village = None
         self.current_user = None
         self.current_persona_mode = "tourist"
         self.current_profile = None
 
-        # 未登录游客的临时对话记忆；登录用户改由 UserMemoryStore 持久化
+        # 未登录游客的临时对话记忆（按村寨分桶）；登录用户改由 UserMemoryStore 持久化
         self.conversation_history = {}
         self.memory_store = UserMemoryStore()
 
@@ -71,10 +103,11 @@ class VillageAgent:
         # 登录用户的原始对话仍由 UserMemoryStore 持久化，两者互不替代。
         self.long_memory = MemoryManager(llm_client=self.client, model=config.MODEL_NAME)
 
-        # 研学课程包的多轮槽位填充：缺出发地时先追问，记住用户上一条课程请求
+        # 研学课程包的多轮槽位填充：缺出发地时先追问，记住用户上一条课程请求。
+        # 字典按 user_id（或 guest:村寨）为 key，本身已是请求隔离的。
         self._pending_course = {}
 
-        # ??????????????????
+        # 延迟加载的重型组件 + 最近一次调用结果快照（脚本兼容用，Web 层勿读）
         self.orchestrator = None
         self.last_plan = None
         self.last_tool_results = None
@@ -82,9 +115,9 @@ class VillageAgent:
         self.fact_checker = None
         self.last_verification = None
 
-    def ask(self, question: str, village: str = None, user_id: str = None, persona_mode: str = None, remember: bool = True) -> str:
+    def ask(self, question: str, village: str = None, user_id: str = None, persona_mode: str = None, remember: bool = True) -> AskResult:
         """
-        用户提问，返回村寨代言人的回答。
+        用户提问，返回村寨代言人的回答（AskResult，answer 字段为回答正文）。
 
         参数:
             question:     用户的问题
@@ -92,77 +125,81 @@ class VillageAgent:
             user_id:      登录用户名；为空时使用游客临时记忆
             persona_mode: student / tourist / researcher
         """
-        if village:
-            self.current_village = village
-            if self.current_user is None and user_id is None:
-                self.conversation_history.setdefault(village, [])
+        ctx = AskResult()
+        ctx.village = village or self.current_village
+        ctx.user_id = user_id
 
-        self.current_user = user_id
-        if self.current_user:
-            self.current_profile = self.memory_store.get_profile(self.current_user)
-            self.current_persona_mode = persona_mode or self.current_profile.get("persona_mode") or "tourist"
-            history = self.memory_store.get_history(self.current_user, self.current_village)
+        if ctx.user_id:
+            ctx.profile = self.memory_store.get_profile(ctx.user_id)
+            ctx.persona_mode = persona_mode or ctx.profile.get("persona_mode") or "tourist"
+            ctx.history = self.memory_store.get_history(ctx.user_id, ctx.village)
         else:
-            self.current_profile = None
-            self.current_persona_mode = persona_mode or "tourist"
-            history = self.conversation_history.get(self.current_village, [])
+            ctx.profile = None
+            ctx.persona_mode = persona_mode or "tourist"
+            if ctx.village:
+                ctx.history = self.conversation_history.setdefault(ctx.village, [])
+            else:
+                ctx.history = []
+
+        # 更新快照（调试/脚本兼容，不影响请求正确性）
+        self.current_village = ctx.village
+        self.current_user = ctx.user_id
+        self.current_profile = ctx.profile
+        self.current_persona_mode = ctx.persona_mode
 
         # 0.1 从长期记忆中召回与当前问题相关的历史摘要（尚无摘要时返回空串，无副作用）
         memory_context = self.long_memory.build_context(
-            self.current_village or "未指定", question,
-            user_id=self.current_user, top_k=2,
+            ctx.village or "未指定", question,
+            user_id=ctx.user_id, top_k=2,
         )
 
         # 0.15 研学课程包槽位填充：往返交通必须知道出发城市，缺失时先追问而不是硬生成
-        question, ask_back = self._course_departure_gate(question, self.current_user)
+        question, ask_back = self._course_departure_gate(question, ctx.user_id, ctx.village)
         if ask_back:
-            self.last_plan = {
+            ctx.plan = {
                 "is_complex": True,
                 "task_type": "clarify_departure",
                 "reasoning": "课程包缺少出发城市，先向用户追问以计算往返交通",
                 "steps": [],
             }
-            self.last_tool_results, self.last_evidence, self.last_verification = [], [], None
+            ctx.tool_results, ctx.evidence, ctx.verification = [], [], None
+            ctx.answer = ask_back
             if remember:
-                self._remember(question, ask_back, history)
-            return ask_back
+                self._remember(ctx, question, ask_back)
+            return self._finish(ctx)
 
         # 0.2 如果问题像复杂任务，先尝试 Planner + 工具调用
-        orchestrator_result = self._run_orchestrator(question, history, memory_context)
+        orchestrator_result = self._run_orchestrator(ctx, question, memory_context)
         if orchestrator_result and orchestrator_result.get("handled"):
             answer = orchestrator_result["answer"]
-            answer = self._attach_local_guide(question, self.current_village, answer)
-            self.last_plan = orchestrator_result.get("plan")
-            self.last_tool_results = orchestrator_result.get("tool_results")
-            self.last_evidence = self._extract_evidence(orchestrator_result.get("tool_results"))
-            self.last_verification = orchestrator_result.get("verification")
+            answer = self._attach_local_guide(question, ctx.village, answer)
+            ctx.plan = orchestrator_result.get("plan")
+            ctx.tool_results = orchestrator_result.get("tool_results")
+            ctx.evidence = self._extract_evidence(orchestrator_result.get("tool_results"))
+            ctx.verification = orchestrator_result.get("verification")
+            ctx.answer = answer
             if remember:
-                self._remember(question, answer, history)
-            return answer
-
-        self.last_plan = None
-        self.last_tool_results = None
-        self.last_evidence = None
-        self.last_verification = None
+                self._remember(ctx, question, answer)
+            return self._finish(ctx)
 
         # 1. 检索相关档案片段
         # 检索时把最近几轮对话一起带上，方便处理“后来呢”“他呢”这类追问
-        recent_context = [turn["content"] for turn in history[-6:]]
+        recent_context = [turn["content"] for turn in ctx.history[-6:]]
         retrieval_query = question
         if recent_context:
             retrieval_query = question + "\n" + "\n".join(recent_context)
 
-        results = self.retriever.search(retrieval_query, village=self.current_village)
-        self.last_evidence = results
+        results = self.retriever.search(retrieval_query, village=ctx.village)
+        ctx.evidence = results
 
         # 2. 组装档案资料
         archive_text = self._format_archive(results)
 
         # 3. 组装 system prompt（村寨人格 + 讲解模式 + 用户画像 + 长期记忆摘要）
         system_prompt = build_system_prompt(
-            self.current_village,
-            persona_mode=self.current_persona_mode,
-            user_profile=self.current_profile,
+            ctx.village,
+            persona_mode=ctx.persona_mode,
+            user_profile=ctx.profile,
         )
         if memory_context:
             system_prompt += "\n\n" + memory_context
@@ -172,7 +209,7 @@ class VillageAgent:
 
         # 5. 组装完整消息：system + 历史对话 + 当前问题
         messages = [{"role": "system", "content": system_prompt}]
-        for turn in history[-HISTORY_LIMIT:]:
+        for turn in ctx.history[-HISTORY_LIMIT:]:
             messages.append({"role": turn["role"], "content": turn["content"]})
         messages.append({"role": "user", "content": user_prompt})
 
@@ -191,9 +228,9 @@ class VillageAgent:
         verification = self._run_fact_checker(question, answer, archive_text)
         if verification.get("revised_answer"):
             answer = verification["revised_answer"]
-        self.last_verification = verification
-        answer = self._attach_local_guide(question, self.current_village, answer)
-        self.last_plan = {
+        ctx.verification = verification
+        answer = self._attach_local_guide(question, ctx.village, answer)
+        ctx.plan = {
             "is_complex": False,
             "task_type": "archive_qa",
             "reasoning": "简单档案问答，使用 RAG 检索档案证据。",
@@ -201,9 +238,19 @@ class VillageAgent:
         }
 
         # 8. 保存本轮对话记忆：登录用户写入数据库，游客写入页面内存
-        self._remember(question, answer, history)
+        ctx.answer = answer
+        if remember:
+            self._remember(ctx, question, answer)
 
-        return answer
+        return self._finish(ctx)
+
+    def _finish(self, ctx: AskResult) -> AskResult:
+        """收尾：同步快照属性（脚本兼容），返回请求级结果对象。"""
+        self.last_plan = ctx.plan
+        self.last_tool_results = ctx.tool_results
+        self.last_evidence = ctx.evidence
+        self.last_verification = ctx.verification
+        return ctx
 
     @staticmethod
     def _extract_evidence(tool_results):
@@ -237,12 +284,13 @@ class VillageAgent:
             + "&source=web_search_result_notes"
         )
 
-    def _resolve_guide_village(self, question, village=None):
+    @staticmethod
+    def _resolve_guide_village(question, village=None):
         q = question or ""
         for name in VILLAGE_COORDS:
             if name and name in q:
                 return name
-        return village or self.current_village
+        return village
 
     def _local_guide_block(self, question, village=None):
         q = question or ""
@@ -289,12 +337,12 @@ class VillageAgent:
         return answer.rstrip() + "\n" + block
 
     def _run_fact_checker(self, question: str, answer: str, evidence_text: str):
-        """?????? Agent ????????????"""
+        """事实校验 Agent 对最终回答做二次校验（日期/数字/人名/番号等）"""
         if self.fact_checker is None:
             self.fact_checker = FactCheckerAgent()
         return self.fact_checker.verify(question, answer, evidence_text)
 
-    def _course_departure_gate(self, question: str, user_id):
+    def _course_departure_gate(self, question: str, user_id, village=None):
         """课程包出发地槽位填充。
 
         返回 (处理后的问题, 追问文本或None)：
@@ -302,7 +350,7 @@ class VillageAgent:
         - 新课程请求但没有出发地 → 记住请求并返回追问；
         - 其它情况原样放行。
         """
-        key = user_id or f"guest:{self.current_village}"
+        key = user_id or f"guest:{village}"
         pending = self._pending_course.pop(key, None)
 
         if pending:
@@ -326,44 +374,46 @@ class VillageAgent:
             )
         return question, None
 
-    def _run_orchestrator(self, question: str, history: list, memory_context: str = ""):
+    def _run_orchestrator(self, ctx: AskResult, question: str, memory_context: str = ""):
         """Planner + 工具调用编排，memory_context 为长期记忆召回摘要。"""
         if self.orchestrator is None:
             self.orchestrator = OrchestratorAgent(retriever=self.retriever)
         return self.orchestrator.run(
             question=question,
-            village=self.current_village,
-            history=history,
+            village=ctx.village,
+            history=ctx.history,
             memory_context=memory_context,
         )
 
-    def _remember(self, question: str, answer: str, history: list) -> None:
+    def _remember(self, ctx: AskResult, question: str, answer: str) -> None:
         """保存本轮对话：登录用户写入持久化记忆，游客写入内存。"""
-        memory_key_village = self.current_village or "未指定"
+        memory_key_village = ctx.village or "未指定"
         # 同步喂给长期记忆：超过短期窗口后，MemoryManager 会自动把较早轮次压缩成摘要
         self.long_memory.add_turn(
-            memory_key_village, "user", question, user_id=self.current_user
+            memory_key_village, "user", question, user_id=ctx.user_id
         )
         self.long_memory.add_turn(
-            memory_key_village, "assistant", answer, user_id=self.current_user
+            memory_key_village, "assistant", answer, user_id=ctx.user_id
         )
 
-        if self.current_user:
-            self.memory_store.append_turn(self.current_user, self.current_village, "user", question)
-            self.memory_store.append_turn(self.current_user, self.current_village, "assistant", answer)
+        if ctx.user_id:
+            self.memory_store.append_turn(ctx.user_id, ctx.village, "user", question)
+            self.memory_store.append_turn(ctx.user_id, ctx.village, "assistant", answer)
             self.memory_store.update_profile(
-                self.current_user,
-                persona_mode=self.current_persona_mode,
-                village=self.current_village,
+                ctx.user_id,
+                persona_mode=ctx.persona_mode,
+                village=ctx.village,
                 question=question,
             )
             return
 
+        history = ctx.history
         history.append({"role": "user", "content": question})
         history.append({"role": "assistant", "content": answer})
         if len(history) > HISTORY_LIMIT * 2:
             history = history[-HISTORY_LIMIT * 2:]
-        self.conversation_history[self.current_village] = history
+        self.conversation_history[ctx.village] = history
+        ctx.history = history
 
     @staticmethod
     def _format_archive(results: list) -> str:
@@ -393,28 +443,3 @@ class VillageAgent:
             "2. 如果是寒暄、追问、普通聊天或路线咨询，直接自然回应，不要硬套档案，也不要重复固定格式。\n"
             "3. 不要在回答末尾追加“——据《...》”或罗列档案来源；来源会由证据链单独展示。"
         )
-
-    @staticmethod
-    def _maybe_add_source(answer: str, results: list, question: str) -> str:
-        """只在确需溯源时自然补充来源，避免每轮都机械地加“档案来源”。"""
-        if not results:
-            return answer
-
-        # 闲聊问题不强加来源
-        if any(word in question for word in CHITCHAT_KEYWORDS):
-            return answer
-
-        # 模型已经自然带出来源时，不再重复添加
-        if "《" in answer or "来源" in answer or "档案" in answer:
-            return answer
-
-        sources = []
-        for r in results[:2]:
-            source = r.get("source", "").strip()
-            if source and source != "未知档案" and source not in sources:
-                sources.append(source)
-
-        if not sources:
-            return answer
-
-        return answer + "\n——据《" + "》《".join(sources) + "》"
