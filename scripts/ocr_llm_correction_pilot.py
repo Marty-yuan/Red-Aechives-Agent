@@ -59,7 +59,7 @@ def call_llm(client, model: str, text: str, max_tokens: int = 1500) -> dict | No
     try:
         r = client.chat.completions.create(
             model=model,
-            messages=[{"role": "user", "content": PROMPT.format(text=text[:1500])}],
+            messages=[{"role": "user", "content": PROMPT.replace("{text}", text[:1500])}],
             temperature=0.0,
             max_tokens=max_tokens,
         )

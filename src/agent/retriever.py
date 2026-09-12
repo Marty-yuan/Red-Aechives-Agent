@@ -19,6 +19,7 @@ from scipy.sparse import load_npz
 from sklearn.metrics.pairwise import cosine_similarity
 
 from . import config
+from .query_normalize import normalize_query
 
 
 class ArchiveRetriever:
@@ -49,6 +50,9 @@ class ArchiveRetriever:
             列表，每项是一个 dict，包含 text / locations / source / score
         """
         top_k = top_k or config.TOP_K
+
+        # 查询侧 OCR 错字归一化（可用 RED_ARCHIVE_QUERY_NORM=0 关闭）
+        query = normalize_query(query)
 
         # 将问题转为向量
         query_vec = self.vectorizer.transform([query])
@@ -84,6 +88,7 @@ class ArchiveRetriever:
                 continue
             chunk = self.chunks[idx]
             results.append({
+                "chunk_id": idx,
                 "text": chunk["text"],
                 "locations": chunk.get("locations", []),
                 "source": chunk.get("source", "未知档案"),
